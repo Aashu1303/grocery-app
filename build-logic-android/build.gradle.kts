@@ -24,6 +24,7 @@ java {
 dependencies {
     implementation(libs.plugin.kotlin)
     implementation(libs.plugin.agp)
+    implementation(libs.plugin.compose.compiler)
 }
 
 gradlePlugin {

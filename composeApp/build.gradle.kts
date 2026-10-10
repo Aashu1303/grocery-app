@@ -17,9 +17,6 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.koin.test)
         }
-        findByName("androidMain")?.dependencies {
-            implementation(libs.androidx.activity.compose)
-        }
     }
 }
 

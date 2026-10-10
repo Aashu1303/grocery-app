@@ -17,3 +17,4 @@ Copy `0000-template.md`. A superseded ADR stays in place with its status changed
 | [0010](0010-compiled-convention-plugins.md) | Convention plugins are compiled Kotlin classes | Accepted |
 | [0011](0011-code-style-tooling.md) | Code style tooling: ktlint, detekt, source and module rules | Accepted |
 | [0012](0012-xcodegen-ios-wrapper.md) | iOS wrapper generated with XcodeGen | Accepted |
+| [0013](0013-agp9-android-app-module.md) | AGP 9, compileSdk 37 and a thin androidApp module | Accepted |

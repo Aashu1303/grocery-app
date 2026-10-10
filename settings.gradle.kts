@@ -48,4 +48,5 @@ if (composeEnabled) {
         ":feature:ledger",
         ":feature:kitchen",
     )
+    if (androidEnabled) include(":androidApp")
 }

@@ -33,10 +33,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Check
-        run: ./gradlew check --continue
+      - name: Check (JVM, Compose desktop, lint)
+        run: ./gradlew check --continue -Prasoi.android=false
       - name: Assemble Android
-        run: ./gradlew assembleDebug
+        run: ./gradlew :androidApp:assembleDebug
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v4

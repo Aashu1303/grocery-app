@@ -138,7 +138,8 @@ The LLD fixes the module layout, schema, bill lifecycle, algorithms, parser pipe
 ### 6.1 Module layout
 
 ```text
-composeApp/          Android + iOS entry, navigation graph, DI wiring
+composeApp/          shared app: navigation graph, DI wiring, iOS framework export
+androidApp/          Android entry (Application, MainActivity, manifest); AGP 9 needs it separate (ADR 0013)
 iosApp/              Xcode wrapper
 core/model/          entities, Money, Quantity, typed ids
 core/domain/         use cases: split, settlement, expiry, categorizer

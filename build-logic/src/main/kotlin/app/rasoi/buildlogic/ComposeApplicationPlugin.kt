@@ -5,14 +5,11 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
-/** The app entry module: Compose Multiplatform with an Android application and an iOS framework. */
+/** The shared app module: navigation and DI for all platforms, exported to iOS as a framework (ADR 0013). */
 class ComposeApplicationPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
-            configureKotlinMultiplatform()
-            pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
-            pluginManager.apply("org.jetbrains.compose")
-            if (androidEnabled) pluginManager.apply("rasoi.android-application")
+            pluginManager.apply(ComposeLibraryPlugin::class.java)
             configureExtension<KotlinMultiplatformExtension> {
                 targets.withType(KotlinNativeTarget::class.java).configureEach { native ->
                     native.binaries.framework {
