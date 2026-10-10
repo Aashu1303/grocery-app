@@ -60,3 +60,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: iOS simulator tests
         run: ./gradlew iosSimulatorArm64Test -Prasoi.android=false -Prasoi.ios=true --continue
+      - name: Build iOS app
+        run: |
+          brew install xcodegen
+          cd iosApp && xcodegen generate
+          xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build
