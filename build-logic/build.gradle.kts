@@ -52,6 +52,10 @@ gradlePlugin {
             id = "rasoi.compose-library"
             implementationClass = "app.rasoi.buildlogic.ComposeLibraryPlugin"
         }
+        register("composeApplication") {
+            id = "rasoi.compose-application"
+            implementationClass = "app.rasoi.buildlogic.ComposeApplicationPlugin"
+        }
         register("feature") {
             id = "rasoi.feature"
             implementationClass = "app.rasoi.buildlogic.FeaturePlugin"
