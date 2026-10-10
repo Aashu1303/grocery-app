@@ -1,14 +1,17 @@
 name: Record screenshots
 
 # Re-records Roborazzi golden images and commits them to the branch, so every golden change is a reviewed diff.
+# Run it manually, or push a commit whose message contains "[record screenshots]".
 on:
   workflow_dispatch:
+  push:
 
 permissions:
   contents: write
 
 jobs:
   record:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[record screenshots]')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

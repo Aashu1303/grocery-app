@@ -20,8 +20,8 @@ Features may only use design-system components (`verifyFeatureSources`). Anythin
    - Material 3 is allowed here (and only here), always with Rasoi colours passed explicitly.
 3. **Catalog.** Add one `CatalogEntry` per state to `catalog/CatalogEntries.kt` (enabled, disabled, loading,
    selected, error and so on). Add the component name to `CatalogCoverageTest`.
-4. **Screenshots.** `CatalogScreenshotTest` renders every entry in light and dark. Re-record goldens by running the
-   **Record screenshots** workflow (or `./gradlew recordRoborazziJvm` where Compose builds), and review every changed
+4. **Screenshots.** `CatalogScreenshotTest` renders every entry in light and dark. Re-record goldens by pushing a commit whose message contains
+   `[record screenshots]` (or running `./gradlew recordRoborazziJvm` where Compose builds), and review every changed
    PNG in the diff.
 5. **Pure logic** (formatting, initials, mapping) gets a unit test in `src/jvmTest`.
 6. `./gradlew check` (or the lint-only command from AGENTS.md on restricted machines), then `pre-commit-review`.
