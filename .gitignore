@@ -1,2 +1,33 @@
 .DS_Store
 **/.DS_Store
+
+# Build output and tooling
+.gradle/
+build/
+!build-logic/
+.kotlin/
+local.properties
+*.iml
+.idea/
+captures/
+xcuserdata/
+DerivedData/
+Pods/
+*.hprof
+
+# Secrets
+.env
+.env.*
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+
+# Real invoices carry PII: nothing under fixtures/invoices is committed
+# except explicitly redacted text fixtures and the folder README.
+fixtures/invoices/**
+!fixtures/invoices/
+!fixtures/invoices/*/
+!fixtures/invoices/README.md
+!fixtures/invoices/**/*.redacted.txt
