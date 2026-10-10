@@ -5,7 +5,8 @@ import kotlin.random.Random
 
 /** Generates short invite codes from an alphabet without look-alike characters (0/O, 1/I). */
 class InviteCodeGenerator(private val random: Random) {
-    fun next(): InviteCode = InviteCode(String(CharArray(LENGTH) { ALPHABET[random.nextInt(ALPHABET.length)] }))
+    fun next(): InviteCode =
+        InviteCode(CharArray(LENGTH) { ALPHABET[random.nextInt(ALPHABET.length)] }.concatToString())
 
     companion object {
         const val LENGTH = 8

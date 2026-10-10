@@ -68,7 +68,9 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
       - name: iOS simulator tests
-        run: ./gradlew iosSimulatorArm64Test -Prasoi.android=false -Prasoi.ios=true --continue
+        run: |
+          set -o pipefail
+          ./gradlew iosSimulatorArm64Test -Prasoi.android=false -Prasoi.ios=true --continue 2>&1 | tee build-ios.log
       - name: Build iOS app
         run: |
           brew install xcodegen
@@ -76,3 +78,7 @@ jobs:
           xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build
+      - name: Summarize failures
+        if: failure()
+        run: |
+          grep -hE '^e: |^w: |FAILED|What went wrong|error:' build-*.log | head -80 || true
