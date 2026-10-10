@@ -11,6 +11,8 @@ Copy `0000-template.md`. A superseded ADR stays in place with its status changed
 | [0004](0004-firebase-auth-and-push.md) | Firebase for phone auth and push | Accepted |
 | [0005](0005-offline-reads-online-writes.md) | Offline reads, online-only writes in Phase 1 | Accepted |
 | [0006](0006-app-name-rasoi.md) | App name Rasoi, package `app.rasoi` | Accepted |
-| [0007](0007-jvm-targets-and-ci-verified-mobile.md) | JVM and desktop targets for local verification; mobile verified in CI | Accepted |
+| [0007](0007-jvm-targets-and-ci-verified-mobile.md) | JVM targets for local verification; mobile and Compose verified in CI | Accepted |
 | [0008](0008-single-designated-branch.md) | Work on the designated branch, tag milestones | Accepted |
 | [0009](0009-invoice-fixtures-and-pii.md) | Real invoices are never committed; redacted text fixtures only | Accepted |
+| [0010](0010-compiled-convention-plugins.md) | Convention plugins are compiled Kotlin classes | Accepted |
+| [0011](0011-code-style-tooling.md) | Code style tooling: ktlint, detekt, source and module rules | Accepted |
