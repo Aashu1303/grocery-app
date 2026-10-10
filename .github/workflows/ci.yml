@@ -43,7 +43,8 @@ jobs:
           ./gradlew :androidApp:assembleDebug 2>&1 | tee build-android.log
       - name: Summarize failures
         if: failure()
-        run: grep -hE "^e: |^w: |FAILED|What went wrong|> .*(error|Error|failed)" build-*.log | head -80 || true
+        run: |
+          grep -hE '^e: |^w: |FAILED|What went wrong' build-*.log | head -80 || true
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v5
