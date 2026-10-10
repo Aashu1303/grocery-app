@@ -39,6 +39,13 @@ class MoneyTest {
     }
 
     @Test
+    fun absoluteValueDropsTheSign() {
+        assertEquals(Money(150), Money(-150).absoluteValue)
+        assertEquals(Money(150), Money(150).absoluteValue)
+        assertFailsWith<ArithmeticException> { Money(Long.MIN_VALUE).absoluteValue }
+    }
+
+    @Test
     fun sumOfEmptyListIsZero() {
         assertEquals(Money.ZERO, emptyList<Money>().sum())
         assertEquals(Money(30), listOf(Money(10), Money(20)).sum())

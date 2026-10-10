@@ -11,6 +11,7 @@ import kotlin.jvm.JvmInline
 value class Money(val paise: Long) : Comparable<Money> {
     val isZero: Boolean get() = paise == 0L
     val isNegative: Boolean get() = paise < 0L
+    val absoluteValue: Money get() = if (isNegative) -this else this
 
     operator fun plus(other: Money): Money = Money(addExact(paise, other.paise))
 
