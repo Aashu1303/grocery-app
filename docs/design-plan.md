@@ -75,7 +75,7 @@ Most of the logic lives in shared, pure Kotlin that is tested on the JVM; platfo
 **Correctness**
 
 1. **Money is `Long` paise.** Never `Float` or `Double`. One `Money` value class with arithmetic and formatting.
-2. **Quantities are `Long` base units** (milligrams, millilitres, or count × 1000) with a `Unit` enum.
+2. **Quantities are `Long` base units** (milligrams, millilitres, or count × 1000) with a `QuantityUnit` enum (named to avoid `kotlin.Unit`; ADR 0002).
 3. **Splits always sum exactly** to the source amount, using largest-remainder rounding. Tested as an invariant.
 4. **Time:** store UTC `Instant`s with `kotlinx-datetime`; convert to the household time zone only for display and month boundaries.
 5. **Errors are values:** repositories return a sealed `Result`-style type with typed failures. No exceptions cross layer boundaries.
@@ -116,7 +116,7 @@ The whole system is Kotlin, so the app and server share models and domain logic.
 | File storage | S3-compatible object storage | Invoice PDFs for re-parsing and dispute evidence |
 | Scheduled jobs | In-server scheduler with a jobs table | Auto-approve, expiry alerts, month close; no extra infrastructure |
 | Payments | UPI deep link (`upi://pay`) + manual "mark settled" | No payment processing or licensing needed |
-| Build | Gradle version catalog + convention plugins | Consistent module setup |
+| Build | Gradle version catalog + convention plugins | Consistent module setup; every shared module also has a `jvm` target for fast local tests (ADR 0007) |
 | CI | GitHub Actions | Build, lint, test on every push |
 
 **Decisions to record as ADRs at M0:** server-side PDF parsing, money as paise, server-authoritative ledger, Firebase for auth and push, offline reads with online-only writes in Phase 1.
@@ -156,7 +156,9 @@ server/app/          Ktor entry, routing, auth, DI
 server/parsing/      extraction, detection, template parsers, LLM fallback
 server/jobs/         auto-approve, expiry alerts, month close
 server/notifications/ FCM
-fixtures/invoices/   redacted text fixtures (committed)
+fixtures/invoices/   redacted text fixtures (committed; real PDFs git-ignored, ADR 0009)
+build-logic/         convention plugins and module/design-system rule checks (ADR 0010)
+build-logic-android/ Android convention plugins, used when rasoi.android=true (ADR 0007)
 docs/                design-plan.md, kickoff-prompt.md adr/
 ```
 
@@ -345,7 +347,7 @@ Code follows the official Kotlin coding conventions, enforced by ktlint and dete
 **Git**
 
 - Conventional Commits (`feat(bills): add approval flow`), small and focused.
-- `main` is always green; work on short-lived branches named `m2/invoice-parsing`.
+- `main` is always green; work on short-lived branches named `m2/invoice-parsing` (Phase 1 is built on a single designated branch; ADR 0008).
 - Each milestone ends with a tag (`m2-complete`).
 
 **Review before every commit**
