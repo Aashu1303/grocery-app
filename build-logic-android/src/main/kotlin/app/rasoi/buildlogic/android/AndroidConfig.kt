@@ -15,6 +15,6 @@ internal fun Project.androidNamespace(): String =
 
 internal fun Project.addAndroidTarget() {
     extensions.getByType(KotlinMultiplatformExtension::class.java).androidTarget {
-        it.compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+        compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
     }
 }
