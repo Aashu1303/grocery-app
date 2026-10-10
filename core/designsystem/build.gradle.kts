@@ -30,3 +30,6 @@ compose.resources {
     packageOfResClass = "app.rasoi.core.designsystem.resources"
     generateResClass = always
 }
+
+// Golden images are a gate: an unrecorded visual change fails `check` (record with "[record screenshots]").
+tasks.named("check") { dependsOn("verifyRoborazziJvm") }
