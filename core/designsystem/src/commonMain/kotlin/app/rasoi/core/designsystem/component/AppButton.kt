@@ -1,6 +1,8 @@
 package app.rasoi.core.designsystem.component
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -11,6 +13,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -57,14 +60,19 @@ fun AppButton(
 
 @Composable
 private fun ButtonContent(text: String, loading: Boolean) {
-    if (loading) {
-        val description = stringResource(Res.string.ds_loading)
-        CircularProgressIndicator(
-            modifier = Modifier.size(AppTheme.spacing.md).semantics { contentDescription = description },
-            strokeWidth = AppTheme.shapes.elevationHigh / 2,
-            color = AppTheme.colors.onSurfaceVariant,
-        )
-    } else {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (loading) {
+            val description = stringResource(Res.string.ds_loading)
+            CircularProgressIndicator(
+                modifier = Modifier.size(AppTheme.spacing.md + AppTheme.spacing.xxs / 2)
+                    .semantics { contentDescription = description },
+                strokeWidth = AppTheme.shapes.elevationLow * 2,
+                color = AppTheme.colors.onSurfaceVariant,
+            )
+        }
         Text(text = text, style = AppTheme.type.label)
     }
 }
