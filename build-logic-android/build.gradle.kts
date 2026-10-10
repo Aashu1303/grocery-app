@@ -10,6 +10,8 @@ detekt {
     config.setFrom(file("../config/detekt/detekt.yml"))
 }
 
+group = "app.rasoi"
+
 kotlin {
     compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
 }

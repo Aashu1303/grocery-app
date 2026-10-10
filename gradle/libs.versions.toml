@@ -71,7 +71,6 @@ compose-resources = { module = "org.jetbrains.compose.components:components-reso
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "compose" } # @Preview in common code
 compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "compose" } # multiplatform UI tests
 compose-ui-test-junit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "compose" } # desktop UI test rule for screenshots
-compose-desktop-linux = { module = "org.jetbrains.compose.desktop:desktop-jvm-linux-x64", version.ref = "compose" } # Skiko runtime for desktop screenshot tests
 lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" } # MVI ViewModels in common code
 lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" } # collectAsStateWithLifecycle
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" } # type-safe navigation

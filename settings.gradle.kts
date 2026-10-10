@@ -1,7 +1,6 @@
 pluginManagement {
     val android = providers.gradleProperty("rasoi.android").orNull.toBoolean()
     includeBuild("build-logic")
-    if (android) includeBuild("build-logic-android")
     repositories {
         gradlePluginPortal()
         mavenCentral()
@@ -21,6 +20,9 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "rasoi"
+
+// Android conventions reach every project through the root buildscript classpath (see build.gradle.kts).
+if (androidEnabled) includeBuild("build-logic-android")
 
 include(
     ":core:model",

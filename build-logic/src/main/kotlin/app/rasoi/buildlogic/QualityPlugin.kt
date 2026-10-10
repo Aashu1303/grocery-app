@@ -20,6 +20,7 @@ class QualityPlugin : Plugin<Project> {
         configureExtension<KtlintExtension> {
             android.set(false)
             outputToConsole.set(true)
+            filter { it.exclude { element -> element.file.invariantSeparatorsPath.contains("/build/") } }
         }
     }
 }

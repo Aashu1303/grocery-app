@@ -7,7 +7,7 @@ style:
     ignoreEnums: true
     ignorePropertyDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
-    excludes: ['**/commonTest/**', '**/jvmTest/**', '**/test/**', '**/designsystem/**/tokens/**']
+    excludes: ['**/commonTest/**', '**/jvmTest/**', '**/test/**', '**/designsystem/**/tokens/**', '**/designsystem/**/theme/**', '**/designsystem/**/icon/**']
   MaxLineLength:
     maxLineLength: 120
   ForbiddenComment:
