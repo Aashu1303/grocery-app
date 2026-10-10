@@ -1,4 +1,7 @@
-plugins { id("rasoi.compose-library") }
+plugins {
+    id("rasoi.compose-library")
+    id("io.github.takahirom.roborazzi")
+}
 
 kotlin {
     sourceSets {
@@ -12,10 +15,18 @@ kotlin {
             implementation(libs.compose.ui.tooling.preview)
         }
         jvmTest.dependencies {
+            implementation(libs.compose.ui.test)
             implementation(libs.compose.ui.test.junit4)
-            implementation(libs.compose.desktop.linux)
+            implementation(compose.desktop.currentOs)
             implementation(libs.roborazzi.compose.desktop)
+            implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.junit4)
         }
     }
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "app.rasoi.core.designsystem.resources"
+    generateResClass = always
 }

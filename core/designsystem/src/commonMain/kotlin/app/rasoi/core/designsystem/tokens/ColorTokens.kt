@@ -1,0 +1,54 @@
+package app.rasoi.core.designsystem.tokens
+
+import androidx.compose.ui.graphics.Color
+import app.rasoi.core.designsystem.theme.AppColors
+
+internal val LightColors = AppColors(
+    primary = Color(0xFF2E6B3F),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFC8EBCF),
+    onPrimaryContainer = Color(0xFF0B3A1C),
+    surface = Color(0xFFFFFBF6),
+    surfaceVariant = Color(0xFFF0EAE1),
+    onSurface = Color(0xFF1F1B16),
+    onSurfaceVariant = Color(0xFF4E463C),
+    outline = Color(0xFF7A7062),
+    success = Color(0xFF2E6B32),
+    successContainer = Color(0xFFD6EFD3),
+    onSuccessContainer = Color(0xFF123B16),
+    warning = Color(0xFF7A4A00),
+    warningContainer = Color(0xFFFFE3BD),
+    onWarningContainer = Color(0xFF3D2400),
+    danger = Color(0xFFB3261E),
+    onDanger = Color(0xFFFFFFFF),
+    dangerContainer = Color(0xFFFFDAD5),
+    onDangerContainer = Color(0xFF5C0E09),
+    owedToYou = Color(0xFF2E6B32),
+    youOwe = Color(0xFFA43A1F),
+    isDark = false,
+)
+
+internal val DarkColors = AppColors(
+    primary = Color(0xFF93D4A2),
+    onPrimary = Color(0xFF003919),
+    primaryContainer = Color(0xFF1D5230),
+    onPrimaryContainer = Color(0xFFC8EBCF),
+    surface = Color(0xFF17130F),
+    surfaceVariant = Color(0xFF2B261F),
+    onSurface = Color(0xFFECE1D6),
+    onSurfaceVariant = Color(0xFFD3C5B4),
+    outline = Color(0xFF9C9080),
+    success = Color(0xFF8FD58F),
+    successContainer = Color(0xFF1F4D22),
+    onSuccessContainer = Color(0xFFD6EFD3),
+    warning = Color(0xFFFFBA5C),
+    warningContainer = Color(0xFF5A3700),
+    onWarningContainer = Color(0xFFFFE3BD),
+    danger = Color(0xFFFFB4AB),
+    onDanger = Color(0xFF690005),
+    dangerContainer = Color(0xFF7D1A13),
+    onDangerContainer = Color(0xFFFFDAD5),
+    owedToYou = Color(0xFF8FD58F),
+    youOwe = Color(0xFFFFB49F),
+    isDark = true,
+)

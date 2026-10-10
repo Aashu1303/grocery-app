@@ -1,0 +1,24 @@
+<resources>
+    <string name="ds_try_again">Try again</string>
+    <string name="ds_cancel">Cancel</string>
+    <string name="ds_loading">Loading</string>
+    <string name="ds_back">Back</string>
+    <string name="ds_owed_to_you">owed to you</string>
+    <string name="ds_you_owe">you owe</string>
+    <string name="ds_split_one">One person</string>
+    <string name="ds_split_equal">Equal</string>
+    <string name="ds_split_quantity">By quantity</string>
+    <string name="ds_increase">Increase %1$s</string>
+    <string name="ds_decrease">Decrease %1$s</string>
+    <string name="ds_approval_pending">Waiting for approval</string>
+    <string name="ds_approval_approved">Approved</string>
+    <string name="ds_approval_changes_requested">Changes requested</string>
+    <string name="ds_freshness_fresh">Fresh</string>
+    <string name="ds_freshness_use_soon">Use soon</string>
+    <string name="ds_freshness_expired">Expired</string>
+    <string name="ds_selected">Selected</string>
+    <string name="ds_not_selected">Not selected</string>
+    <string name="ds_catalog_title">Design system</string>
+    <string name="ds_catalog_dark_theme">Dark theme</string>
+    <string name="ds_catalog_light_theme">Light theme</string>
+</resources>
