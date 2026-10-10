@@ -19,3 +19,4 @@ Copy `0000-template.md`. A superseded ADR stays in place with its status changed
 | [0012](0012-xcodegen-ios-wrapper.md) | iOS wrapper generated with XcodeGen | Accepted |
 | [0013](0013-agp9-android-app-module.md) | AGP 9, compileSdk 37 and a thin androidApp module | Accepted |
 | [0014](0014-role-permissions.md) | Role permissions | Accepted |
+| [0015](0015-server-auth-sessions-idempotency.md) | Server sign-in, sessions, idempotency and wiring | Accepted |

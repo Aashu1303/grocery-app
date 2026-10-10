@@ -1,14 +1,20 @@
 package app.rasoi.server
 
+import app.rasoi.server.persistence.DatabaseFactory
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.log
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-
-private const val DEFAULT_PORT = 8080
+import kotlin.time.Clock
 
 fun main() {
-    val config = ServerConfig(
-        port = System.getenv("PORT")?.toIntOrNull() ?: DEFAULT_PORT,
-        version = System.getenv("RASOI_VERSION") ?: "dev",
-    )
-    embeddedServer(Netty, port = config.port) { rasoiModule(config) }.start(wait = true)
+    val config = ServerConfig.fromEnvironment()
+    val database = DatabaseFactory.connect(config.database)
+    val clock = Clock.System
+    val graph = AppGraph(config, database, AppGraph.verifierFor(config, clock), clock)
+    embeddedServer(Netty, port = config.port) {
+        if (config.authMode == AuthMode.DEV) log.warn("RASOI_AUTH_MODE=dev: development sign-in is enabled")
+        monitor.subscribe(ApplicationStopped) { database.close() }
+        rasoiModule(graph)
+    }.start(wait = true)
 }

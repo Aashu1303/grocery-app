@@ -183,6 +183,8 @@ docs/                design-plan.md, kickoff-prompt.md adr/
 | pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED |
 | jobs | id, kind, run\_at, payload, status | Survives restarts |
 | device\_tokens | user\_id, token, platform | For FCM |
+| sessions | token\_hash, user\_id, expires\_at | Opaque bearer sessions; only the hash is stored (ADR 0015) |
+| idempotency\_keys | user\_id, key, request\_hash, status\_code, response\_body | Replays the first response to a retried write (ADR 0015) |
 
 ### 6.3 Bill lifecycle
 
@@ -231,8 +233,10 @@ interface InvoiceParser {
 | Method | Path | Purpose |
 | --- | --- | --- |
 | POST | /auth/session | Exchange a Firebase ID token for a session |
+| GET | /me | The caller and their households (ADR 0015) |
 | POST | /households | Create a household |
-| POST | /households/{id}/invites | Create an invite |
+| GET | /households/{id} | Household with members and locations (ADR 0015) |
+| POST | /households/{id}/invites | Create an invite (owner only, ADR 0014) |
 | POST | /invites/{code}/accept | Join a household |
 | GET, POST | /households/{id}/locations | List and add locations |
 | GET, POST, PATCH | /households/{id}/pantry | List, add and update pantry items |

@@ -25,7 +25,8 @@ detekt = "1.23.8"
 ktlintGradle = "14.2.0"
 roborazzi = "1.76.0"
 testcontainers = "2.0.5"
-konsist = "0.18.1"
+javaJwt = "4.6.1"
+jwksRsa = "0.24.1"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" } # structured concurrency and Flow
@@ -46,6 +47,7 @@ ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" } # production server engine
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" } # JSON bodies on the server
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" } # typed error mapping
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" } # bearer session authentication
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" } # testApplication for route tests
 sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" } # typed SQL runtime
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" } # query Flows
@@ -54,16 +56,17 @@ sqldelight-driver-native = { module = "app.cash.sqldelight:native-driver", versi
 sqldelight-driver-sqlite = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" } # in-memory JVM driver for tests
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" } # server SQL DSL
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" } # JDBC transactions
-exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed" } # timestamp columns
+exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" } # kotlin.time.Instant columns
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" } # schema migrations
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" } # PostgreSQL support for Flyway
 postgres-driver = { module = "org.postgresql:postgresql", version.ref = "postgres" } # PostgreSQL JDBC driver
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" } # connection pool
+java-jwt = { module = "com.auth0:java-jwt", version.ref = "javaJwt" } # verifies Firebase ID token signatures and claims
+jwks-rsa = { module = "com.auth0:jwks-rsa", version.ref = "jwksRsa" } # fetches and caches Google signing keys
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" } # PDF text with positions
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" } # server logging
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" } # Flow assertions
 testcontainers-postgres = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" } # real PostgreSQL in route tests
-konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" } # architecture rule tests
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" } # Compose runtime
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" } # layout and gestures
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" } # core UI primitives
