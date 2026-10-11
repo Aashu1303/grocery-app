@@ -16,5 +16,10 @@ internal object CatalogSamples {
     const val NON_FOOD = "Non-food"
     const val APPROVE = "Approve split"
     const val DELETE = "Delete bill"
+    const val HOUSEHOLD = "Flat 4B"
+    const val NAME_LABEL = "Household name"
+    const val PHONE_LABEL = "Phone number"
+    const val PHONE_ERROR = "Enter a 10-digit mobile number"
+    val roles = listOf("Member", "Cook")
     val members = listOf(MemberOption("u1", "Aarav Shah"), MemberOption("u2", "Meera Iyer"), MemberOption("u3", "Ravi"))
 }

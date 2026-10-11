@@ -79,8 +79,9 @@ modules are then excluded from the build, and CI verifies them instead. You can 
 - Suffixes: `…Screen`, `…ViewModel`, `…UiState`, `…UiEvent`, `…Repository`, `…UseCase`, `…Dto`, `…Entity`.
 - Composables are stateless by default with state hoisted; `modifier: Modifier = Modifier` is the first optional
   parameter; every screen state has a preview and a screenshot.
-- Features use **only** design-system tokens and components: no raw `Color(...)`, no `dp`/`sp` literals, no direct
-  `androidx.compose.material3` imports, no hard-coded strings (`./gradlew verifyFeatureSources`).
+- Features use **only** design-system tokens and components (`AppText`, `AppTextField`, `AppButton`, …): no raw
+  `Color(...)`, no `dp`/`sp` literals, no direct `androidx.compose.material3` imports, no hard-coded strings
+  (`./gradlew verifyFeatureSources`). Foundation layouts (`Column`, `Row`, `LazyColumn`, `Spacer`) are fine.
 - Strings live in `composeResources/values/strings.xml` of the owning module.
 - No `!!`, no `GlobalScope`, no TODO/FIXME comments, no commented-out code.
 - One public class per file; small files and functions. Comments explain *why*; KDoc only on public domain APIs

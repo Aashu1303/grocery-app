@@ -9,11 +9,16 @@ import app.rasoi.core.designsystem.component.AppBottomBarItem
 import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppCard
+import app.rasoi.core.designsystem.component.AppKeyboard
+import app.rasoi.core.designsystem.component.AppText
+import app.rasoi.core.designsystem.component.AppTextField
 import app.rasoi.core.designsystem.component.AppTopBar
 import app.rasoi.core.designsystem.component.ApprovalBanner
 import app.rasoi.core.designsystem.component.AvatarSize
 import app.rasoi.core.designsystem.component.BillLineRow
 import app.rasoi.core.designsystem.component.BottomSheetSurface
+import app.rasoi.core.designsystem.component.ChoiceChips
+import app.rasoi.core.designsystem.component.ChoiceOption
 import app.rasoi.core.designsystem.component.ConfirmDialogContent
 import app.rasoi.core.designsystem.component.EmptyView
 import app.rasoi.core.designsystem.component.ErrorView
@@ -90,6 +95,29 @@ val catalogEntries: List<CatalogEntry> = buildList {
         add(CatalogEntry("ApprovalBanner", state.name.lowercase()) { ApprovalBanner(state, "2 of 3 approved") })
     }
 
+    add(CatalogEntry("AppText", "title") { AppText(S.TITLE, style = AppTheme.type.title, heading = true) })
+    add(CatalogEntry("AppText", "body") { AppText(S.MESSAGE) })
+    add(
+        CatalogEntry("AppTextField", "empty") {
+            AppTextField("", {}, label = S.PHONE_LABEL, keyboard = AppKeyboard.PHONE)
+        },
+    )
+    add(CatalogEntry("AppTextField", "filled") { AppTextField(S.HOUSEHOLD, {}, label = S.NAME_LABEL) })
+    add(
+        CatalogEntry("AppTextField", "error") {
+            AppTextField("123", {}, label = S.PHONE_LABEL, error = S.PHONE_ERROR, keyboard = AppKeyboard.PHONE)
+        },
+    )
+    add(
+        CatalogEntry("AppTextField", "disabled") {
+            AppTextField(S.HOUSEHOLD, {}, label = S.NAME_LABEL, enabled = false)
+        },
+    )
+    add(
+        CatalogEntry("ChoiceChips", "selected") {
+            ChoiceChips(S.roles.map { ChoiceOption(it, it) }, selected = S.roles[1], onSelect = {})
+        },
+    )
     add(CatalogEntry("StateViews", "loading") { LoadingView() })
     add(CatalogEntry("StateViews", "empty") { EmptyView(S.TITLE, S.MESSAGE, actionLabel = S.ACTION, onAction = noop) })
     add(CatalogEntry("StateViews", "error") { ErrorView(S.ERROR, onRetry = noop) })

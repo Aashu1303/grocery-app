@@ -9,7 +9,7 @@ class CatalogCoverageTest {
     private val planComponents = setOf(
         "AppButton", "AppCard", "AppTopBar", "AppBottomBar", "AmountText", "ExpiryChip", "PantryItemRow",
         "BillLineRow", "SplitSelector", "QuantityStepper", "MemberAvatar", "MemberPicker", "ApprovalBanner",
-        "StateViews", "AppBottomSheet", "ConfirmDialog",
+        "StateViews", "AppBottomSheet", "ConfirmDialog", "AppText", "AppTextField", "ChoiceChips",
     )
 
     @Test
