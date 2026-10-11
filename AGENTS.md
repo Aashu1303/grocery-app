@@ -118,7 +118,8 @@ modules are then excluded from the build, and CI verifies them instead. You can 
 
 A change is done when:
 
-1. `./gradlew check` passes locally, and CI (`check` and `ios` jobs) is green on the pushed commit.
+1. `./gradlew check` passes locally, and CI (`check` and `ios` jobs, on the self-hosted runner described in
+   `docs/ci.md`) is green on the pushed commit.
 2. New logic has tests; domain and parser code was written test-first; coverage gates hold.
 3. It matches `docs/design-plan.md`, or the plan and an ADR were updated in the same change.
 4. Screens handle loading, empty, error-with-retry and content states, use only design-system components and string

@@ -15,10 +15,13 @@ permissions:
 env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false
 
+# Jobs run on the self-hosted Mac runner (ADR 0025). Set the repository variables RASOI_RUNNER and RASOI_IOS_RUNNER to
+# JSON label lists, for example '["ubuntu-latest"]' and '["macos-latest"]', to use GitHub-hosted runners instead.
+
 jobs:
   guard:
     name: Privacy and resource guards
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || '["self-hosted","macOS","ARM64"]') }}
     steps:
       - uses: actions/checkout@v5
       - run: ./scripts/check-no-real-invoices.sh
@@ -26,7 +29,7 @@ jobs:
 
   check:
     name: Build, lint and test (JVM, Compose, Android)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
@@ -35,18 +38,21 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
+      - uses: android-actions/setup-android@v3
+      - name: Docker is needed for the server tests
+        run: docker info > /dev/null || { echo "::error::Docker is not running on this runner (Testcontainers needs it); see docs/ci.md"; exit 1; }
       - name: Check (JVM, Compose desktop, lint)
         run: |
           set -o pipefail
-          ./gradlew check --continue -Prasoi.android=false 2>&1 | tee build-check.log
+          ./gradlew check --continue -Prasoi.android=false -Prasoi.ios=false 2>&1 | tee build-check.log
       - name: Assemble Android
         run: |
           set -o pipefail
-          ./gradlew :androidApp:assembleDebug 2>&1 | tee build-android.log
+          ./gradlew :androidApp:assembleDebug -Prasoi.ios=false 2>&1 | tee build-android.log
       - name: Assemble Android release (compiles the Firebase sign-in; unsigned, no Firebase settings)
         run: |
           set -o pipefail
-          ./gradlew :androidApp:assembleRelease -Prasoi.apiBaseUrl=https://api.example.invalid 2>&1 | tee build-android-release.log
+          ./gradlew :androidApp:assembleRelease -Prasoi.ios=false -Prasoi.apiBaseUrl=https://api.example.invalid 2>&1 | tee build-android-release.log
       - name: Summarize failures
         if: failure()
         run: |
@@ -63,7 +69,7 @@ jobs:
 
   ios:
     name: Build and test (iOS)
-    runs-on: macos-latest
+    runs-on: ${{ fromJSON(vars.RASOI_IOS_RUNNER || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
@@ -72,13 +78,15 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
+      - name: Xcode is needed
+        run: xcodebuild -version || { echo "::error::Xcode is not installed on this runner; see docs/ci.md"; exit 1; }
       - name: iOS simulator tests
         run: |
           set -o pipefail
           ./gradlew iosSimulatorArm64Test -Prasoi.android=false -Prasoi.ios=true --continue 2>&1 | tee build-ios.log
       - name: Build iOS app
         run: |
-          brew install xcodegen
+          command -v xcodegen > /dev/null || brew install xcodegen
           cd iosApp && xcodegen generate
           xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
