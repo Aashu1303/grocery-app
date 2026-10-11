@@ -72,8 +72,8 @@ class AndroidApplicationPlugin : Plugin<Project> {
     /** Plain HTTP is a development convenience; a release must point at an HTTPS server. */
     private fun Project.requireHttpsForRelease() {
         val apiBaseUrl = providers.gradleProperty("rasoi.apiBaseUrl").orNull
-        tasks.matching { it.name == "preReleaseBuild" }.configureEach {
-            doFirst {
+        tasks.matching { it.name == "preReleaseBuild" }.configureEach { task ->
+            task.doFirst {
                 if (apiBaseUrl?.startsWith(HTTPS) != true) {
                     throw GradleException("Release builds need -Prasoi.apiBaseUrl=https://<your server>")
                 }
