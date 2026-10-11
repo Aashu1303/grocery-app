@@ -43,7 +43,10 @@ Files in `feature/<name>/src/commonMain/kotlin/app/rasoi/feature/<name>/`:
 - `<Screen>Screen.kt`: a stateful `…Route` composable that collects state and a **stateless** `…Screen(state,
   onEvent, modifier = Modifier)` that renders it with design-system components only.
 - Strings in `feature/<name>/src/commonMain/composeResources/values/strings.xml`. Buttons are verbs.
-- Koin: a `val <name>FeatureModule = module { viewModelOf(::<Screen>ViewModel) }`, added in `composeApp/.../Koin.kt`.
+- Koin (ADR 0026): annotate the ViewModel `@KoinViewModel` and its screen arguments `@InjectedParam`; add a
+  `@Module @ComponentScan class <Name>ViewModels` in the feature, register the feature's use cases with
+  `factory<UseCase>()` in `useCaseModule` (`composeApp/.../UseCaseModule.kt`) and list `<Name>ViewModels::class` in
+  `initKoin` (`composeApp/.../Koin.kt`). The plugin only follows definitions visible from the entry point (KOIN-W003).
 
 ## 4. Tests
 

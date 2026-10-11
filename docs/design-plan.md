@@ -104,7 +104,7 @@ The whole system is Kotlin, so the app and server share models and domain logic.
 | --- | --- | --- |
 | Shared UI | Compose Multiplatform (Android, iOS) | One UI codebase; desktop and web possible later |
 | Navigation | Navigation Compose for Compose Multiplatform | Official, type-safe routes |
-| DI | Koin | KMP-native, simple, no code generation |
+| DI | Koin + compiler plugin (ADR 0026) | KMP-native; graph checked at build time without KSP |
 | Networking | Ktor client + kotlinx.serialization | Multiplatform, same serialization as the server |
 | Local storage | SQLDelight | Typed SQL on Android and iOS; offline reads of pantry and ledger |
 | Backend | Ktor server (JVM) | Kotlin end to end; shares `contract` and `domain` modules |
