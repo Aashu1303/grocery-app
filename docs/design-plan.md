@@ -114,7 +114,7 @@ The whole system is Kotlin, so the app and server share models and domain logic.
 | Auth | Firebase Auth phone OTP; server verifies the ID token | Phone numbers fit Indian flatmates and cooks |
 | Push | Firebase Cloud Messaging (Android, and iOS via APNs) | One channel for approvals and expiry alerts |
 | File storage | S3-compatible object storage | Invoice PDFs for re-parsing and dispute evidence |
-| Scheduled jobs | In-server scheduler with a jobs table | Auto-approve, expiry alerts, month close; no extra infrastructure |
+| Scheduled jobs | In-server `JobRunner` (`server:jobs`) running sweeps that derive due work from stored state | Auto-approve, expiry alerts, month close; no extra infrastructure and no queue to lose (ADR 0021) |
 | Payments | UPI deep link (`upi://pay`) + manual "mark settled" | No payment processing or licensing needed |
 | Build | Gradle version catalog + convention plugins | Consistent module setup; every shared module also has a `jvm` target for fast local tests (ADR 0007) |
 | CI | GitHub Actions | Build, lint, test on every push |
@@ -172,16 +172,15 @@ docs/                design-plan.md, kickoff-prompt.md adr/
 | memberships | household\_id, user\_id, role | Role: OWNER, MEMBER, COOK; unique per pair |
 | invites | code, household\_id, role, expires\_at | Single use |
 | locations | id, household\_id, name, kind | Kind: FRIDGE, FREEZER, SHELF, OTHER |
-| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, created\_by, total\_paise, status, confidence, period\_id | Unique (household\_id, platform, invoice\_no); period\_id arrives in M5 (ADR 0018) |
+| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, created\_by, total\_paise, status, confidence, title, submitted\_at, version, period\_id | Unique (household\_id, platform, invoice\_no); period\_id arrives in M5 (ADR 0018) |
 | bill\_documents | bill\_id, household\_id, platform, invoice\_no, storage\_key, sha256 | Several PDFs per bill; unique per household by sha256 and by platform + invoice\_no |
 | bill\_lines | id, bill\_id, position, raw\_name, display\_name, units, measure\_amount, measure\_unit, amount\_paise, mrp\_paise, hsn, upc, category, is\_food | amount\_paise = what was paid for the line; units drive QUANTITY splits (ADR 0018) |
 | bill\_charges | id, bill\_id, kind, amount\_paise, distribution | Kind: HANDLING, DELIVERY, DISCOUNT, ROUND\_OFF, OTHER; signed amount |
-| allocations | line\_id, user\_id, mode, quantity, amount\_paise | Amounts stored after computation; sum = line amount |
-| approvals | bill\_id, user\_id, state, comment, decided\_at | State: PENDING, APPROVED, CHANGES\_REQUESTED |
+| allocations | line\_id, user\_id, mode, units, amount\_paise | Amounts stored after computation; a line's rows sum to its amount; charge shares are derived, not stored (ADR 0021) |
+| approvals | bill\_id, user\_id, state, comment, decided\_at, automatic | State: PENDING, APPROVED, CHANGES\_REQUESTED; `automatic` marks the 48 h approval |
 | periods | id, household\_id, month, status | OPEN or LOCKED |
 | settlements | id, period\_id, from\_user, to\_user, amount\_paise, status | PENDING or PAID |
 | pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, added\_on, price\_paise, payer\_id, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED; one item per source line (ADR 0020) |
-| jobs | id, kind, run\_at, payload, status | Survives restarts |
 | device\_tokens | user\_id, token, platform | For FCM |
 | sessions | token\_hash, user\_id, expires\_at | Opaque bearer sessions; only the hash is stored (ADR 0015) |
 | idempotency\_keys | user\_id, key, request\_hash, status\_code, response\_body | Replays the first response to a retried write (ADR 0015) |
@@ -194,9 +193,9 @@ A bill moves from draft to locked through approval; only approved bills count to
 
 A change request loops the bill back to its uploader; an edit to an approved bill also returns it to pending, for affected members only.
 
-- **Affected members** = everyone with a non-zero share, excluding the payer if the payer submitted.
+- **Affected members** = everyone with a non-zero share, excluding the payer if the payer submitted. Cooks never hold a share.
 - **Auto-approve:** 48 hours after submission, remaining PENDING approvals become APPROVED by the system.
-- **Edits after approval** reset approval only for members whose share changed.
+- **Edits after approval** reset approval only for members whose share changed or who became affected (for example when the payer changes). Only the uploader or an owner may edit a submitted bill.
 - **Month close** (1st of the month, household time zone): the previous period locks; bills not yet approved move to the new period.
 
 ### 6.4 Core algorithms
@@ -244,7 +243,7 @@ interface InvoiceParser {
 | PATCH | /households/{id}/pantry/{itemId} | Move, edit, finish or discard an item (ADR 0020) |
 | POST | /households/{id}/invoices | Upload one or more PDFs (JSON, Base64); returns a parsed draft bill (ADR 0018) |
 | GET | /bills/{id} | One bill with its review warnings (ADR 0018) |
-| GET, POST | /households/{id}/bills | List by period; create a manual bill |
+| GET, POST | /households/{id}/bills | List (other members' drafts are hidden; filtering by period arrives in M5); create a manual bill (ADR 0021) |
 | PATCH | /bills/{id} | Edit lines, payer, allocations, charges |
 | POST | /bills/{id}/submit | Send for approval |
 | POST | /bills/{id}/approvals | Approve or request changes |

@@ -89,22 +89,20 @@ object ApprovalRules {
     }
 
     /**
-     * An edit to a submitted bill: members whose share changed (or who are newly affected) are asked again, others keep
-     * their approval. Returns [new] unchanged when nobody's share moved or the bill was still a draft.
+     * An edit to a submitted bill: members whose share changed (or who are newly affected, for instance because the
+     * payer changed) are asked again, others keep their approval. Returns [new] unchanged when nobody is affected or
+     * the bill was still a draft.
      */
     fun afterEdit(old: Bill, new: Bill, now: Instant): Bill {
         val newShares = (BillShares.of(new) as? AppResult.Success)?.value
-        val changed = if (newShares == null ||
-            old.status == BillStatus.DRAFT
-        ) {
-            emptySet()
-        } else {
-            changedMembers(old, newShares)
-        }
-        if (newShares == null || changed.isEmpty()) return new
-        val approvals = requiredApprovers(new, newShares).map { user ->
+        if (newShares == null || old.status == BillStatus.DRAFT) return new
+        val required = requiredApprovers(new, newShares)
+        val asked =
+            changedMembers(old, newShares) + required.filter { user -> new.approvals.none { it.userId == user } }
+        if (asked.isEmpty() && new.approvals.all { it.userId in required }) return new
+        val approvals = required.map { user ->
             val existing = new.approvals.firstOrNull { it.userId == user }
-            if (existing != null && user !in changed) existing else Approval(user, ApprovalState.PENDING)
+            if (existing != null && user !in asked) existing else Approval(user, ApprovalState.PENDING)
         }
         val resetClock = approvals.any { it.state == ApprovalState.PENDING }
         val edited = new.copy(approvals = approvals, submittedAt = if (resetClock) now else new.submittedAt)

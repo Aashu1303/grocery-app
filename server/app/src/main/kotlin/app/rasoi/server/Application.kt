@@ -1,5 +1,6 @@
 package app.rasoi.server
 
+import app.rasoi.server.jobs.JobRunner
 import app.rasoi.server.persistence.DatabaseFactory
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.log
@@ -16,5 +17,11 @@ fun main() {
         if (config.authMode == AuthMode.DEV) log.warn("RASOI_AUTH_MODE=dev: development sign-in is enabled")
         monitor.subscribe(ApplicationStopped) { database.close() }
         rasoiModule(graph)
+        scheduleJobs(
+            graph,
+            JobRunner(this) { name, error ->
+                log.error("Job {} failed: {}", name, error::class.simpleName)
+            },
+        )
     }.start(wait = true)
 }

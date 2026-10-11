@@ -42,13 +42,14 @@ fun rasoiTest(
         authMode = AuthMode.DEV,
         firebaseProjectId = null,
     )
+    val graph = AppGraph(config, TestPostgres.database, DevIdTokenVerifier(), clock, storage, fallback)
     lateinit var server: Application
     application {
-        rasoiModule(AppGraph(config, TestPostgres.database, DevIdTokenVerifier(), clock, storage, fallback))
+        rasoiModule(graph)
         server = this
     }
     startApplication()
-    TestScope(this, clock, server, storage).block()
+    TestScope(this, clock, server, storage, graph).block()
 }
 
 class TestScope(
@@ -56,6 +57,7 @@ class TestScope(
     val clock: MutableClock,
     val application: Application,
     val storage: InMemoryDocumentStorage,
+    val graph: AppGraph,
 ) {
     val client: HttpClient = builder.createClient { install(ContentNegotiation) { json(ContractJson) } }
 

@@ -80,6 +80,11 @@ class HouseholdService(
         .flatMap { HouseholdRules.validateLocationName(name) }
         .flatMap { validName -> locations.create(householdId, validName, kind) }
 
+    /** Members who can owe a share of a bill: everyone whose role may approve bills, so never a cook. */
+    suspend fun billParticipants(householdId: HouseholdId): Set<UserId> =
+        households.members(householdId).filter { RolePolicy.allows(it.role, Permission.APPROVE_BILLS) }
+            .map { it.userId }.toSet()
+
     /** Returns the caller's role when they are a member holding [permission]. */
     suspend fun authorize(userId: UserId, householdId: HouseholdId, permission: Permission): AppResult<Role> {
         val role = households.roleOf(householdId, userId) ?: return AppResult.Failure(AppError.NotFound("household"))

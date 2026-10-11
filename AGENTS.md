@@ -22,7 +22,7 @@ server that share `core:model`, `core:domain` and `core:contract`.
 | `androidApp` | Android app | `Application`, `MainActivity`, manifest (ADR 0013) | `composeApp` |
 | `server:app` | JVM | Ktor entry, routing, auth, DI | `core:*` except `designsystem`, `data`; `server:*` |
 | `server:parsing` | JVM | PDF extraction, platform detection, template parsers, LLM fallback | `core:model`, `core:domain`, `core:contract` |
-| `server:jobs` | JVM | Auto-approve, expiry alerts, month close | as above |
+| `server:jobs` | JVM | The periodic `JobRunner`; sweeps (auto-approve, expiry alerts, month close) are registered in `server:app` (ADR 0021) | as above |
 | `server:notifications` | JVM | FCM | as above |
 | `build-logic`, `build-logic-android` | Gradle | Convention plugins (`rasoi.*`) and rule checks | — |
 

@@ -9,5 +9,6 @@ internal object BillChargesTable : Table("bill_charges") {
     val kind = text("kind")
     val label = text("label")
     val amountPaise = long("amount_paise")
+    val distribution = text("distribution")
     override val primaryKey = PrimaryKey(id)
 }

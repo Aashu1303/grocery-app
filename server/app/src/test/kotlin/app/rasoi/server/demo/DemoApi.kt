@@ -6,6 +6,9 @@ import app.rasoi.core.contract.auth.CreateSessionRequestDto
 import app.rasoi.core.contract.auth.MeDto
 import app.rasoi.core.contract.auth.SessionDto
 import app.rasoi.core.contract.bills.BillDto
+import app.rasoi.core.contract.bills.BillSummaryDto
+import app.rasoi.core.contract.bills.CreateBillRequestDto
+import app.rasoi.core.contract.bills.DecideApprovalRequestDto
 import app.rasoi.core.contract.bills.UpdateBillRequestDto
 import app.rasoi.core.contract.bills.UploadInvoicesRequestDto
 import app.rasoi.core.contract.household.CreateHouseholdRequestDto
@@ -115,6 +118,35 @@ class DemoApi(private val client: HttpClient, private val baseUrl: String = "") 
                 setBody(body)
             }
         }
+
+    suspend fun bills(session: SessionDto, householdId: String): HttpResponse =
+        call("GET /households/{id}/bills") { client.get("$baseUrl/households/$householdId/bills") { authed(session) } }
+
+    suspend fun createBill(session: SessionDto, householdId: String, body: CreateBillRequestDto): HttpResponse =
+        call("POST /households/{id}/bills") {
+            client.post("$baseUrl/households/$householdId/bills") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun submitBill(session: SessionDto, id: String): HttpResponse = call("POST /bills/{id}/submit") {
+        client.post("$baseUrl/bills/$id/submit") {
+            write(session)
+            setBody("{}")
+        }
+    }
+
+    suspend fun decide(session: SessionDto, id: String, body: DecideApprovalRequestDto): HttpResponse =
+        call("POST /bills/{id}/approvals") {
+            client.post("$baseUrl/bills/$id/approvals") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun billList(session: SessionDto, householdId: String): List<BillSummaryDto> =
+        bills(session, householdId).expect(HttpStatusCode.OK).body()
 
     suspend fun imported(session: SessionDto, householdId: String, body: UploadInvoicesRequestDto): BillDto =
         importInvoices(session, householdId, body).expect(HttpStatusCode.Created).body()

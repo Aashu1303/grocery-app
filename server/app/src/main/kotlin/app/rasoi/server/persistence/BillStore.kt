@@ -3,27 +3,18 @@ package app.rasoi.server.persistence
 import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import app.rasoi.core.model.Bill
-import app.rasoi.core.model.BillCharge
 import app.rasoi.core.model.BillId
-import app.rasoi.core.model.BillLine
 import app.rasoi.core.model.BillStatus
-import app.rasoi.core.model.Category
-import app.rasoi.core.model.ChargeKind
 import app.rasoi.core.model.HouseholdId
-import app.rasoi.core.model.ImportConfidence
-import app.rasoi.core.model.Money
 import app.rasoi.core.model.PantryItem
 import app.rasoi.core.model.Platform
-import app.rasoi.core.model.Quantity
-import app.rasoi.core.model.QuantityUnit
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.notInList
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -68,6 +59,8 @@ class BillStore(private val db: RasoiDatabase) {
                 it[platform] = bill.platform.name
                 it[invoiceNo] = bill.invoiceNumber
                 it[orderId] = bill.orderId
+                it[title] = bill.title
+                it[version] = 0
                 it[invoiceDate] = bill.invoiceDate
                 it[payerId] = bill.payerId.uuid()
                 it[createdBy] = bill.createdBy.uuid()
@@ -103,118 +96,74 @@ class BillStore(private val db: RasoiDatabase) {
     }
 
     suspend fun find(id: BillId): Bill? = db.query {
-        val row = BillsTable.selectAll().where { BillsTable.id eq id.uuid() }.singleOrNull() ?: return@query null
-        val lines = BillLinesTable.selectAll()
-            .where { BillLinesTable.billId eq id.uuid() }
-            .orderBy(BillLinesTable.position to SortOrder.ASC)
-            .map { it.toLine() }
-        val charges = BillChargesTable.selectAll()
-            .where { BillChargesTable.billId eq id.uuid() }
-            .orderBy(BillChargesTable.position to SortOrder.ASC)
-            .map { it.toCharge() }
-        row.toBill(lines, charges)
+        loadBills(BillsTable.selectAll().where { BillsTable.id eq id.uuid() }.toList()).singleOrNull()
+    }
+
+    /** A household's bills, newest invoice first. */
+    suspend fun list(householdId: HouseholdId): List<Bill> = db.query {
+        loadBills(
+            BillsTable.selectAll()
+                .where { BillsTable.householdId eq householdId.uuid() }
+                .orderBy(BillsTable.invoiceDate to SortOrder.DESC, BillsTable.createdAt to SortOrder.DESC)
+                .toList(),
+        )
+    }
+
+    /** Pending bills submitted at or before [cutoff], whose silent approvals the system now gives. */
+    suspend fun pendingSince(cutoff: Instant): List<Bill> = db.query {
+        loadBills(
+            BillsTable.selectAll()
+                .where { (BillsTable.status eq BillStatus.PENDING.name) and (BillsTable.submittedAt lessEq cutoff) }
+                .toList(),
+        )
     }
 
     /**
-     * Saves edited lines, charges and total. Lines keep their ids (allocations will reference them), so existing
-     * rows are updated in place, removed ones deleted and new ones inserted.
+     * Saves everything an edit, a submission or a decision can change: the header, lines, charges, allocations and
+     * approvals, plus pantry rows. Lines keep their ids (allocations reference them), so existing rows are updated in
+     * place, removed ones deleted and new ones inserted. The save fails with `Conflict("bill_changed")`, writing
+     * nothing, when someone saved the bill since [bill] was read.
      */
-    suspend fun updateContents(bill: Bill, pantry: PantryChanges, now: Instant): Bill = db.query {
+    suspend fun save(bill: Bill, pantry: PantryChanges, now: Instant): AppResult<Bill> = try {
+        db.query {
+            val billId = bill.id.uuid()
+            val claimed = BillsTable.update({ (BillsTable.id eq billId) and (BillsTable.version eq bill.version) }) {
+                it[totalPaise] = bill.total.paise
+                it[payerId] = bill.payerId.uuid()
+                it[status] = bill.status.name
+                it[submittedAt] = bill.submittedAt
+                it[updatedAt] = now
+                it[version] = bill.version + 1
+            }
+            if (claimed == 0) throw StaleBill()
+            rewrite(bill, pantry, now)
+        }
+        AppResult.Success(bill.copy(version = bill.version + 1))
+    } catch (_: StaleBill) {
+        AppResult.Failure(AppError.Conflict("bill_changed"))
+    }
+
+    private fun JdbcTransaction.rewrite(bill: Bill, pantry: PantryChanges, now: Instant) {
         val billId = bill.id.uuid()
-        val keep = bill.lines.map { it.id.value.let(Uuid::parse) }
+        val keep = bill.lines.map { Uuid.parse(it.id.value) }
         BillLinesTable.deleteWhere { (BillLinesTable.billId eq billId) and (BillLinesTable.id notInList keep) }
         val existing = BillLinesTable.selectAll().where { BillLinesTable.billId eq billId }
             .map { it[BillLinesTable.id] }.toSet()
         val (updated, added) = bill.lines.withIndex().partition { Uuid.parse(it.value.id.value) in existing }
         updated.forEach { (position, line) ->
-            BillLinesTable.update({
-                BillLinesTable.id eq Uuid.parse(line.id.value)
-            }) { it.write(billId, position, line) }
+            BillLinesTable.update({ BillLinesTable.id eq Uuid.parse(line.id.value) }) {
+                it.writeLine(billId, position, line)
+            }
         }
         insertLines(bill.id, added)
         BillChargesTable.deleteWhere { BillChargesTable.billId eq billId }
         insertCharges(bill.id, bill.charges)
+        replaceSplits(bill)
         if (pantry.removeForLines.isNotEmpty()) deleteInStockItemsFor(pantry.removeForLines)
         insertPantryItems(pantry.add, now)
-        BillsTable.update({ BillsTable.id eq billId }) {
-            it[totalPaise] = bill.total.paise
-            it[updatedAt] = now
-        }
-        bill
     }
 
-    private fun JdbcTransaction.insertLines(billId: BillId, lines: List<IndexedValue<BillLine>>) {
-        BillLinesTable.batchInsert(lines) { (position, line) ->
-            this[BillLinesTable.id] = Uuid.parse(line.id.value)
-            write(billId.uuid(), position, line)
-        }
-    }
-
-    private fun JdbcTransaction.insertCharges(billId: BillId, charges: List<BillCharge>) {
-        BillChargesTable.batchInsert(charges.withIndex().toList()) { (position, charge) ->
-            this[BillChargesTable.id] = Uuid.parse(charge.id.value)
-            this[BillChargesTable.billId] = billId.uuid()
-            this[BillChargesTable.position] = position
-            this[BillChargesTable.kind] = charge.kind.name
-            this[BillChargesTable.label] = charge.label
-            this[BillChargesTable.amountPaise] = charge.amount.paise
-        }
-    }
-
-    private fun UpdateBuilder<*>.write(billId: Uuid, position: Int, line: BillLine) {
-        this[BillLinesTable.billId] = billId
-        this[BillLinesTable.position] = position
-        this[BillLinesTable.rawName] = line.rawName
-        this[BillLinesTable.displayName] = line.displayName
-        this[BillLinesTable.units] = line.units
-        this[BillLinesTable.amountPaise] = line.amount.paise
-        this[BillLinesTable.measureAmount] = line.measure?.amount
-        this[BillLinesTable.measureUnit] = line.measure?.unit?.name
-        this[BillLinesTable.mrpPaise] = line.mrp?.paise
-        this[BillLinesTable.hsn] = line.hsn
-        this[BillLinesTable.upc] = line.upc
-        this[BillLinesTable.category] = line.category.name
-        this[BillLinesTable.isFood] = line.isFood
-    }
-
-    private fun ResultRow.toBill(lines: List<BillLine>, charges: List<BillCharge>) = Bill(
-        id = this[BillsTable.id].toBillId(),
-        householdId = this[BillsTable.householdId].toHouseholdId(),
-        platform = Platform.valueOf(this[BillsTable.platform]),
-        invoiceNumber = this[BillsTable.invoiceNo],
-        orderId = this[BillsTable.orderId],
-        invoiceDate = this[BillsTable.invoiceDate],
-        payerId = this[BillsTable.payerId].toUserId(),
-        createdBy = this[BillsTable.createdBy].toUserId(),
-        status = BillStatus.valueOf(this[BillsTable.status]),
-        confidence = ImportConfidence.valueOf(this[BillsTable.confidence]),
-        lines = lines,
-        charges = charges,
-        total = Money(this[BillsTable.totalPaise]),
-    )
-
-    private fun ResultRow.toLine() = BillLine(
-        id = this[BillLinesTable.id].toBillLineId(),
-        rawName = this[BillLinesTable.rawName],
-        displayName = this[BillLinesTable.displayName],
-        units = this[BillLinesTable.units],
-        amount = Money(this[BillLinesTable.amountPaise]),
-        measure = this[BillLinesTable.measureAmount]?.let { amount ->
-            Quantity(amount, QuantityUnit.valueOf(requireNotNull(this[BillLinesTable.measureUnit])))
-        },
-        mrp = this[BillLinesTable.mrpPaise]?.let(::Money),
-        hsn = this[BillLinesTable.hsn],
-        upc = this[BillLinesTable.upc],
-        category = this[BillLinesTable.category]?.let(Category::valueOf) ?: Category.OTHER,
-        isFood = this[BillLinesTable.isFood] ?: false,
-    )
-
-    private fun ResultRow.toCharge() = BillCharge(
-        id = this[BillChargesTable.id].toChargeId(),
-        kind = ChargeKind.valueOf(this[BillChargesTable.kind]),
-        label = this[BillChargesTable.label],
-        amount = Money(this[BillChargesTable.amountPaise]),
-    )
+    private class StaleBill : RuntimeException()
 
     private companion object {
         const val UNIQUE_VIOLATION = "23505"

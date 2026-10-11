@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:contract"))
     implementation(project(":server:parsing"))
+    implementation(project(":server:jobs"))
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)

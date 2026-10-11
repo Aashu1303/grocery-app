@@ -56,7 +56,6 @@ fun Application.rasoiModule(graph: AppGraph) {
             householdRoutes(graph.households, graph.idempotency)
             billRoutes(graph.imports, graph.bills, graph.idempotency)
             pantryRoutes(graph.pantry, graph.idempotency)
-            pantryRoutes(graph.pantry, graph.idempotency)
         }
     }
 }

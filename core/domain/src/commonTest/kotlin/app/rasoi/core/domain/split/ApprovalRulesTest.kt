@@ -238,4 +238,30 @@ class ApprovalRulesTest {
         assertEquals(ApprovalState.APPROVED, states(result)[aarav])
         assertEquals(BillStatus.PENDING, result.status)
     }
+
+    private fun approvedByBoth(): Bill {
+        val first = ok(ApprovalRules.decide(submitted(), aarav, ApprovalState.APPROVED, null, t0))
+        return ok(ApprovalRules.decide(first, lakshmi, ApprovalState.APPROVED, null, t0))
+    }
+
+    @Test
+    fun changingThePayerToSomeoneElseAsksTheUploaderWhoNowOwesToo() {
+        val approved = approvedByBoth()
+        val result = ApprovalRules.afterEdit(approved, approved.copy(payerId = aarav), t0 + 5.hours)
+        assertEquals(
+            mapOf(meera to ApprovalState.PENDING, aarav to ApprovalState.APPROVED, lakshmi to ApprovalState.APPROVED),
+            states(result),
+        )
+        assertEquals(BillStatus.PENDING, result.status)
+        assertEquals(t0 + 5.hours, result.submittedAt)
+    }
+
+    @Test
+    fun makingTheUploaderThePayerAgainDropsTheirApproval() {
+        val approved = approvedByBoth()
+        val reassigned = ApprovalRules.afterEdit(approved, approved.copy(payerId = aarav), t0 + 5.hours)
+        val back = ApprovalRules.afterEdit(reassigned, reassigned.copy(payerId = meera), t0 + 6.hours)
+        assertEquals(mapOf(aarav to ApprovalState.APPROVED, lakshmi to ApprovalState.APPROVED), states(back))
+        assertEquals(BillStatus.APPROVED, back.status)
+    }
 }

@@ -2,12 +2,20 @@ package app.rasoi.server.demo
 
 import app.rasoi.core.contract.ErrorDto
 import app.rasoi.core.contract.auth.SessionDto
+import app.rasoi.core.contract.bills.ApprovalStateDto
 import app.rasoi.core.contract.bills.BillDto
+import app.rasoi.core.contract.bills.BillLineEditDto
+import app.rasoi.core.contract.bills.BillStatusDto
 import app.rasoi.core.contract.bills.BillWarningCodeDto
 import app.rasoi.core.contract.bills.CategoryDto
+import app.rasoi.core.contract.bills.CreateBillRequestDto
+import app.rasoi.core.contract.bills.DecideApprovalRequestDto
+import app.rasoi.core.contract.bills.LineSplitEditDto
 import app.rasoi.core.contract.bills.PlatformDto
 import app.rasoi.core.contract.bills.QuantityDto
 import app.rasoi.core.contract.bills.QuantityUnitDto
+import app.rasoi.core.contract.bills.SplitEntryDto
+import app.rasoi.core.contract.bills.SplitModeDto
 import app.rasoi.core.contract.bills.UpdateBillRequestDto
 import app.rasoi.core.contract.household.HouseholdDto
 import app.rasoi.core.contract.household.LocationKindDto
@@ -35,14 +43,17 @@ data class DemoHousehold(
 /**
  * The end-to-end demo scenario from design-plan section 8, run against a real server over HTTP. Each step asserts
  * what a user would see. Steps for bills, pantry, kitchen and the ledger are added in the milestones that build them.
+ * [afterApprovalWindow] lets a test move the clock 48 hours and run the sweep; against a live server it stays null and
+ * the silent approval is not exercised.
  */
-class DemoScenario(private val api: DemoApi) {
+class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (suspend () -> Unit)? = null) {
     suspend fun run(): DemoHousehold {
         assertEquals("ok", api.health().status)
         val people = signInAndInvite()
         storagePlaces(people)
         val demo = people.copy(bills = importInvoices(people))
         duplicatesAreRejected(demo)
+        approveTheBills(demo, splitTheBills(demo))
         pantryFollowsTheKitchen(demo)
         nonMembersSeeNothing(demo)
         return demo
@@ -132,6 +143,105 @@ class DemoScenario(private val api: DemoApi) {
         assertEquals("duplicate_invoice", response.expect(HttpStatusCode.Conflict).body<ErrorDto>().code)
     }
 
+    private fun entries(vararg people: SessionDto) = people.map { SplitEntryDto(it.user.id) }
+
+    /** Lines alternate between the owner, both of them and the flatmate, so every split mode on offer is used. */
+    private fun mixedSplits(bill: BillDto, demo: DemoHousehold) = bill.lines.mapIndexed { index, line ->
+        when (index % 3) {
+            0 -> LineSplitEditDto(line.id, SplitModeDto.ONE, entries(demo.owner))
+            1 -> LineSplitEditDto(line.id, SplitModeDto.EQUAL, entries(demo.owner, demo.flatmate))
+            else -> LineSplitEditDto(line.id, SplitModeDto.ONE, entries(demo.flatmate))
+        }
+    }
+
+    private suspend fun split(session: SessionDto, bill: BillDto, splits: List<LineSplitEditDto>): BillDto =
+        api.editBill(session, bill.id, UpdateBillRequestDto(splits = splits)).expect(HttpStatusCode.OK).body()
+
+    /**
+     * Step 3: lines are split between the flatmates, a bill is typed in by hand and fees are shared. A bill cannot be
+     * submitted before every line is split, and a cook never owes a share. Returns the hand-typed bill.
+     */
+    private suspend fun splitTheBills(demo: DemoHousehold): BillDto {
+        val id = demo.household.id
+        val (zepto, blinkit, instamart) = demo.bills
+        val handpickd = demo.bills.last()
+        api.submitBill(demo.owner, instamart.id).expect(HttpStatusCode.BadRequest)
+        val cooksLine = LineSplitEditDto(instamart.lines.first().id, SplitModeDto.ONE, entries(demo.cook))
+        api.editBill(demo.owner, instamart.id, UpdateBillRequestDto(splits = listOf(cooksLine)))
+            .expect(HttpStatusCode.BadRequest)
+
+        val splitZepto = split(demo.owner, zepto, mixedSplits(zepto, demo))
+        assertEquals(zepto.totalPaise, splitZepto.shares.sumOf { it.totalPaise })
+        assertEquals(setOf(demo.owner.user.id, demo.flatmate.user.id), splitZepto.shares.map { it.userId }.toSet())
+        val splitBlinkit = split(demo.flatmate, blinkit, mixedSplits(blinkit, demo))
+        assertEquals(blinkit.totalPaise, splitBlinkit.shares.sumOf { it.totalPaise })
+
+        val gas = CreateBillRequestDto(
+            title = "Gas cylinder",
+            invoiceDate = "2026-10-05",
+            lines = listOf(BillLineEditDto(displayName = "Cylinder", units = 1, amountPaise = 95_000)),
+        )
+        api.createBill(demo.cook, id, gas).expect(HttpStatusCode.Forbidden)
+        val manual: BillDto = api.createBill(demo.flatmate, id, gas).expect(HttpStatusCode.Created).body()
+        assertEquals(BillStatusDto.DRAFT, manual.status)
+        val line = LineSplitEditDto(manual.lines.single().id, SplitModeDto.EQUAL, entries(demo.owner, demo.flatmate))
+        assertEquals(listOf(47_500L, 47_500L), split(demo.flatmate, manual, listOf(line)).shares.map { it.totalPaise })
+
+        // Drafts are private to their uploader; the cook cannot see money at all.
+        assertEquals(setOf(zepto.id, instamart.id, handpickd.id), api.billList(demo.owner, id).map { it.id }.toSet())
+        assertEquals(setOf(blinkit.id, manual.id), api.billList(demo.flatmate, id).map { it.id }.toSet())
+        api.bills(demo.cook, id).expect(HttpStatusCode.Forbidden)
+        return manual
+    }
+
+    private suspend fun decide(session: SessionDto, bill: BillDto, state: ApprovalStateDto, comment: String? = null) =
+        api.decide(session, bill.id, DecideApprovalRequestDto(state, comment))
+
+    /**
+     * Step 4: submitted bills ask the members who owe a share. One member asks for changes and approves after the
+     * fix, an edit asks only the member it affects, and silence for 48 hours counts as approval.
+     */
+    private suspend fun approveTheBills(demo: DemoHousehold, gas: BillDto) {
+        val (zepto, blinkit) = demo.bills
+        val pending: BillDto = api.submitBill(demo.owner, zepto.id).expect(HttpStatusCode.OK).body()
+        assertEquals(BillStatusDto.PENDING, pending.status)
+        assertEquals(listOf(demo.flatmate.user.id), pending.approvals.map { it.userId })
+        api.submitBill(demo.flatmate, zepto.id).expect(HttpStatusCode.Forbidden)
+        decide(demo.cook, zepto, ApprovalStateDto.APPROVED).expect(HttpStatusCode.Forbidden)
+        decide(demo.owner, zepto, ApprovalStateDto.APPROVED).expect(HttpStatusCode.Forbidden)
+        decide(demo.flatmate, zepto, ApprovalStateDto.CHANGES_REQUESTED).expect(HttpStatusCode.BadRequest)
+        val requested: BillDto = decide(demo.flatmate, zepto, ApprovalStateDto.CHANGES_REQUESTED, "Those were mine")
+            .expect(HttpStatusCode.OK).body()
+        assertEquals(BillStatusDto.CHANGES_REQUESTED, requested.status)
+
+        api.submitBill(demo.owner, zepto.id).expect(HttpStatusCode.OK)
+        val approved: BillDto = decide(demo.flatmate, zepto, ApprovalStateDto.APPROVED).expect(HttpStatusCode.OK).body()
+        assertEquals(BillStatusDto.APPROVED, approved.status)
+        decide(demo.flatmate, zepto, ApprovalStateDto.APPROVED).expect(HttpStatusCode.Conflict)
+
+        val asked: BillDto = api.submitBill(demo.flatmate, gas.id).expect(HttpStatusCode.OK).body()
+        assertEquals(listOf(demo.owner.user.id), asked.approvals.map { it.userId })
+        decide(demo.owner, gas, ApprovalStateDto.APPROVED).expect(HttpStatusCode.OK)
+        val raised = UpdateBillRequestDto(
+            lines = listOf(BillLineEditDto(gas.lines.single().id, "Cylinder", 1, 96_000)),
+            totalPaise = 96_000,
+        )
+        val edited: BillDto = api.editBill(demo.flatmate, gas.id, raised).expect(HttpStatusCode.OK).body()
+        assertEquals(BillStatusDto.PENDING, edited.status)
+        assertEquals(ApprovalStateDto.PENDING, edited.approvals.single().state)
+        api.editBill(demo.cook, gas.id, raised).expect(HttpStatusCode.Forbidden)
+
+        api.submitBill(demo.flatmate, blinkit.id).expect(HttpStatusCode.OK)
+        afterApprovalWindow?.let { moveClock ->
+            moveClock()
+            listOf(blinkit, gas).forEach { bill ->
+                val settled: BillDto = api.bill(demo.flatmate, bill.id).expect(HttpStatusCode.OK).body()
+                assertEquals(BillStatusDto.APPROVED, settled.status)
+                assertTrue(settled.approvals.single().automatic)
+            }
+        }
+    }
+
     /**
      * Step 5: the pantry fills from food lines (not from the non-food ones), items move between storage places and
      * are marked finished or discarded, and the cook adds something by hand.
@@ -184,7 +294,17 @@ class DemoScenario(private val api: DemoApi) {
         val basmati =
             CreatePantryItemRequestDto("Sneaky", CategoryDto.STAPLES, QuantityDto(1_000, QuantityUnitDto.COUNT))
         api.addPantryItem(demo.outsider, id, basmati).expect(HttpStatusCode.NotFound)
+        api.bills(demo.outsider, id).expect(HttpStatusCode.NotFound)
+        val gas = CreateBillRequestDto(
+            "Sneaky",
+            "2026-10-05",
+            listOf(BillLineEditDto(displayName = "Cylinder", units = 1, amountPaise = 1)),
+        )
+        api.createBill(demo.outsider, id, gas).expect(HttpStatusCode.NotFound)
         demo.bills.forEach { bill ->
+            api.submitBill(demo.outsider, bill.id).expect(HttpStatusCode.NotFound)
+            api.decide(demo.outsider, bill.id, DecideApprovalRequestDto(ApprovalStateDto.APPROVED))
+                .expect(HttpStatusCode.NotFound)
             api.bill(demo.outsider, bill.id).expect(HttpStatusCode.NotFound)
             api.editBill(demo.outsider, bill.id, UpdateBillRequestDto(totalPaise = 1)).expect(HttpStatusCode.NotFound)
         }
