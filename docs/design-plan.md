@@ -44,12 +44,12 @@ All four samples have a text layer, so text extraction works without OCR, but ea
 
 **Parser requirements these samples force**
 
-- **Platform detection** by seller and footer signatures ("Swinsta", "Blink Commerce", "ZEPTO MARKETPLACE", "handpickd"), not by file name.
+- **Platform detection** by seller and footer signatures ("Swinsta", "Blink Commerce", "ZEPTO MARKETPLACE"), not by file name. Handpickd prints its name only in the logo image, so it is detected by its bill structure (ADR 0017).
 - **Wrapped descriptions:** item names span several lines (Instamart, Zepto), so rows are rebuilt from text positions, not split by newline.
 - **Multi-page tables** with repeated headers (Zepto).
 - **Zero-value promo lines** must be dropped (Instamart "Flyer - Nat Habit Shampoo", total 0).
 - **Non-food items** appear (Blinkit hot/cold pack). They are splittable but never enter the pantry.
-- **Split basis** = the amount actually paid per line: tax-inclusive Total for GST invoices; amount minus line promo for Handpickd (20 - 1 = 19).
+- **Split basis** = the amount actually paid per line: tax-inclusive Total for GST invoices; amount minus line promo for Handpickd (20 - 1 = 19). The exact columns per platform are in ADR 0017.
 - **Bill-level charges and discounts** (handling, delivery, extras, delivery discount) are separate charge lines, distributed by the split rules.
 - **Reconciliation check:** lines + charges - discounts + round-off must equal the invoice total, or the bill is flagged on the review screen. All four samples pass this check.
 - **HSN code as a category signal:** chapter 07/08 produce, 04 dairy, 19/21 packaged food, 22 beverages, 39 and 49 non-food. Use it for category, default location and expiry estimate.
@@ -224,8 +224,9 @@ A change request loops the bill back to its uploader; an edit to an approved bil
 interface InvoiceParser {
     val platform: Platform
     fun matches(document: ExtractedDocument): Boolean
-    fun parse(document: ExtractedDocument): ParseResult
+    fun parse(document: ExtractedDocument): AppResult<ParsedInvoice> // typed "unreadable" failures, no guessed totals
 }
+// InvoicePipeline runs steps 2-7 and returns AppResult<ParseResult(invoice, warnings, confidence)> (ADR 0017).
 ```
 
 ### 6.6 API (Phase 1)

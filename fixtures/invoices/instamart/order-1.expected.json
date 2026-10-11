@@ -1,0 +1,22 @@
+{
+  "platform": "INSTAMART",
+  "invoiceNumber": "INV000000000003",
+  "orderId": "900000000000003",
+  "invoiceDate": "2026-10-04",
+  "lines": [
+    { "rawName": "Too Yumm Kashmiri Chilli Potato Chips, 40% Less Saturated Fats, No Palm Oil Healthy Spicy Chips", "units": 1, "amount": "36.00", "hsn": "21069099" },
+    { "rawName": "PapaNata Musk Mellon Drink", "units": 1, "amount": "49.00", "hsn": "22029920" },
+    { "rawName": "Amul Lactose Free Milk", "units": 2, "amount": "52.00", "hsn": "04011000" },
+    { "rawName": "Too Yumm Himalayan Pink Salt Potato Chips, 40% Less Saturated Fats, No Palm Oil Fasting Vrat Chips", "units": 1, "amount": "39.00", "hsn": "21069099" },
+    { "rawName": "Diet Coke Can - Cola Sparkling Soft Drink", "units": 2, "amount": "100.00", "hsn": "22021010" },
+    { "rawName": "Paper Boat Lychee fruit drink with Chewy cubes (Nata de Coco)", "units": 1, "amount": "39.00", "hsn": "22029920" },
+    { "rawName": "Robusta Banana (Keli)", "units": 1, "amount": "31.00", "hsn": "08039010" },
+    { "rawName": "Kissan Sweet & Spicy Ketchup Doy Bottle", "units": 1, "amount": "64.00", "hsn": "21032000" },
+    { "rawName": "Too Yumm Bhujia Sev Snacks, 30% Less Saturated Fats, No Palm Oil Healthy Namkeen", "units": 1, "amount": "47.00", "hsn": "21069099" }
+  ],
+  "charges": [
+    { "kind": "HANDLING", "label": "Handling Fee (Inclusive of GST)", "amount": "12.01" }
+  ],
+  "total": "469.01",
+  "warnings": []
+}

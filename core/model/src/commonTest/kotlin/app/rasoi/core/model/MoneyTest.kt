@@ -83,6 +83,15 @@ class MoneyTest {
     }
 
     @Test
+    fun decimalStringIsPlainAndSigned() {
+        assertEquals("26.00", Money(2_600).toDecimalString())
+        assertEquals("-10.00", Money(-1_000).toDecimalString())
+        assertEquals("0.01", Money(1).toDecimalString())
+        assertEquals("-0.50", Money(-50).toDecimalString())
+        assertEquals("123456.78", Money(12_345_678).toDecimalString())
+    }
+
+    @Test
     fun formatsExtremes() {
         assertEquals("-₹92,23,37,20,36,85,47,758.08", Money(Long.MIN_VALUE).format())
         assertEquals("₹92,23,37,20,36,85,47,758.07", Money(Long.MAX_VALUE).format())

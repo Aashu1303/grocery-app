@@ -21,3 +21,4 @@ Copy `0000-template.md`. A superseded ADR stays in place with its status changed
 | [0014](0014-role-permissions.md) | Role permissions | Accepted |
 | [0015](0015-server-auth-sessions-idempotency.md) | Server sign-in, sessions, idempotency and wiring | Accepted |
 | [0016](0016-client-sign-in-providers.md) | Client phone sign-in providers | Accepted |
+| [0017](0017-invoice-parsing-design.md) | Invoice parsing: positioned-text fixtures, structural detection, per-platform split basis | Accepted |

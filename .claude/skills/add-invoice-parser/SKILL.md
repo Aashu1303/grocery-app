@@ -5,47 +5,60 @@ description: Add or fix a platform invoice parser in server/parsing (Zepto, Blin
 
 # Add an invoice parser
 
-Pipeline (design-plan 6.5): extract text with positions (PDFBox), detect the platform, parse with a template into
-`ParsedInvoice`, fall back to the LLM, normalize, reconcile, return a draft bill.
+Pipeline (design-plan 6.5, ADR 0017): `PdfTextExtractor` (positioned words) → `InvoicePipeline` picks the first
+`InvoiceParser` whose `matches` is true → template `parse` → `Normalizer` → `Reconciler` → `ParseResult` with
+warnings and confidence. `InvoiceFallback` handles documents no template reads.
 
-## 1. Create a redacted text fixture (never commit the PDF)
+## 1. Make a redacted fixture (never commit the PDF)
 
-1. Put the real PDF under `fixtures/invoices/<platform>/` locally. It is git-ignored (ADR 0009).
-2. Extract its positioned text with the project's extractor (or `pdftotext -layout` for a first look).
-3. Replace every customer name, address, phone number, email, GSTIN of the buyer, order number and invoice number
-   with obvious placeholders (`CUSTOMER NAME`, `ORDER-0001`, `INV-0001`). Keep the seller name, line items, HSN codes,
-   quantities and amounts exactly.
-4. Save as `fixtures/invoices/<platform>/<case>.redacted.txt`. Only `*.redacted.txt` passes `.gitignore`.
-5. Run `./scripts/check-no-real-invoices.sh`.
+1. Put the real PDF under `fixtures/invoices/<platform>/` locally. Everything there except `*.redacted.txt`,
+   `*.expected.json` and the README is git-ignored (ADR 0009).
+2. Extract and redact in one step. Pass every customer name, address word, phone number, email, order number and
+   invoice number, plus the seller's street address:
+   ```sh
+   ./gradlew :server:parsing:extractFixture --args="/abs/path/in.pdf \
+     /abs/path/fixtures/invoices/<platform>/<case>.redacted.txt 'Real Name=>CUSTOMER' 'OD123=>OD-DEMO0001'"
+   ```
+   The tool refuses to write a fixture that still contains a replaced value. Never write the replacement pairs to a
+   file or a commit message: they are the PII.
+3. Read the whole fixture yourself (`awk '{$1=$2=$3=$4=""; print}'`) and confirm that no name, address, phone,
+   email, PIN code or real order or invoice number remains. Keep the seller name, line items, HSN codes, quantities
+   and amounts exactly.
+4. Run `./scripts/check-no-real-invoices.sh` and `git status --ignored fixtures/` (the PDF must show as ignored).
 
-## 2. Write the golden test first
+## 2. Write the golden snapshot first
 
-- Add `<case>.expected.json` next to the fixture with the expected `ParsedInvoice`: header (platform, invoice no,
-  date), lines (raw name, quantity, unit, amount paid in paise, HSN, UPC), charges (kind, signed paise), total.
-- Add the case to the parser golden test in `server/parsing/src/test`. It must fail before you write the parser.
-- Assert reconciliation: lines + charges − discounts + round-off == total.
+- Add `<case>.expected.json` beside the fixture in the shape that `GoldenInvoiceTest.snapshot` writes: platform,
+  invoice number, order id, date, lines (rawName, units, amount, measure, mrp, hsn, upc), charges (kind, label,
+  signed amount), total, and warnings, which must be empty.
+- Work out the amounts by hand from the PDF. `./gradlew :server:parsing:test` must fail before the parser exists.
 
 ## 3. Implement `InvoiceParser`
 
 ```kotlin
 class <Platform>InvoiceParser : InvoiceParser {
     override val platform = Platform.<PLATFORM>
-    override fun matches(document: ExtractedDocument): Boolean // seller/footer signature, never the file name
-    override fun parse(document: ExtractedDocument): ParseResult // AppResult-style, typed failures
+    override fun matches(document: ExtractedDocument): Boolean = // seller or structural signature, never a file name
+    override fun parse(document: ExtractedDocument): AppResult<ParsedInvoice> = parsing {
+        val layout = Layout(document)
+        val invoiceNumber = layout.valueAfter("Invoice No:").orFail("invoice_number")
+        // ...
+    }
 }
 ```
 
-Rules from the samples:
-- Rebuild rows from text positions; descriptions wrap across lines.
-- Handle multi-page tables with repeated headers.
-- Drop zero-value promo lines; keep non-food lines (they are splittable but never enter the pantry).
-- The split basis is the amount actually paid per line (tax-inclusive total, or amount minus line promo).
-- Bill-level fees and discounts become charge lines.
-- Parse money with `Money.parse`, never floating point.
-
-Register the parser in the detector's list and add a detection test.
+- `parsing {}` with `orFail("field")` turns anything missing into `unreadable_<field>`, never an exception or a
+  guessed value. An invoice with no lines is unreadable.
+- Use `Layout` (lines from positions), `DescriptionAssigner` for wrapped descriptions (`CENTERED` or `TOP`),
+  `parseAmount`, `parseDate`, `parseMeasure` and `ChargeClassifier`. Money is always `Money`, never floating point.
+- Handle multi-page tables with repeated headers; columns may shift per page.
+- `ParsedLine.amount` is the split basis: what was paid for the line (see the table in ADR 0017). Bill-level fees,
+  discounts and round-off become `ParsedCharge`s. Rows that only restate line totals are not charges.
+- Register the parser in `InvoicePipeline.default()` and add `Platform.<PLATFORM>` if it is new.
 
 ## 4. Finish
 
-`./gradlew :server:parsing:test`, then `./gradlew check` and the `pre-commit-review` skill. Note the platform's
-quirks in the plan's section 2 table if they are new.
+- `TemplateDetectionTest` must show that every parser matches only its own fixtures and that a truncated document
+  is unreadable.
+- Run `./gradlew :server:parsing:test`, then `./gradlew check` and the `pre-commit-review` skill.
+- New platform quirks go in the plan's section 2 table; a new split basis goes in ADR 0017 or a new ADR.

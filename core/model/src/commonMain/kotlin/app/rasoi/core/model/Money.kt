@@ -32,6 +32,14 @@ value class Money(val paise: Long) : Comparable<Money> {
         return "$sign$RUPEE${groupIndian(digits)}.${fraction.toString().padStart(2, '0')}"
     }
 
+    /** Plain decimal rupees without grouping or symbol, for machine-readable output such as snapshots. */
+    fun toDecimalString(): String {
+        val rupees = paise / PAISE_PER_RUPEE
+        val fraction = (paise % PAISE_PER_RUPEE).let { if (it < 0) -it else it }
+        val sign = if (paise < 0 && rupees == 0L) "-" else ""
+        return "$sign$rupees.${fraction.toString().padStart(2, '0')}"
+    }
+
     override fun toString(): String = format()
 
     companion object {

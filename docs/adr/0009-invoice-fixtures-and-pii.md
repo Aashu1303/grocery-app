@@ -11,3 +11,6 @@ Invoices contain names, addresses, phone numbers and order numbers. Real PDFs we
 
 ## Consequences
 The earlier commit still holds the PDFs in remote history. Removing them needs a history rewrite and force-push, which is the owner's decision.
+
+Amended by ADR 0017: each fixture's `*.expected.json` golden snapshot is committed too, and seller street addresses
+are redacted along with customer data.
