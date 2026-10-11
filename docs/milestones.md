@@ -8,3 +8,4 @@ Tags are annotated `mN-complete`. If a tag is missing on GitHub, create it from 
 | --- | --- | --- | --- |
 | M0 Foundation | `79ca6ab` | [run 13](https://github.com/Aashu1303/grocery-app/actions/runs/38096739005) | Includes the first M1 domain and server commits, which were pushed before M0's final CI fix. |
 | M1 Household and auth | `434437f` | [run 23](https://github.com/Aashu1303/grocery-app/actions/runs/38099561232) | Server auth, households, invites, roles, locations; sign-in, setup and household screens; demo step 1. |
+| M2 Invoice import | `844e624` | [run 34](https://github.com/Aashu1303/grocery-app/actions/runs/38109498311) | Four-platform parser with reconciliation, LLM fallback, bills and draft editing, import and review screens, demo steps 2 and 7. |
