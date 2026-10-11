@@ -26,6 +26,9 @@ jobs:
     name: Choose runner
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # When hosted minutes run out this job dies at once and the others fall back to the self-hosted runner. Its
+    # failure is the expected signal, so it must not turn the whole run red.
+    continue-on-error: true
     outputs:
       linux: ${{ steps.pick.outputs.linux }}
       ios: ${{ steps.pick.outputs.ios }}
