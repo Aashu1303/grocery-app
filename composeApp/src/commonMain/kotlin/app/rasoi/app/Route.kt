@@ -22,4 +22,10 @@ sealed interface Route {
 
     @Serializable
     data object Household : Route
+
+    @Serializable
+    data object ImportInvoices : Route
+
+    @Serializable
+    data class BillReview(val billId: String) : Route
 }

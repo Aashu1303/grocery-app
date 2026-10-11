@@ -4,8 +4,9 @@ import app.rasoi.core.data.auth.DevPhoneAuthProvider
 import app.rasoi.core.data.network.ApiConfig
 import app.rasoi.core.data.session.InMemorySessionStorage
 import app.rasoi.core.domain.auth.AuthRepository
+import app.rasoi.core.domain.bills.BillRepository
+import app.rasoi.core.domain.bills.GetBillUseCase
 import app.rasoi.core.domain.household.HouseholdRepository
-import app.rasoi.feature.household.householdFeatureModule
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import kotlin.test.AfterTest
@@ -25,9 +26,11 @@ class KoinModulesTest {
             InMemorySessionStorage(),
             DevPhoneAuthProvider(),
         )
-        val koin = startKoin { modules(appModule, dataModule(platform), householdFeatureModule) }.koin
+        val koin = startKoin { modules(listOf(appModule, dataModule(platform)) + featureModules) }.koin
         assertSame(Clock.System, koin.get<Clock>())
         assertNotNull(koin.get<AuthRepository>())
         assertNotNull(koin.get<HouseholdRepository>())
+        assertNotNull(koin.get<BillRepository>())
+        assertNotNull(koin.get<GetBillUseCase>())
     }
 }

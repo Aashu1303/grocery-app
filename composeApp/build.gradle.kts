@@ -10,6 +10,7 @@ kotlin {
             implementation(project(":core:domain"))
             implementation(project(":core:designsystem"))
             implementation(project(":feature:household"))
+            implementation(project(":feature:invoiceimport"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.resources)

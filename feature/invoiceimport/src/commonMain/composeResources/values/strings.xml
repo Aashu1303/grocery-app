@@ -1,0 +1,72 @@
+<resources>
+    <string name="import_title">Import invoice</string>
+    <string name="import_empty_title">Choose your invoice PDFs</string>
+    <string name="import_empty_message">Pick the PDFs from Zepto, Blinkit, Instamart or Handpickd. Several PDFs of one order become one bill.</string>
+    <string name="import_choose">Choose PDFs</string>
+    <string name="import_add_another">Add another PDF</string>
+    <string name="import_upload">Import bill</string>
+    <string name="import_file_size">%1$d KB</string>
+    <string name="import_remove_file">Remove file</string>
+    <string name="review_title">Review bill</string>
+    <string name="review_invoice">Invoice %1$s</string>
+    <string name="review_date_format">%1$d %2$s</string>
+    <string name="review_lines">Items</string>
+    <string name="review_charges">Fees and discounts</string>
+    <string name="review_total">Total</string>
+    <string name="review_quantity">Qty %1$d</string>
+    <string name="review_quantity_measure">Qty %1$d · %2$s</string>
+    <string name="review_done">Done</string>
+    <string name="review_load_error">Couldn’t load the bill. %1$s</string>
+    <string name="review_mismatch_title">Totals don’t match</string>
+    <string name="review_mismatch_message">Items and fees add up to %1$s but the invoice says %2$s. Check the amounts.</string>
+    <string name="review_use_calculated">Use calculated total</string>
+    <string name="review_fallback_title">Read automatically</string>
+    <string name="review_fallback_message">This invoice has an unfamiliar layout. Check every item before you continue.</string>
+    <string name="review_edit_title">Edit item</string>
+    <string name="review_edit_name">Name</string>
+    <string name="review_edit_amount">Amount paid (₹)</string>
+    <string name="review_edit_units">Quantity</string>
+    <string name="review_edit_save">Save item</string>
+    <string name="error_offline">You appear to be offline. Try again when you’re connected.</string>
+    <string name="error_forbidden">Your role doesn’t allow importing bills.</string>
+    <string name="error_not_found">This bill is no longer available.</string>
+    <string name="error_not_editable">This bill is already submitted, so it can’t be edited here.</string>
+    <string name="error_duplicate">This invoice was already imported.</string>
+    <string name="error_not_a_pdf">One of the files isn’t a readable PDF.</string>
+    <string name="error_encrypted">One of the PDFs is password-protected. Remove the password and try again.</string>
+    <string name="error_no_text">One of the PDFs is a scan without text. Rasoi can’t read it yet.</string>
+    <string name="error_unsupported">Rasoi couldn’t read this invoice format.</string>
+    <string name="error_different_orders">These PDFs belong to different orders. Import them separately.</string>
+    <string name="error_repeated">The same invoice was chosen twice.</string>
+    <string name="error_too_large">The files are too large. Import fewer PDFs at a time.</string>
+    <string name="error_too_many">You can import up to 5 PDFs at once.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="field_required">This can’t be empty.</string>
+    <string name="field_too_long">That’s too long.</string>
+    <string name="field_invalid_amount">Enter an amount like 129.00.</string>
+    <string name="platform_zepto">Zepto</string>
+    <string name="platform_blinkit">Blinkit</string>
+    <string name="platform_instamart">Instamart</string>
+    <string name="platform_handpickd">Handpickd</string>
+    <string name="platform_manual">Added by hand</string>
+    <string name="platform_other">Other store</string>
+    <string name="charge_handling">Handling fee</string>
+    <string name="charge_delivery">Delivery</string>
+    <string name="charge_discount">Discount</string>
+    <string name="charge_round_off">Round off</string>
+    <string name="charge_other">Fee</string>
+    <string-array name="months_short">
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
+    </string-array>
+</resources>

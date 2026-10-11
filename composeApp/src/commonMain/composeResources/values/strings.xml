@@ -9,6 +9,7 @@
     <string name="pantry_empty_title">Your pantry is empty</string>
     <string name="pantry_empty_message">Items from your grocery invoices will appear here.</string>
     <string name="bills_empty_title">No bills yet</string>
+    <string name="bills_import">Import invoice</string>
     <string name="bills_empty_message">Import a grocery invoice to split it with your flatmates.</string>
     <string name="balances_empty_title">All settled</string>
     <string name="balances_empty_message">Balances appear once bills are approved.</string>

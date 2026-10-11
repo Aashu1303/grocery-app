@@ -1,3 +1,3 @@
 package app.rasoi.core.designsystem.component
 
-enum class AppKeyboard { TEXT, PHONE, NUMBER, CODE }
+enum class AppKeyboard { TEXT, PHONE, NUMBER, DECIMAL, CODE }

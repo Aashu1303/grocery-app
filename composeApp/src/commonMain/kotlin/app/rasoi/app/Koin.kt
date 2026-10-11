@@ -3,11 +3,14 @@ package app.rasoi.app
 import app.rasoi.core.data.network.HttpClientFactory
 import app.rasoi.core.data.network.RasoiApi
 import app.rasoi.core.data.repository.DefaultAuthRepository
+import app.rasoi.core.data.repository.DefaultBillRepository
 import app.rasoi.core.data.repository.DefaultHouseholdRepository
 import app.rasoi.core.data.session.SessionHolder
 import app.rasoi.core.domain.auth.AuthRepository
+import app.rasoi.core.domain.bills.BillRepository
 import app.rasoi.core.domain.household.HouseholdRepository
 import app.rasoi.feature.household.householdFeatureModule
+import app.rasoi.feature.invoiceimport.invoiceImportFeatureModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,6 +26,9 @@ val appModule: Module = module {
     viewModelOf(::AppViewModel)
 }
 
+/** One Koin module per feature module; the app and its tests load them all. */
+val featureModules: List<Module> = listOf(householdFeatureModule, invoiceImportFeatureModule)
+
 fun dataModule(platform: PlatformDependencies): Module = module {
     single { platform.phoneAuth }
     single { SessionHolder(platform.sessionStorage, get()) }
@@ -33,9 +39,10 @@ fun dataModule(platform: PlatformDependencies): Module = module {
     }
     single<AuthRepository> { DefaultAuthRepository(get(), get(), get()) }
     single<HouseholdRepository> { DefaultHouseholdRepository(get()) }
+    single<BillRepository> { DefaultBillRepository(get()) }
 }
 
 /** Starts dependency injection once per process; called from each platform entry point. */
 fun initKoin(platform: PlatformDependencies) {
-    startKoin { modules(appModule, dataModule(platform), householdFeatureModule) }
+    startKoin { modules(listOf(appModule, dataModule(platform)) + featureModules) }
 }

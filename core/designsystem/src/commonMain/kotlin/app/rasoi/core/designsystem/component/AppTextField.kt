@@ -41,6 +41,7 @@ fun AppTextField(
                 AppKeyboard.TEXT -> KeyboardType.Text
                 AppKeyboard.PHONE -> KeyboardType.Phone
                 AppKeyboard.NUMBER, AppKeyboard.CODE -> KeyboardType.Number
+                AppKeyboard.DECIMAL -> KeyboardType.Decimal
             },
             imeAction = if (onDone != null) ImeAction.Done else ImeAction.Default,
         ),

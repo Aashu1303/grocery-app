@@ -23,9 +23,12 @@ import app.rasoi.core.designsystem.component.ConfirmDialogContent
 import app.rasoi.core.designsystem.component.EmptyView
 import app.rasoi.core.designsystem.component.ErrorView
 import app.rasoi.core.designsystem.component.ExpiryChip
+import app.rasoi.core.designsystem.component.FileRow
 import app.rasoi.core.designsystem.component.LoadingView
 import app.rasoi.core.designsystem.component.MemberAvatar
 import app.rasoi.core.designsystem.component.MemberPicker
+import app.rasoi.core.designsystem.component.NoticeBanner
+import app.rasoi.core.designsystem.component.NoticeTone
 import app.rasoi.core.designsystem.component.PantryItemRow
 import app.rasoi.core.designsystem.component.QuantityStepper
 import app.rasoi.core.designsystem.component.SplitSelector
@@ -93,6 +96,17 @@ val catalogEntries: List<CatalogEntry> = buildList {
 
     ApprovalState.entries.forEach { state ->
         add(CatalogEntry("ApprovalBanner", state.name.lowercase()) { ApprovalBanner(state, "2 of 3 approved") })
+    }
+
+    add(CatalogEntry("FileRow", "removable") { FileRow(S.FILE_NAME, S.FILE_DETAIL, S.REMOVE, onRemove = noop) })
+    add(CatalogEntry("FileRow", "fixed") { FileRow(S.FILE_NAME, S.FILE_DETAIL, S.REMOVE) })
+
+    NoticeTone.entries.forEach { tone ->
+        add(
+            CatalogEntry("NoticeBanner", tone.name.lowercase()) {
+                NoticeBanner(tone, S.NOTICE_TITLE, S.NOTICE_MESSAGE)
+            },
+        )
     }
 
     add(CatalogEntry("AppText", "title") { AppText(S.TITLE, style = AppTheme.type.title, heading = true) })

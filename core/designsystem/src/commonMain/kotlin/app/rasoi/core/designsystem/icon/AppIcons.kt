@@ -20,6 +20,7 @@ object AppIcons {
     val Close: ImageVector by lazy { icon("Close", "M6 6L18 18 M18 6L6 18") }
     val Back: ImageVector by lazy { icon("Back", "M15 5L8 12L15 19") }
     val Warning: ImageVector by lazy { icon("Warning", "M12 3L22 20H2Z M12 9V14 M12 17V17.5") }
+    val Info: ImageVector by lazy { icon("Info", "M12 3A9 9 0 1 1 12 21A9 9 0 1 1 12 3Z M12 11V16 M12 7.5V8") }
     val Clock: ImageVector by lazy { icon("Clock", "M12 3A9 9 0 1 1 12 21A9 9 0 1 1 12 3Z M12 7V12L15 14") }
 
     private fun icon(name: String, pathData: String): ImageVector = ImageVector.Builder(
