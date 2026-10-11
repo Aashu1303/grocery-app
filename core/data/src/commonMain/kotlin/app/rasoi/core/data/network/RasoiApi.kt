@@ -129,6 +129,7 @@ class RasoiApi(
             HttpStatusCode.Forbidden -> AppError.Forbidden
             HttpStatusCode.NotFound -> AppError.NotFound(dto?.message?.removePrefix("No such ") ?: "resource")
             HttpStatusCode.Conflict -> AppError.Conflict(dto?.code ?: "conflict")
+            HttpStatusCode.ServiceUnavailable -> AppError.Unavailable(dto?.code ?: "unavailable")
             else -> AppError.Server(status.value)
         }
     }

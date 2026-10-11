@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":core:contract"))
     implementation(project(":server:parsing"))
     implementation(project(":server:jobs"))
+    implementation(project(":server:notifications"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)

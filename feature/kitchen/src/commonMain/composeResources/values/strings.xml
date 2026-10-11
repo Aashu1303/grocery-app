@@ -1,0 +1,26 @@
+<resources>
+    <string name="kitchen_title">Use these first</string>
+    <string name="kitchen_load_error">Couldn’t load your kitchen. %1$s</string>
+    <string name="kitchen_empty_title">Nothing to cook with yet</string>
+    <string name="kitchen_empty_message">Import an invoice or add items to the pantry and Rasoi will show what to use first.</string>
+    <string name="kitchen_in_stock">In stock</string>
+    <string name="kitchen_expiry_none">No expiry</string>
+    <string name="kitchen_expiry_today">Expires today</string>
+    <string name="kitchen_expiry_one">1 day left</string>
+    <string name="kitchen_expiry_days">%1$d days left</string>
+    <string name="kitchen_expired_one">Expired yesterday</string>
+    <string name="kitchen_expired_days">Expired %1$d days ago</string>
+    <string name="kitchen_ideas">What can I cook?</string>
+    <string name="kitchen_ideas_title">Ideas from your kitchen</string>
+    <string name="kitchen_ideas_loading">Thinking of dishes…</string>
+    <string name="kitchen_ideas_none">No dish matched what you have. Try again after your next shop.</string>
+    <string name="kitchen_ideas_uses">Uses: %1$s</string>
+    <string name="kitchen_ideas_unavailable_title">Dish ideas are off</string>
+    <string name="kitchen_ideas_unavailable_message">This server has no chat model set up, so it can’t suggest dishes.</string>
+    <string name="kitchen_ideas_hide">Hide ideas</string>
+
+    <string name="error_offline">You appear to be offline. Try again when you’re connected.</string>
+    <string name="error_forbidden">Your role doesn’t allow this.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_ideas_failed">Couldn’t come up with ideas just now. Please try again.</string>
+</resources>

@@ -156,7 +156,7 @@ feature/kitchen/     use-first list, dish suggestions
 server/app/          Ktor entry, routing, auth, DI
 server/parsing/      extraction, detection, template parsers, LLM fallback
 server/jobs/         auto-approve, expiry alerts, month close
-server/notifications/ FCM
+server/notifications/ Notifier, FCM (ADR 0023)
 fixtures/invoices/   redacted text fixtures (committed; real PDFs git-ignored, ADR 0009)
 build-logic/         convention plugins and module/design-system rule checks (ADR 0010)
 build-logic-android/ Android convention plugins, used when rasoi.android=true (ADR 0007)
@@ -181,7 +181,8 @@ docs/                design-plan.md, kickoff-prompt.md adr/
 | periods | id, household\_id, month, status, created\_at, closed\_at | Month is `YYYY-MM`; at most one OPEN period per household (ADR 0022) |
 | settlements | id, period\_id, from\_user, to\_user, amount\_paise, status, paid\_at | PENDING or PAID; written when a period closes |
 | pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, added\_on, price\_paise, payer\_id, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED; one item per source line (ADR 0020) |
-| device\_tokens | user\_id, token, platform | For FCM |
+| device\_tokens | token, user\_id, platform, updated\_at | For FCM; the token is the key (ADR 0023) |
+| expiry\_alerts\_sent | item\_id, kind, sent\_at | Kind: EXPIRES\_SOON, EXPIRED; one row per item and kind so alerts are sent once (ADR 0023) |
 | sessions | token\_hash, user\_id, expires\_at | Opaque bearer sessions; only the hash is stored (ADR 0015) |
 | idempotency\_keys | user\_id, key, request\_hash, status\_code, response\_body | Replays the first response to a retried write (ADR 0015) |
 
@@ -208,6 +209,7 @@ A change request loops the bill back to its uploader; an edit to an approved bil
 6. **Categorizer.** HSN chapter gives the category and `is_food`; keyword rules override. Category sets default location (dairy to fridge) and expiry.
 7. **Expiry estimate.** A config table of default shelf life per category (for example milk 2 days, leafy vegetables 3), editable per item.
 8. **Use-first ranking.** In-stock food items sorted by days to expiry, then by quantity.
+9. **Dish ideas.** Only in-stock item names go to the model; dishes using anything else are dropped (ADR 0023).
 
 ### 6.5 Invoice parsing pipeline
 

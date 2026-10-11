@@ -18,6 +18,9 @@ sealed interface AppError {
 
     data class Server(val status: Int) : AppError
 
+    /** A feature that needs something the server does not have configured, such as a chat model. */
+    data class Unavailable(val reason: String) : AppError
+
     data class Unexpected(val message: String) : AppError
 
     data class FieldViolation(val field: String, val code: String)

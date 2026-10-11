@@ -17,9 +17,12 @@ import app.rasoi.core.contract.bills.QuantityUnitDto
 import app.rasoi.core.contract.bills.SplitEntryDto
 import app.rasoi.core.contract.bills.SplitModeDto
 import app.rasoi.core.contract.bills.UpdateBillRequestDto
+import app.rasoi.core.contract.devices.DevicePlatformDto
+import app.rasoi.core.contract.devices.RegisterDeviceRequestDto
 import app.rasoi.core.contract.household.HouseholdDto
 import app.rasoi.core.contract.household.LocationKindDto
 import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.core.contract.kitchen.DishSuggestionsDto
 import app.rasoi.core.contract.ledger.LedgerDto
 import app.rasoi.core.contract.ledger.PeriodStatusDto
 import app.rasoi.core.contract.ledger.SettlementStatusDto
@@ -50,10 +53,10 @@ data class DemoHousehold(
 /**
  * The end-to-end demo scenario from design-plan section 8, run against a real server over HTTP. Each step asserts
  * what a user would see. Steps for bills, pantry, kitchen and the ledger are added in the milestones that build them.
- * [afterApprovalWindow] lets a test move the clock 48 hours and run the sweep; against a live server it stays null and
+ * [hooks] let a test move the clock and run the sweeps; against a live server they stay null and
  * the silent approval is not exercised.
  */
-class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (suspend () -> Unit)? = null) {
+class DemoScenario(private val api: DemoApi, private val hooks: DemoHooks? = null) {
     suspend fun run(): DemoHousehold {
         assertEquals("ok", api.health().status)
         val people = signInAndInvite()
@@ -62,6 +65,7 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
         duplicatesAreRejected(demo)
         approveTheBills(demo, splitTheBills(demo))
         pantryFollowsTheKitchen(demo)
+        theKitchenPlansAhead(demo)
         closeTheMonth(demo)
         nonMembersSeeNothing(demo)
         return demo
@@ -257,8 +261,8 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
         api.editBill(demo.cook, gas.id, raised).expect(HttpStatusCode.Forbidden)
 
         api.submitBill(demo.flatmate, blinkit.id).expect(HttpStatusCode.OK)
-        afterApprovalWindow?.let { moveClock ->
-            moveClock()
+        hooks?.let {
+            it.approvalWindowPasses()
             listOf(blinkit, gas).forEach { bill ->
                 val settled: BillDto = api.bill(demo.flatmate, bill.id).expect(HttpStatusCode.OK).body()
                 assertEquals(BillStatusDto.APPROVED, settled.status)
@@ -302,6 +306,42 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
         )
         api.addPantryItem(demo.cook, id, rice).expect(HttpStatusCode.Created)
         assertEquals(items.size - 1, api.pantryItems(demo.owner, id).size)
+    }
+
+    /**
+     * Step 6: phones register for pushes, the use-first list is ordered by expiry, dish ideas use only what is in
+     * stock, and once days pass the expiry alerts go out and the use-first list moves on.
+     */
+    private suspend fun theKitchenPlansAhead(demo: DemoHousehold) {
+        val id = demo.household.id
+        listOf(demo.owner, demo.flatmate, demo.cook).forEachIndexed { index, person ->
+            val body = RegisterDeviceRequestDto("demo-device-$index", DevicePlatformDto.ANDROID)
+            api.registerDevice(person, body).expect(HttpStatusCode.OK)
+        }
+        api.registerDevice(
+            demo.cook,
+            RegisterDeviceRequestDto(" ", DevicePlatformDto.IOS),
+        ).expect(HttpStatusCode.BadRequest)
+
+        val first = api.useFirst(demo.cook, id)
+        assertTrue(first.isNotEmpty() && first.all { it.item.status == PantryStatusDto.IN_STOCK })
+        val dated = first.mapNotNull { it.daysLeft }
+        assertEquals(dated.sorted(), dated, "soonest expiry comes first")
+
+        val pantryNames = api.pantryItems(demo.cook, id).map { it.name.lowercase() }
+        if (hooks?.hasChatModel == true) {
+            val dishes = api.suggestions(demo.cook, id).expect(HttpStatusCode.OK).body<DishSuggestionsDto>().dishes
+            assertTrue(dishes.isNotEmpty())
+            assertTrue(dishes.all { dish -> dish.uses.all { use -> pantryNames.any { use.lowercase() in it } } })
+        } else {
+            api.suggestions(demo.cook, id).expect(HttpStatusCode.ServiceUnavailable)
+        }
+
+        val titles = hooks?.daysPass(DAYS_AHEAD) ?: return
+        assertTrue(titles.any { it == "Use soon" || it == "Expired" }, "alerts: $titles")
+        val later = api.useFirst(demo.cook, id)
+        assertEquals(first.first().item.id, later.first().item.id)
+        assertTrue((later.first().daysLeft ?: 0) < (first.first().daysLeft ?: 0))
     }
 
     /**
@@ -385,5 +425,9 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
             api.bill(demo.outsider, bill.id).expect(HttpStatusCode.NotFound)
             api.editBill(demo.outsider, bill.id, UpdateBillRequestDto(totalPaise = 1)).expect(HttpStatusCode.NotFound)
         }
+    }
+
+    private companion object {
+        const val DAYS_AHEAD = 5
     }
 }

@@ -16,6 +16,7 @@ internal fun AppError.toHttp(): Pair<HttpStatusCode, ErrorDto> = when (this) {
     AppError.Forbidden -> HttpStatusCode.Forbidden to ErrorDto("forbidden", "Your role does not allow this")
     is AppError.NotFound -> HttpStatusCode.NotFound to ErrorDto("not_found", "No such $resource")
     is AppError.Conflict -> HttpStatusCode.Conflict to ErrorDto(reason, "The request conflicts with current state")
+    is AppError.Unavailable -> HttpStatusCode.ServiceUnavailable to ErrorDto(reason, "This feature is not available")
     AppError.Offline, AppError.Timeout, is AppError.Server, is AppError.Unexpected ->
         HttpStatusCode.InternalServerError to ErrorDto("internal", "Unexpected error")
 }

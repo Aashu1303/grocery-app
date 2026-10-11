@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
@@ -30,7 +29,6 @@ import app.rasoi.core.designsystem.component.AppBottomBarItem
 import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppTopBar
-import app.rasoi.core.designsystem.component.EmptyView
 import app.rasoi.core.designsystem.component.ErrorView
 import app.rasoi.core.designsystem.component.LoadingView
 import app.rasoi.core.designsystem.component.MemberAvatar
@@ -43,6 +41,7 @@ import app.rasoi.feature.household.setup.HouseholdSetupRoute
 import app.rasoi.feature.household.signin.SignInRoute
 import app.rasoi.feature.invoiceimport.review.BillReviewRoute
 import app.rasoi.feature.invoiceimport.upload.ImportRoute
+import app.rasoi.feature.kitchen.KitchenRoute
 import app.rasoi.feature.ledger.LedgerRoute
 import app.rasoi.feature.pantry.PantryRoute
 import org.jetbrains.compose.resources.stringResource
@@ -108,7 +107,6 @@ private fun MainScreen(
 }
 
 private fun NavGraphBuilder.appDestinations(state: AppState.Ready, navController: NavHostController) {
-    TopLevelDestination.entries.forEach { tab -> placeholder(tab) }
     composable<Route.Pantry> {
         PantryRoute(householdId = state.household.household.id, myRole = state.household.role)
     }
@@ -119,6 +117,9 @@ private fun NavGraphBuilder.appDestinations(state: AppState.Ready, navController
             onOpenBill = { billId -> navController.navigate(Route.BillDetail(billId.value)) },
             onImport = { navController.navigate(Route.ImportInvoices) },
         )
+    }
+    composable<Route.Kitchen> {
+        KitchenRoute(householdId = state.household.household.id, myRole = state.household.role)
     }
     composable<Route.Balances> {
         LedgerRoute(
@@ -159,21 +160,6 @@ private fun NavGraphBuilder.appDestinations(state: AppState.Ready, navController
             myRole = state.household.role,
             onBack = { navController.popBackStack() },
         )
-    }
-}
-
-private fun NavGraphBuilder.placeholder(tab: TopLevelDestination) {
-    val content: @Composable () -> Unit = {
-        EmptyView(
-            title = stringResource(tab.emptyTitle),
-            message = stringResource(tab.emptyMessage),
-            modifier = Modifier.padding(AppTheme.spacing.screenPadding),
-        )
-    }
-    when (tab.route) {
-        Route.Kitchen -> composable<Route.Kitchen> { content() }
-        Route.Pantry, Route.Bills, Route.Balances, Route.Catalog, Route.Household, Route.ImportInvoices -> Unit
-        is Route.BillReview, is Route.BillDetail -> Unit
     }
 }
 

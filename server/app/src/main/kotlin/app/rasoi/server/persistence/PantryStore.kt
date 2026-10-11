@@ -5,9 +5,14 @@ import app.rasoi.core.model.HouseholdId
 import app.rasoi.core.model.PantryItem
 import app.rasoi.core.model.PantryItemId
 import app.rasoi.core.model.PantryStatus
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.time.Instant
@@ -21,6 +26,17 @@ class PantryStore(private val db: RasoiDatabase) {
         }
         query.orderBy(PantryItemsTable.name to SortOrder.ASC, PantryItemsTable.addedOn to SortOrder.DESC)
             .map { it.toPantryItem() }
+    }
+
+    /** In-stock items dated on or before [until] with their household's time zone, for the alert sweep. */
+    suspend fun expiringUntil(until: LocalDate): List<Pair<PantryItem, TimeZone>> = db.query {
+        PantryItemsTable.join(HouseholdsTable, JoinType.INNER, PantryItemsTable.householdId, HouseholdsTable.id)
+            .selectAll()
+            .where {
+                (PantryItemsTable.status eq PantryStatus.IN_STOCK.name) and
+                    (PantryItemsTable.expiresOn.isNotNull()) and (PantryItemsTable.expiresOn lessEq until)
+            }
+            .map { it.toPantryItem() to TimeZone.of(it[HouseholdsTable.timeZone]) }
     }
 
     suspend fun find(id: PantryItemId): PantryItem? = db.query {

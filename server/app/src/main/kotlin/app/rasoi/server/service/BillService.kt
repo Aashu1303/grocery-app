@@ -19,6 +19,7 @@ import app.rasoi.core.model.UserId
 import app.rasoi.core.model.flatMap
 import app.rasoi.core.model.map
 import app.rasoi.core.model.mapError
+import app.rasoi.server.notifications.PushMessage
 import app.rasoi.server.persistence.BillStore
 import app.rasoi.server.persistence.PantryChanges
 import app.rasoi.server.persistence.PantryStore
@@ -40,6 +41,7 @@ class BillService(
     private val pantry: PantryStore,
     private val planner: PantryPlanner,
     private val periods: PeriodService,
+    private val notifications: NotificationService,
     private val clock: Clock,
 ) {
     private class Loaded(val bill: Bill, val role: Role)
@@ -85,11 +87,41 @@ class BillService(
     suspend fun submit(userId: UserId, billId: BillId): AppResult<Bill> = load(userId, billId, Permission.EDIT_BILLS)
         .flatMap { ApprovalRules.submit(it.bill, userId, clock.now()) }
         .flatMap { bills.save(it, PantryChanges(), clock.now()) }
+        .also { result ->
+            if (result is AppResult.Success) {
+                val waiting = result.value.approvals.filter { it.state == ApprovalState.PENDING }.map { it.userId }
+                notifications.notify(
+                    waiting,
+                    PushMessage(
+                        "Bill waiting for approval",
+                        billName(result.value),
+                        mapOf(
+                            "billId" to result.value.id.value,
+                        ),
+                    ),
+                )
+            }
+        }
 
     suspend fun decide(userId: UserId, billId: BillId, state: ApprovalState, comment: String?): AppResult<Bill> =
         load(userId, billId, Permission.APPROVE_BILLS)
             .flatMap { ApprovalRules.decide(it.bill, userId, state, comment, clock.now()) }
             .flatMap { bills.save(it, PantryChanges(), clock.now()) }
+            .also { result ->
+                if (result is AppResult.Success && state == ApprovalState.CHANGES_REQUESTED) {
+                    val bill = result.value
+                    notifications.notify(
+                        listOf(bill.createdBy),
+                        PushMessage(
+                            "Changes requested",
+                            billName(bill),
+                            mapOf(
+                                "billId" to bill.id.value,
+                            ),
+                        ),
+                    )
+                }
+            }
 
     /** Gives the approvals that have been pending for 48 hours; returns how many bills moved. */
     suspend fun autoApproveDue(): Int {
@@ -99,6 +131,8 @@ class BillService(
             .filter { it.status != BillStatus.PENDING }
             .count { bills.save(it, PantryChanges(), now) is AppResult.Success }
     }
+
+    private fun billName(bill: Bill): String = bill.title ?: bill.invoiceNumber
 
     private fun ensureMayEdit(loaded: Loaded, userId: UserId): AppResult<Unit> =
         if (loaded.bill.status == BillStatus.DRAFT || loaded.bill.createdBy == userId || loaded.role == Role.OWNER) {

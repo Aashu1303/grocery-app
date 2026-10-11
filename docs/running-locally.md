@@ -57,7 +57,8 @@ On a machine without Google Maven or Kotlin/Native access, see "Platform switche
 | `RASOI_STORAGE_DIR` | A directory on a **persistent volume** (invoice PDFs live there). S3-compatible storage is in the design plan but not built yet. |
 | `SESSION_TTL_DAYS` | Session lifetime, default 30. |
 | `RASOI_VERSION` | Shown by `/health`; set it to your release. |
-| `RASOI_LLM_*` | Optional, as above. |
+| `RASOI_LLM_*` | Optional, as above. The same chat model also powers the Kitchen tab's dish ideas; without it that feature says it is off. |
+| `FCM_SERVICE_ACCOUNT_FILE` | Optional path to a Firebase service-account JSON file (keep it outside the repo). With it the server sends approval and expiry push notifications; without it nothing is sent. |
 
 Run it behind a TLS-terminating proxy (HTTPS only), run one instance (the 15-minute sweeps that auto-approve bills and
 close months are safe to repeat, but only one process is tested), and back up the database and the storage folder.
@@ -75,6 +76,7 @@ These are the gaps between "runs locally" and "ships", all from milestones not b
    server rejects. You need a Firebase project with Phone sign-in enabled, `google-services.json` (Android) and
    `GoogleService-Info.plist` (iOS), release SHA-1/APNs/reCAPTCHA setup, and the two production `PhoneAuthProvider`
    implementations (planned for M7). Release builds must not ship the dev provider.
-2. **Push notifications** (approval and expiry alerts) need FCM and are planned for M6.
-3. **Expiry alerts, use-first list and dish suggestions** are M6; the final accessibility pass and release polish are M7.
+2. **Push on the phones.** The server side is built (`POST /devices`, FCM sender, expiry sweep), but the apps do not
+   yet obtain an FCM token; that needs the same Firebase project and files as sign-in and arrives with it in M7.
+3. The final accessibility pass and release polish are M7.
 4. **File storage** is a local folder, not S3.

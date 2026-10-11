@@ -12,6 +12,7 @@ import app.rasoi.core.contract.bills.CreateBillRequestDto
 import app.rasoi.core.contract.bills.DecideApprovalRequestDto
 import app.rasoi.core.contract.bills.UpdateBillRequestDto
 import app.rasoi.core.contract.bills.UploadInvoicesRequestDto
+import app.rasoi.core.contract.devices.RegisterDeviceRequestDto
 import app.rasoi.core.contract.household.CreateHouseholdRequestDto
 import app.rasoi.core.contract.household.CreateInviteRequestDto
 import app.rasoi.core.contract.household.CreateLocationRequestDto
@@ -20,6 +21,7 @@ import app.rasoi.core.contract.household.InviteDto
 import app.rasoi.core.contract.household.LocationDto
 import app.rasoi.core.contract.household.LocationKindDto
 import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.core.contract.kitchen.UseFirstEntryDto
 import app.rasoi.core.contract.ledger.LedgerDto
 import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
 import app.rasoi.core.contract.pantry.PantryItemDto
@@ -211,6 +213,27 @@ class DemoApi(private val client: HttpClient, private val baseUrl: String = "") 
     suspend fun markPaid(session: SessionDto, settlementId: String): HttpResponse =
         call("POST /settlements/{id}/paid") {
             client.post("$baseUrl/settlements/$settlementId/paid") {
+                write(session)
+                setBody("{}")
+            }
+        }
+
+    suspend fun registerDevice(session: SessionDto, body: RegisterDeviceRequestDto): HttpResponse =
+        call("POST /devices") {
+            client.post("$baseUrl/devices") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun useFirst(session: SessionDto, householdId: String): List<UseFirstEntryDto> =
+        call("GET /households/{id}/kitchen/use-first") {
+            client.get("$baseUrl/households/$householdId/kitchen/use-first") { authed(session) }
+        }.expect(HttpStatusCode.OK).body()
+
+    suspend fun suggestions(session: SessionDto, householdId: String): HttpResponse =
+        call("POST /households/{id}/kitchen/suggestions") {
+            client.post("$baseUrl/households/$householdId/kitchen/suggestions") {
                 write(session)
                 setBody("{}")
             }

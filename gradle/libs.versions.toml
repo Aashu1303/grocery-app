@@ -62,7 +62,7 @@ flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" } # 
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" } # PostgreSQL support for Flyway
 postgres-driver = { module = "org.postgresql:postgresql", version.ref = "postgres" } # PostgreSQL JDBC driver
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" } # connection pool
-java-jwt = { module = "com.auth0:java-jwt", version.ref = "javaJwt" } # verifies Firebase ID token signatures and claims
+java-jwt = { module = "com.auth0:java-jwt", version.ref = "javaJwt" } # verifies Firebase ID tokens and signs the FCM service-account assertion
 jwks-rsa = { module = "com.auth0:jwks-rsa", version.ref = "jwksRsa" } # fetches and caches Google signing keys
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" } # PDF text with positions
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" } # server logging

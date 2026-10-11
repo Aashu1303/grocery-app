@@ -18,6 +18,8 @@ data class ServerConfig(
     val storageDir: String = "data/documents",
     /** The LLM fallback for unknown invoice formats; off unless all three RASOI_LLM_* variables are set. */
     val llm: OpenAiChatClient.Config? = null,
+    /** Path of a Google service-account key file; push notifications are off unless it is set. */
+    val fcmServiceAccountFile: String? = null,
 ) {
     companion object {
         private const val DEFAULT_PORT = 8080
@@ -41,6 +43,7 @@ data class ServerConfig(
                 sessionTtl = env["SESSION_TTL_DAYS"]?.toLongOrNull()?.days ?: 30.days,
                 storageDir = env["RASOI_STORAGE_DIR"]?.takeIf { it.isNotBlank() } ?: "data/documents",
                 llm = llmConfig(env),
+                fcmServiceAccountFile = env["FCM_SERVICE_ACCOUNT_FILE"]?.takeIf { it.isNotBlank() },
             )
         }
 

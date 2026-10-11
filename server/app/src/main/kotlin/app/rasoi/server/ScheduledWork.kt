@@ -7,6 +7,7 @@ import kotlin.time.Duration.Companion.minutes
 internal fun scheduleJobs(graph: AppGraph, runner: JobRunner) {
     runner.every("auto-approve-bills", SWEEP) { graph.bills.autoApproveDue() }
     runner.every("close-periods", SWEEP) { graph.periods.closeDue() }
+    runner.every("expiry-alerts", SWEEP) { graph.expiryAlerts.sendDue() }
 }
 
 private val SWEEP = 15.minutes

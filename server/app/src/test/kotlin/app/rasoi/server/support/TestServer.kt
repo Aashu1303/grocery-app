@@ -9,6 +9,7 @@ import app.rasoi.server.AuthMode
 import app.rasoi.server.ServerConfig
 import app.rasoi.server.auth.DevIdTokenVerifier
 import app.rasoi.server.parsing.InvoiceFallback
+import app.rasoi.server.parsing.fallback.ChatCompletionClient
 import app.rasoi.server.persistence.DatabaseConfig
 import app.rasoi.server.rasoiModule
 import io.ktor.client.HttpClient
@@ -32,6 +33,8 @@ fun rasoiTest(
     clock: MutableClock = MutableClock(),
     storage: InMemoryDocumentStorage = InMemoryDocumentStorage(),
     fallback: InvoiceFallback? = null,
+    chat: ChatCompletionClient? = null,
+    notifier: RecordingNotifier = RecordingNotifier(),
     block: suspend TestScope.() -> Unit,
 ) = testApplication {
     TestPostgres.reset()
@@ -42,14 +45,23 @@ fun rasoiTest(
         authMode = AuthMode.DEV,
         firebaseProjectId = null,
     )
-    val graph = AppGraph(config, TestPostgres.database, DevIdTokenVerifier(), clock, storage, fallback)
+    val graph = AppGraph(
+        config,
+        TestPostgres.database,
+        DevIdTokenVerifier(),
+        clock,
+        storage,
+        chat,
+        fallback,
+        notifier,
+    )
     lateinit var server: Application
     application {
         rasoiModule(graph)
         server = this
     }
     startApplication()
-    TestScope(this, clock, server, storage, graph).block()
+    TestScope(this, clock, server, storage, graph, notifier).block()
 }
 
 class TestScope(
@@ -58,6 +70,7 @@ class TestScope(
     val application: Application,
     val storage: InMemoryDocumentStorage,
     val graph: AppGraph,
+    val notifier: RecordingNotifier,
 ) {
     val client: HttpClient = builder.createClient { install(ContentNegotiation) { json(ContractJson) } }
 
