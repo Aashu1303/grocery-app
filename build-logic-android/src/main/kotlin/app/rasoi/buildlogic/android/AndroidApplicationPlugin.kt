@@ -26,7 +26,11 @@ class AndroidApplicationPlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
             extensions.getByType(ApplicationExtension::class.java).apply {
                 namespace = "app.rasoi.android"
-                compileSdk = AndroidConfig.COMPILE_SDK
+                // SDK 37 ships as the minor-versioned platform android-37.0, which AGP 9.1 only finds when asked for
+                // it explicitly; the dependencies (Compose, OkHttp) need compile SDK 37 or later.
+                compileSdk {
+                    version = release(AndroidConfig.COMPILE_SDK) { minorApiLevel = 0 }
+                }
                 defaultConfig.apply {
                     applicationId = "app.rasoi"
                     minSdk = AndroidConfig.MIN_SDK
