@@ -59,7 +59,11 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
+      # Installs the SDK command-line tools and accepts the licences; Gradle downloads the platform and build tools
+      # it needs. The default package list asks for the obsolete 'tools' package and fails.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
       - name: Screenshots are not verified on the self-hosted runner
         if: ${{ runner.environment == 'self-hosted' }}
         run: echo "::notice::Goldens are rendered on Linux (ADR 0025); verifyRoborazziJvm is skipped on this runner."
