@@ -1,6 +1,8 @@
 package app.rasoi.core.domain.bills
 
 import app.rasoi.core.domain.pantry.Categorizer
+import app.rasoi.core.domain.split.LineAllocator
+import app.rasoi.core.model.Allocation
 import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import app.rasoi.core.model.Bill
@@ -9,8 +11,11 @@ import app.rasoi.core.model.BillLine
 import app.rasoi.core.model.BillLineId
 import app.rasoi.core.model.BillStatus
 import app.rasoi.core.model.BillWarning
+import app.rasoi.core.model.ChargeDistribution
 import app.rasoi.core.model.ChargeId
 import app.rasoi.core.model.ImportConfidence
+import app.rasoi.core.model.LineSplit
+import app.rasoi.core.model.SplitEntry
 import app.rasoi.core.model.sum
 
 /** Reconciliation warnings and draft editing rules for bills (design-plan 6.3 and 6.5). */
@@ -28,14 +33,15 @@ object BillRules {
         )
     }
 
+    /** Bills stay editable until their month locks (design-plan section 1). */
     fun ensureEditable(bill: Bill): AppResult<Unit> = when (bill.status) {
-        BillStatus.DRAFT -> AppResult.Success(Unit)
-        else -> AppResult.Failure(AppError.Conflict("bill_not_editable"))
+        BillStatus.LOCKED -> AppResult.Failure(AppError.Conflict("bill_not_editable"))
+        else -> AppResult.Success(Unit)
     }
 
     fun validate(edit: BillEdit): AppResult<BillEdit> {
         val violations = buildList {
-            if (edit.lines == null && edit.charges == null && edit.total == null) add(violation("body", "empty"))
+            if (edit == BillEdit()) add(violation("body", "empty"))
             edit.lines?.let { lines ->
                 when {
                     lines.isEmpty() -> add(violation("lines", "required"))
@@ -67,13 +73,61 @@ object BillRules {
             }
         }
         if (unknown.isNotEmpty()) return AppResult.Failure(AppError.Validation(unknown))
-        val lines = edit.lines?.map { line -> editedLine(line, existingLines, bill, newLineId) }
+        val lines = edit.lines?.map { line -> editedLine(line, existingLines, bill, newLineId) } ?: bill.lines
         val charges = edit.charges?.map { charge ->
-            BillCharge(charge.id ?: newChargeId(), charge.kind, charge.label.trim(), charge.amount)
-        }
-        return AppResult.Success(
-            bill.copy(lines = lines ?: bill.lines, charges = charges ?: bill.charges, total = edit.total ?: bill.total),
+            val current = charge.id?.let { existingCharges.getValue(it) }
+            BillCharge(
+                id = charge.id ?: newChargeId(),
+                kind = charge.kind,
+                label = charge.label.trim(),
+                amount = charge.amount,
+                distribution = charge.distribution ?: current?.distribution ?: ChargeDistribution.PROPORTIONAL,
+            )
+        } ?: bill.charges
+        val edited = bill.copy(
+            lines = lines,
+            charges = charges,
+            total = edit.total ?: bill.total,
+            payerId = edit.payerId ?: bill.payerId,
         )
+        return reallocate(edited, bill.allocations, edit.splits.orEmpty())
+    }
+
+    /**
+     * Rebuilds allocations for the edited lines: an explicit split wins, otherwise the line's previous split is
+     * recomputed for its new amount. A previous split that no longer fits (its units changed) is dropped, so the
+     * line must be split again before the bill can be submitted.
+     */
+    private fun reallocate(bill: Bill, previous: List<Allocation>, explicit: List<LineSplitEdit>): AppResult<Bill> {
+        val known = bill.lines.associateBy { it.id }
+        val unknown = explicit.withIndex().filter { it.value.lineId !in known }
+            .map { violation("splits[${it.index}]", "unknown_line") }
+        if (unknown.isNotEmpty()) return AppResult.Failure(AppError.Validation(unknown))
+        val chosen = explicit.associate { it.lineId to it.split }
+        val problems = mutableListOf<AppError.FieldViolation>()
+        val allocations = bill.lines.flatMap { line ->
+            val split = chosen[line.id] ?: previousSplit(line, previous) ?: return@flatMap emptyList()
+            when (val result = LineAllocator.allocate(line, split)) {
+                is AppResult.Success -> result.value
+                is AppResult.Failure -> {
+                    val index = explicit.indexOfFirst { it.lineId == line.id }
+                    val code = (result.error as? AppError.Validation)?.violations?.firstOrNull()?.code ?: "invalid"
+                    if (index >= 0) problems += violation("splits[$index]", code)
+                    emptyList()
+                }
+            }
+        }
+        return if (problems.isEmpty()) {
+            AppResult.Success(bill.copy(allocations = allocations))
+        } else {
+            AppResult.Failure(AppError.Validation(problems))
+        }
+    }
+
+    private fun previousSplit(line: BillLine, previous: List<Allocation>): LineSplit? {
+        val own = previous.filter { it.lineId == line.id }
+        if (own.isEmpty()) return null
+        return LineSplit(own.first().mode, own.map { SplitEntry(it.userId, it.units) })
     }
 
     private fun editedLine(

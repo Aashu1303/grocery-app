@@ -1,5 +1,7 @@
 package app.rasoi.core.domain.bills
 
+import app.rasoi.core.domain.split.LineAllocator
+import app.rasoi.core.model.Allocation
 import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import app.rasoi.core.model.Bill
@@ -7,10 +9,15 @@ import app.rasoi.core.model.BillLineId
 import app.rasoi.core.model.BillStatus
 import app.rasoi.core.model.BillWarning
 import app.rasoi.core.model.Category
+import app.rasoi.core.model.ChargeDistribution
 import app.rasoi.core.model.ChargeId
 import app.rasoi.core.model.ChargeKind
 import app.rasoi.core.model.ImportConfidence
+import app.rasoi.core.model.LineSplit
 import app.rasoi.core.model.Money
+import app.rasoi.core.model.SplitEntry
+import app.rasoi.core.model.SplitMode
+import app.rasoi.core.model.UserId
 import app.rasoi.core.testing.Builders
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,14 +52,14 @@ class BillRulesTest {
     }
 
     @Test
-    fun onlyDraftsCanBeEditedInThisMilestone() {
-        assertEquals(AppResult.Success(Unit), BillRules.ensureEditable(Builders.bill(status = BillStatus.DRAFT)))
-        BillStatus.entries.filter { it != BillStatus.DRAFT }.forEach { status ->
-            assertEquals(
-                AppResult.Failure(AppError.Conflict("bill_not_editable")),
-                BillRules.ensureEditable(Builders.bill(status = status)),
-            )
+    fun everyBillButALockedOneCanBeEdited() {
+        BillStatus.entries.filter { it != BillStatus.LOCKED }.forEach { status ->
+            assertEquals(AppResult.Success(Unit), BillRules.ensureEditable(Builders.bill(status = status)))
         }
+        assertEquals(
+            AppResult.Failure(AppError.Conflict("bill_not_editable")),
+            BillRules.ensureEditable(Builders.bill(status = BillStatus.LOCKED)),
+        )
     }
 
     @Test
@@ -171,5 +178,90 @@ class BillRulesTest {
         }
         assertEquals(Category.DAIRY to true, foodAfter(null))
         assertEquals(Category.DAIRY to false, foodAfter(false))
+    }
+
+    private val meera = UserId("u1")
+    private val aarav = UserId("u2")
+    private val rice = Builders.line(id = "l1", name = "Rice", amount = 10_001, units = 2)
+
+    private fun entries(vararg people: Pair<UserId, Int>) = people.map { (user, units) -> SplitEntry(user, units) }
+
+    private fun split(mode: SplitMode, vararg people: Pair<UserId, Int>) = LineSplit(mode, entries(*people))
+
+    private fun allocationsFor(split: LineSplit) =
+        assertIs<AppResult.Success<List<Allocation>>>(LineAllocator.allocate(rice, split)).value
+
+    private fun equalBill() = Builders.bill(lines = listOf(rice)).copy(
+        allocations = allocationsFor(
+            split(
+                SplitMode.EQUAL,
+                meera to 1,
+                aarav to 1,
+            ),
+        ),
+    )
+
+    private fun applied(bill: Bill, edit: BillEdit) =
+        BillRules.apply(bill, edit, { BillLineId("n") }, { ChargeId("c") })
+
+    private fun appliedBill(bill: Bill, edit: BillEdit) = assertIs<AppResult.Success<Bill>>(applied(bill, edit)).value
+
+    @Test
+    fun anEditCanSetTheSplitOfALineAndThePayer() {
+        val edit = BillEdit(payerId = aarav, splits = listOf(LineSplitEdit(rice.id, split(SplitMode.ONE, aarav to 1))))
+        val bill = appliedBill(Builders.bill(lines = listOf(rice)), edit)
+        assertEquals(aarav, bill.payerId)
+        assertEquals(listOf(aarav to 10_001L), bill.allocations.map { it.userId to it.amount.paise })
+    }
+
+    @Test
+    fun anInvalidSplitIsReportedByPosition() {
+        val base = Builders.bill(lines = listOf(rice))
+        val short = LineSplitEdit(rice.id, split(SplitMode.QUANTITY, meera to 1))
+        assertEquals(
+            listOf("splits[0]" to "units_mismatch"),
+            violations(applied(base, BillEdit(splits = listOf(short)))),
+        )
+        val stray = LineSplitEdit(BillLineId("zzz"), split(SplitMode.ONE, meera to 1))
+        assertEquals(listOf("splits[0]" to "unknown_line"), violations(applied(base, BillEdit(splits = listOf(stray)))))
+    }
+
+    @Test
+    fun changingALinesAmountReallocatesItsExistingSplit() {
+        val edit = BillEdit(lines = listOf(LineEdit(rice.id, "Rice", 2, Money(20_001))))
+        assertEquals(listOf(10_001L, 10_000L), appliedBill(equalBill(), edit).allocations.map { it.amount.paise })
+    }
+
+    @Test
+    fun aQuantitySplitIsDroppedWhenTheUnitCountNoLongerMatches() {
+        val base = Builders.bill(lines = listOf(rice))
+            .copy(allocations = allocationsFor(split(SplitMode.QUANTITY, meera to 1, aarav to 1)))
+        val edit = BillEdit(lines = listOf(LineEdit(rice.id, "Rice", 3, rice.amount)))
+        assertEquals(emptyList(), appliedBill(base, edit).allocations)
+    }
+
+    @Test
+    fun removingALineRemovesItsAllocations() {
+        val edit = BillEdit(lines = listOf(LineEdit(null, "Salt", 1, Money(500))))
+        assertEquals(emptyList(), appliedBill(equalBill(), edit).allocations)
+    }
+
+    @Test
+    fun aChargeKeepsItsDistributionUnlessTheEditChangesIt() {
+        val bill = Builders.bill(charges = listOf(Builders.charge(id = "c1")))
+        val keep = BillEdit(charges = listOf(ChargeEdit(ChargeId("c1"), ChargeKind.OTHER, "Fee", Money(500))))
+        assertEquals(ChargeDistribution.PROPORTIONAL, appliedBill(bill, keep).charges.single().distribution)
+        val change = ChargeEdit(ChargeId("c1"), ChargeKind.OTHER, "Fee", Money(500), ChargeDistribution.EQUAL)
+        assertEquals(
+            ChargeDistribution.EQUAL,
+            appliedBill(bill, BillEdit(charges = listOf(change))).charges.single().distribution,
+        )
+    }
+
+    @Test
+    fun aPayerOrSplitAloneIsAValidEdit() {
+        assertIs<AppResult.Success<BillEdit>>(BillRules.validate(BillEdit(payerId = aarav)))
+        val only = BillEdit(splits = listOf(LineSplitEdit(rice.id, split(SplitMode.ONE, meera to 1))))
+        assertIs<AppResult.Success<BillEdit>>(BillRules.validate(only))
     }
 }

@@ -1,6 +1,7 @@
 package app.rasoi.core.model
 
 import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
 
 /** A household bill built from one or more invoices of one order, or entered by hand (design-plan 6.2). */
 data class Bill(
@@ -17,4 +18,7 @@ data class Bill(
     val lines: List<BillLine>,
     val charges: List<BillCharge>,
     val total: Money,
+    val allocations: List<Allocation> = emptyList(),
+    val approvals: List<Approval> = emptyList(),
+    val submittedAt: Instant? = null,
 )
