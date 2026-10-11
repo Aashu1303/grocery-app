@@ -54,7 +54,7 @@ class SignInUseCasesTest {
     fun returningUserSignsInDirectly() = runTest {
         completeProfile("token-+919812345678", "Meera")
         val outcome = (verifyOtp("verification-+919812345678", "12 34 56") as AppResult.Success).value
-        assertEquals("Meera", assertIs<SignInOutcome.SignedIn>(outcome).user.displayName)
+        assertEquals("Meera", assertIs<SignInOutcome.SignedIn>(outcome).account.displayName)
     }
 
     @Test
