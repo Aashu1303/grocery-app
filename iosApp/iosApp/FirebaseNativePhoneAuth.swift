@@ -30,7 +30,7 @@ final class FirebaseNativePhoneAuth: NSObject, NativePhoneAuth {
 
     /// A rejected number or code is the user's to fix; a lost connection is retryable; the rest is reported by number.
     private static func errorCode(_ error: Error) -> String {
-        let code = AuthErrorCode.Code(rawValue: (error as NSError).code)
+        let code = AuthErrorCode(rawValue: (error as NSError).code)
         switch code {
         case .invalidPhoneNumber?, .missingPhoneNumber?, .invalidVerificationCode?, .invalidVerificationID?:
             return "invalid"
