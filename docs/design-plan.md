@@ -29,7 +29,7 @@ Phase 1 builds a Kotlin Multiplatform app (Android and iOS) plus a Kotlin backen
 | M4 | Bill split and approvals | Allocation, approval flow, auto-approve job, edits with re-approval |
 | M5 | Ledger and settlement | Month close, debt simplification, UPI deep link, mark as settled |
 | M6 | Kitchen | Use-first list, expiry notifications, dish suggestions from stock |
-| M7 | Hardening | End-to-end demo scenario passes, accessibility pass, release builds |
+| M7 | Hardening | End-to-end demo scenario passes, accessibility pass, release builds with production Firebase phone sign-in (ADR 0016) |
 
 ## 2. What the sample invoices tell us
 

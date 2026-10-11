@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
@@ -19,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.rasoi.app.resources.Res
+import app.rasoi.app.resources.app_load_error
 import app.rasoi.app.resources.app_name
 import app.rasoi.app.resources.open_catalog
 import app.rasoi.core.designsystem.catalog.CatalogScreen
@@ -28,48 +30,79 @@ import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppTopBar
 import app.rasoi.core.designsystem.component.EmptyView
+import app.rasoi.core.designsystem.component.ErrorView
+import app.rasoi.core.designsystem.component.LoadingView
+import app.rasoi.core.designsystem.component.MemberAvatar
 import app.rasoi.core.designsystem.theme.AppTheme
+import app.rasoi.feature.household.detail.HouseholdRoute
+import app.rasoi.feature.household.setup.HouseholdSetupRoute
+import app.rasoi.feature.household.signin.SignInRoute
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
-/** Root composable: theme, top bar, bottom bar and the navigation graph. */
+/** Root composable: routes between sign-in, household setup and the main tabs. */
 @Composable
-fun RasoiApp(showCatalog: Boolean, navController: NavHostController = rememberNavController()) {
+fun RasoiApp(showCatalog: Boolean, viewModel: AppViewModel = koinViewModel()) {
     AppTheme {
-        val backStackEntry by navController.currentBackStackEntryAsState()
-        val destination = backStackEntry?.destination
-        val selected = TopLevelDestination.entries.firstOrNull { tab ->
-            destination?.hasRoute(tab.route::class) == true
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        val modifier = Modifier
+            .fillMaxSize()
+            .background(AppTheme.colors.surface)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+        when (val current = state) {
+            AppState.Starting -> LoadingView(modifier)
+            AppState.SignedOut -> SignInRoute(modifier)
+            is AppState.NeedsHousehold -> HouseholdSetupRoute(onHouseholdReady = {
+                viewModel.refresh()
+            }, modifier = modifier)
+            AppState.LoadFailed -> ErrorView(stringResource(Res.string.app_load_error), viewModel::refresh, modifier)
+            is AppState.Ready -> MainScreen(current, showCatalog, modifier)
         }
-        Column(
-            Modifier
-                .fillMaxSize()
-                .background(AppTheme.colors.surface)
-                .windowInsetsPadding(WindowInsets.safeDrawing),
-        ) {
-            if (selected != null) {
-                AppTopBar(title = stringResource(Res.string.app_name), actions = {
-                    if (showCatalog) {
-                        AppButton(
-                            text = stringResource(Res.string.open_catalog),
-                            onClick = { navController.navigate(Route.Catalog) },
-                            variant = AppButtonVariant.TEXT,
-                        )
-                    }
-                })
-            }
-            NavHost(navController, startDestination = Route.Kitchen, modifier = Modifier.weight(1f)) {
-                TopLevelDestination.entries.forEach { tab -> placeholder(tab) }
-                composable<Route.Catalog> { CatalogScreen(onBack = { navController.popBackStack() }) }
-            }
-            if (selected != null) {
-                AppBottomBar(
-                    items = TopLevelDestination.entries.map {
-                        AppBottomBarItem(key = it.name, label = stringResource(it.label), icon = it.icon)
-                    },
-                    selectedKey = selected.name,
-                    onSelect = { key -> navController.navigateToTab(TopLevelDestination.valueOf(key)) },
+    }
+}
+
+@Composable
+private fun MainScreen(
+    state: AppState.Ready,
+    showCatalog: Boolean,
+    modifier: Modifier,
+    navController: NavHostController = rememberNavController(),
+) {
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val destination = backStackEntry?.destination
+    val selected = TopLevelDestination.entries.firstOrNull { tab -> destination?.hasRoute(tab.route::class) == true }
+    Column(modifier) {
+        if (selected != null) {
+            AppTopBar(title = stringResource(Res.string.app_name), actions = {
+                if (showCatalog) {
+                    AppButton(
+                        text = stringResource(Res.string.open_catalog),
+                        onClick = { navController.navigate(Route.Catalog) },
+                        variant = AppButtonVariant.TEXT,
+                    )
+                }
+                MemberAvatar(name = state.account.displayName, onClick = { navController.navigate(Route.Household) })
+            })
+        }
+        NavHost(navController, startDestination = Route.Kitchen, modifier = Modifier.weight(1f)) {
+            TopLevelDestination.entries.forEach { tab -> placeholder(tab) }
+            composable<Route.Catalog> { CatalogScreen(onBack = { navController.popBackStack() }) }
+            composable<Route.Household> {
+                HouseholdRoute(
+                    householdId = state.household.household.id,
+                    myRole = state.household.role,
+                    onBack = { navController.popBackStack() },
                 )
             }
+        }
+        if (selected != null) {
+            AppBottomBar(
+                items = TopLevelDestination.entries.map {
+                    AppBottomBarItem(key = it.name, label = stringResource(it.label), icon = it.icon)
+                },
+                selectedKey = selected.name,
+                onSelect = { key -> navController.navigateToTab(TopLevelDestination.valueOf(key)) },
+            )
         }
     }
 }
@@ -87,7 +120,7 @@ private fun NavGraphBuilder.placeholder(tab: TopLevelDestination) {
         Route.Pantry -> composable<Route.Pantry> { content() }
         Route.Bills -> composable<Route.Bills> { content() }
         Route.Balances -> composable<Route.Balances> { content() }
-        Route.Catalog -> Unit
+        Route.Catalog, Route.Household -> Unit
     }
 }
 

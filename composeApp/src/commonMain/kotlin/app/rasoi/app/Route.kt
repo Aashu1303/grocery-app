@@ -19,4 +19,7 @@ sealed interface Route {
 
     @Serializable
     data object Catalog : Route
+
+    @Serializable
+    data object Household : Route
 }

@@ -21,6 +21,9 @@ targets:
         UILaunchScreen: {}
         CADisableMinimumFrameDurationOnPhone: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        RasoiApiBaseUrl: "$(RASOI_API_BASE_URL)"
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.rasoi
@@ -28,6 +31,7 @@ targets:
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "ComposeApp"]
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         CODE_SIGNING_ALLOWED: NO
+        RASOI_API_BASE_URL: "http://localhost:8080"
     preBuildScripts:
       - name: Compile Kotlin framework
         basedOnDependencyAnalysis: false

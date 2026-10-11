@@ -13,4 +13,5 @@
     <string name="balances_empty_title">All settled</string>
     <string name="balances_empty_message">Balances appear once bills are approved.</string>
     <string name="open_catalog">Design system</string>
+    <string name="app_load_error">Couldn\'t load your household. Check your connection.</string>
 </resources>
