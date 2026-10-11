@@ -13,6 +13,7 @@ verify locally (for example Compose or iOS on a restricted machine) and check CI
 - `./gradlew check` passes: ktlint, detekt, all tests, Kover gate, `verifyModuleGraph`, `verifyFeatureSources`.
 - On a machine without Compose support, also run
   `./gradlew -Prasoi.compose=true <changed compose modules>:ktlintCheck <…>:detekt`.
+- `python3 scripts/check-compose-resources.py` passes (catches missing string imports that only CI could compile).
 - New logic has tests; domain and parser changes were written test-first; invariant tests still pass.
 
 ## 2. Plan conformance

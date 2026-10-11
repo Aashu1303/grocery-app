@@ -17,11 +17,12 @@ env:
 
 jobs:
   guard:
-    name: Privacy guard
+    name: Privacy and resource guards
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - run: ./scripts/check-no-real-invoices.sh
+      - run: python3 scripts/check-compose-resources.py
 
   check:
     name: Build, lint and test (JVM, Compose, Android)

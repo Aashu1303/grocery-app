@@ -42,6 +42,7 @@ server that share `core:model`, `core:domain` and `core:contract`.
 ./gradlew recordRoborazziJvm          # re-record design-system screenshot goldens
 ./gradlew verifyRoborazziJvm          # compare screenshots against goldens
 ./scripts/check-no-real-invoices.sh   # privacy guard: no real invoices tracked
+python3 scripts/check-compose-resources.py  # every Res.string use is imported and declared
 ```
 
 iOS app: `cd iosApp && xcodegen generate && open iosApp.xcodeproj` (ADR 0012).

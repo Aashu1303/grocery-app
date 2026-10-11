@@ -21,6 +21,7 @@ import app.rasoi.core.designsystem.theme.AppTheme
 import app.rasoi.feature.household.resources.Res
 import app.rasoi.feature.household.resources.error_code_invalid
 import app.rasoi.feature.household.resources.error_phone_invalid
+import app.rasoi.feature.household.resources.error_required
 import app.rasoi.feature.household.resources.signin_change_number
 import app.rasoi.feature.household.resources.signin_code_label
 import app.rasoi.feature.household.resources.signin_code_subtitle
