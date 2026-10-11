@@ -179,13 +179,27 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
         val gas = CreateBillRequestDto(
             title = "Gas cylinder",
             invoiceDate = "2026-10-05",
-            lines = listOf(BillLineEditDto(displayName = "Cylinder", units = 1, amountPaise = 95_000)),
+            lines = listOf(
+                BillLineEditDto(displayName = "Cylinder", units = 1, amountPaise = 95_000),
+                BillLineEditDto(displayName = "Hose clips", units = 3, amountPaise = 6_000),
+            ),
         )
         api.createBill(demo.cook, id, gas).expect(HttpStatusCode.Forbidden)
         val manual: BillDto = api.createBill(demo.flatmate, id, gas).expect(HttpStatusCode.Created).body()
         assertEquals(BillStatusDto.DRAFT, manual.status)
-        val line = LineSplitEditDto(manual.lines.single().id, SplitModeDto.EQUAL, entries(demo.owner, demo.flatmate))
-        assertEquals(listOf(47_500L, 47_500L), split(demo.flatmate, manual, listOf(line)).shares.map { it.totalPaise })
+        val (cylinder, clips) = manual.lines
+        val byQuantity = LineSplitEditDto(
+            clips.id,
+            SplitModeDto.QUANTITY,
+            listOf(SplitEntryDto(demo.owner.user.id, 2), SplitEntryDto(demo.flatmate.user.id, 1)),
+        )
+        val equally = LineSplitEditDto(cylinder.id, SplitModeDto.EQUAL, entries(demo.owner, demo.flatmate))
+        val splitGas = split(demo.flatmate, manual, listOf(equally, byQuantity))
+        // The cylinder is shared 47,500 each; the clips go 4,000 to the owner (2 of 3) and 2,000 to the flatmate.
+        assertEquals(
+            mapOf(demo.owner.user.id to 51_500L, demo.flatmate.user.id to 49_500L),
+            splitGas.shares.associate { it.userId to it.totalPaise },
+        )
 
         // Drafts are private to their uploader; the cook cannot see money at all.
         assertEquals(setOf(zepto.id, instamart.id, handpickd.id), api.billList(demo.owner, id).map { it.id }.toSet())
@@ -223,8 +237,11 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
         assertEquals(listOf(demo.owner.user.id), asked.approvals.map { it.userId })
         decide(demo.owner, gas, ApprovalStateDto.APPROVED).expect(HttpStatusCode.OK)
         val raised = UpdateBillRequestDto(
-            lines = listOf(BillLineEditDto(gas.lines.single().id, "Cylinder", 1, 96_000)),
-            totalPaise = 96_000,
+            lines = listOf(
+                BillLineEditDto(gas.lines[0].id, "Cylinder", 1, 96_000),
+                BillLineEditDto(gas.lines[1].id, "Hose clips", 3, 6_000),
+            ),
+            totalPaise = 102_000,
         )
         val edited: BillDto = api.editBill(demo.flatmate, gas.id, raised).expect(HttpStatusCode.OK).body()
         assertEquals(BillStatusDto.PENDING, edited.status)
