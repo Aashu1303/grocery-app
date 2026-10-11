@@ -7,3 +7,4 @@ Tags are annotated `mN-complete`. If a tag is missing on GitHub, create it from 
 | Milestone | Commit | Green CI run | Notes |
 | --- | --- | --- | --- |
 | M0 Foundation | `79ca6ab` | [run 13](https://github.com/Aashu1303/grocery-app/actions/runs/38096739005) | Includes the first M1 domain and server commits, which were pushed before M0's final CI fix. |
+| M1 Household and auth | `434437f` | [run 23](https://github.com/Aashu1303/grocery-app/actions/runs/38099561232) | Server auth, households, invites, roles, locations; sign-in, setup and household screens; demo step 1. |
