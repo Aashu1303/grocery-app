@@ -4,26 +4,26 @@ import Foundation
 
 /// Phone OTP with the Firebase iOS SDK, reporting `(value, errorCode)` the way `CallbackPhoneAuthProvider` expects.
 final class FirebaseNativePhoneAuth: NSObject, NativePhoneAuth {
-    func requestCode(phone: String, done: @escaping (String?, String?) -> KotlinUnit) {
+    func requestCode(phone: String, callback: NativePhoneAuthCallback) {
         PhoneAuthProvider.provider().verifyPhoneNumber(phone, uiDelegate: nil) { verificationId, error in
-            _ = done(verificationId, error.map(Self.errorCode))
+            callback.onResult(value: verificationId, error: error.map(Self.errorCode))
         }
     }
 
-    func confirm(verificationId: String, code: String, done: @escaping (String?, String?) -> KotlinUnit) {
+    func confirm(verificationId: String, code: String, callback: NativePhoneAuthCallback) {
         let credential = PhoneAuthProvider.provider()
             .credential(withVerificationID: verificationId, verificationCode: code)
         Auth.auth().signIn(with: credential) { result, error in
             if let error = error {
-                _ = done(nil, Self.errorCode(error))
+                callback.onResult(value: nil, error: Self.errorCode(error))
                 return
             }
             guard let user = result?.user else {
-                _ = done(nil, "no_user")
+                callback.onResult(value: nil, error: "no_user")
                 return
             }
             user.getIDToken { token, error in
-                _ = done(token, error.map(Self.errorCode))
+                callback.onResult(value: token, error: error.map(Self.errorCode))
             }
         }
     }
@@ -44,11 +44,11 @@ final class FirebaseNativePhoneAuth: NSObject, NativePhoneAuth {
 
 /// Stands in when a release was built without `GoogleService-Info.plist`, so sign-in fails visibly instead of crashing.
 final class UnconfiguredNativePhoneAuth: NSObject, NativePhoneAuth {
-    func requestCode(phone: String, done: @escaping (String?, String?) -> KotlinUnit) {
-        _ = done(nil, "firebase_not_configured")
+    func requestCode(phone: String, callback: NativePhoneAuthCallback) {
+        callback.onResult(value: nil, error: "firebase_not_configured")
     }
 
-    func confirm(verificationId: String, code: String, done: @escaping (String?, String?) -> KotlinUnit) {
-        _ = done(nil, "firebase_not_configured")
+    func confirm(verificationId: String, code: String, callback: NativePhoneAuthCallback) {
+        callback.onResult(value: nil, error: "firebase_not_configured")
     }
 }
