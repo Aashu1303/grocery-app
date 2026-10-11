@@ -1,6 +1,7 @@
 package app.rasoi.server.service
 
 import app.rasoi.core.domain.household.Permission
+import app.rasoi.core.domain.pantry.Categorizer
 import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import app.rasoi.core.model.Bill
@@ -8,11 +9,13 @@ import app.rasoi.core.model.BillCharge
 import app.rasoi.core.model.BillLine
 import app.rasoi.core.model.BillStatus
 import app.rasoi.core.model.HouseholdId
+import app.rasoi.core.model.Platform
 import app.rasoi.core.model.UserId
 import app.rasoi.core.model.flatMap
 import app.rasoi.server.parsing.InvoicePipeline
 import app.rasoi.server.parsing.ParseResult
 import app.rasoi.server.parsing.extract.PdfTextExtractor
+import app.rasoi.server.parsing.model.ParsedLine
 import app.rasoi.server.persistence.BillStore
 import app.rasoi.server.persistence.NewDocument
 import app.rasoi.server.persistence.toBillId
@@ -33,6 +36,7 @@ class InvoiceImportService(
     private val bills: BillStore,
     private val storage: DocumentStorage,
     private val pipeline: InvoicePipeline,
+    private val planner: PantryPlanner,
     private val clock: Clock,
     private val extractor: PdfTextExtractor = PdfTextExtractor(),
 ) {
@@ -102,25 +106,30 @@ class InvoiceImportService(
             createdBy = userId,
             status = BillStatus.DRAFT,
             confidence = merged.confidence,
-            lines = invoice.lines.map { line ->
-                BillLine(
-                    id = Uuid.random().toBillLineId(),
-                    rawName = line.rawName,
-                    displayName = line.rawName,
-                    units = line.units,
-                    amount = line.amount,
-                    measure = line.measure,
-                    mrp = line.mrp,
-                    hsn = line.hsn,
-                    upc = line.upc,
-                )
-            },
+            lines = invoice.lines.map { line -> line.toBillLine(invoice.platform) },
             charges = invoice.charges.map { BillCharge(Uuid.random().toChargeId(), it.kind, it.label, it.amount) },
             total = invoice.total,
         )
-        return bills.create(bill, stored, clock.now()).also { result ->
+        return bills.create(bill, stored, planner.itemsFor(bill), clock.now()).also { result ->
             if (result is AppResult.Failure) stored.forEach { storage.delete(it.storageKey) }
         }
+    }
+
+    private fun ParsedLine.toBillLine(platform: Platform): BillLine {
+        val categorization = Categorizer.categorize(rawName, hsn, platform)
+        return BillLine(
+            id = Uuid.random().toBillLineId(),
+            rawName = rawName,
+            displayName = rawName,
+            units = units,
+            amount = amount,
+            measure = measure,
+            mrp = mrp,
+            hsn = hsn,
+            upc = upc,
+            category = categorization.category,
+            isFood = categorization.isFood,
+        )
     }
 
     private fun AppError.forDocument(index: Int): AppError = when (this) {

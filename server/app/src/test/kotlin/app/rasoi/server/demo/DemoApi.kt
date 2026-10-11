@@ -16,6 +16,9 @@ import app.rasoi.core.contract.household.InviteDto
 import app.rasoi.core.contract.household.LocationDto
 import app.rasoi.core.contract.household.LocationKindDto
 import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
+import app.rasoi.core.contract.pantry.PantryItemDto
+import app.rasoi.core.contract.pantry.UpdatePantryItemRequestDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
@@ -115,6 +118,36 @@ class DemoApi(private val client: HttpClient, private val baseUrl: String = "") 
 
     suspend fun imported(session: SessionDto, householdId: String, body: UploadInvoicesRequestDto): BillDto =
         importInvoices(session, householdId, body).expect(HttpStatusCode.Created).body()
+
+    suspend fun pantry(session: SessionDto, householdId: String, status: String? = null): HttpResponse =
+        call("GET /households/{id}/pantry") {
+            client.get("$baseUrl/households/$householdId/pantry${status?.let { "?status=$it" }.orEmpty()}") {
+                authed(session)
+            }
+        }
+
+    suspend fun addPantryItem(session: SessionDto, householdId: String, body: CreatePantryItemRequestDto) =
+        call("POST /households/{id}/pantry") {
+            client.post("$baseUrl/households/$householdId/pantry") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun updatePantryItem(
+        session: SessionDto,
+        householdId: String,
+        itemId: String,
+        body: UpdatePantryItemRequestDto,
+    ): HttpResponse = call("PATCH /households/{id}/pantry/{itemId}") {
+        client.patch("$baseUrl/households/$householdId/pantry/$itemId") {
+            write(session)
+            setBody(body)
+        }
+    }
+
+    suspend fun pantryItems(session: SessionDto, householdId: String, status: String? = null): List<PantryItemDto> =
+        pantry(session, householdId, status).expect(HttpStatusCode.OK).body()
 
     suspend fun createdInvite(owner: SessionDto, householdId: String, role: RoleDto): InviteDto =
         invite(owner, householdId, role).expect(HttpStatusCode.Created).body()

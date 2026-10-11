@@ -15,6 +15,7 @@ import app.rasoi.server.persistence.HouseholdStore
 import app.rasoi.server.persistence.IdempotencyStore
 import app.rasoi.server.persistence.InviteStore
 import app.rasoi.server.persistence.LocationStore
+import app.rasoi.server.persistence.PantryStore
 import app.rasoi.server.persistence.RasoiDatabase
 import app.rasoi.server.persistence.SessionStore
 import app.rasoi.server.persistence.UserStore
@@ -22,6 +23,8 @@ import app.rasoi.server.service.AuthService
 import app.rasoi.server.service.BillService
 import app.rasoi.server.service.HouseholdService
 import app.rasoi.server.service.InvoiceImportService
+import app.rasoi.server.service.PantryPlanner
+import app.rasoi.server.service.PantryService
 import app.rasoi.server.storage.DocumentStorage
 import app.rasoi.server.storage.FileDocumentStorage
 import com.auth0.jwk.JwkProviderBuilder
@@ -46,22 +49,33 @@ class AppGraph(
 ) {
     private val users = UserStore(db)
 
+    private val locationStore = LocationStore(db)
+
     val auth = AuthService(verifier, users, SessionStore(db), SessionTokens(), clock, config.sessionTtl)
+
+    private val householdStore = HouseholdStore(db)
 
     val households = HouseholdService(
         users = users,
-        households = HouseholdStore(db),
+        households = householdStore,
         invites = InviteStore(db),
-        locations = LocationStore(db),
+        locations = locationStore,
         codes = InviteCodeGenerator(SecureRandom().asKotlinRandom()),
         clock = clock,
     )
 
     private val billStore = BillStore(db)
 
-    val imports = InvoiceImportService(households, billStore, storage, InvoicePipeline.default(fallback), clock)
+    private val pantryStore = PantryStore(db)
 
-    val bills = BillService(households, billStore, clock)
+    private val planner = PantryPlanner(locationStore)
+
+    val imports =
+        InvoiceImportService(households, billStore, storage, InvoicePipeline.default(fallback), planner, clock)
+
+    val bills = BillService(households, billStore, pantryStore, planner, clock)
+
+    val pantry = PantryService(households, householdStore, pantryStore, locationStore, clock)
 
     internal val idempotency = Idempotency(IdempotencyStore(db), clock)
 

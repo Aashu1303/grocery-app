@@ -15,5 +15,7 @@ internal object BillLinesTable : Table("bill_lines") {
     val mrpPaise = long("mrp_paise").nullable()
     val hsn = text("hsn").nullable()
     val upc = text("upc").nullable()
+    val category = text("category").nullable()
+    val isFood = bool("is_food").nullable()
     override val primaryKey = PrimaryKey(id)
 }

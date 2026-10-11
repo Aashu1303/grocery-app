@@ -4,11 +4,18 @@ import app.rasoi.core.contract.ErrorDto
 import app.rasoi.core.contract.auth.SessionDto
 import app.rasoi.core.contract.bills.BillDto
 import app.rasoi.core.contract.bills.BillWarningCodeDto
+import app.rasoi.core.contract.bills.CategoryDto
 import app.rasoi.core.contract.bills.PlatformDto
+import app.rasoi.core.contract.bills.QuantityDto
+import app.rasoi.core.contract.bills.QuantityUnitDto
 import app.rasoi.core.contract.bills.UpdateBillRequestDto
 import app.rasoi.core.contract.household.HouseholdDto
 import app.rasoi.core.contract.household.LocationKindDto
 import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
+import app.rasoi.core.contract.pantry.PantryItemDto
+import app.rasoi.core.contract.pantry.PantryStatusDto
+import app.rasoi.core.contract.pantry.UpdatePantryItemRequestDto
 import app.rasoi.server.support.Invoices
 import io.ktor.client.call.body
 import io.ktor.http.HttpStatusCode
@@ -36,6 +43,7 @@ class DemoScenario(private val api: DemoApi) {
         storagePlaces(people)
         val demo = people.copy(bills = importInvoices(people))
         duplicatesAreRejected(demo)
+        pantryFollowsTheKitchen(demo)
         nonMembersSeeNothing(demo)
         return demo
     }
@@ -124,6 +132,43 @@ class DemoScenario(private val api: DemoApi) {
         assertEquals("duplicate_invoice", response.expect(HttpStatusCode.Conflict).body<ErrorDto>().code)
     }
 
+    /**
+     * Step 5: the pantry fills from food lines (not from the non-food ones), items move between storage places and
+     * are marked finished or discarded, and the cook adds something by hand.
+     */
+    private suspend fun pantryFollowsTheKitchen(demo: DemoHousehold) {
+        val id = demo.household.id
+        val foodLines = demo.bills.flatMap { it.lines }.filter { it.isFood }
+        val items = api.pantryItems(demo.cook, id)
+        assertEquals(foodLines.map { it.id }.toSet(), items.mapNotNull { it.sourceLineId }.toSet())
+        assertTrue(demo.bills.flatMap { it.lines }.any { !it.isFood }, "the Blinkit hot/cold pack is not food")
+
+        val freezer = demo.household.locations.single { it.name == "Freezer" }.id
+        val shelf = demo.household.locations.single { it.name == "Shelf" }.id
+        val beans = items.single { it.name.startsWith("Beans") }
+        val moved = api.updatePantryItem(demo.flatmate, id, beans.id, UpdatePantryItemRequestDto(locationId = freezer))
+            .expect(HttpStatusCode.OK).body<PantryItemDto>()
+        assertEquals(freezer, moved.locationId)
+
+        val milk = items.first { it.name.contains("Milk", ignoreCase = true) }
+        val jam = items.first { it.id != milk.id && it.id != beans.id }
+        api.updatePantryItem(demo.cook, id, milk.id, UpdatePantryItemRequestDto(status = PantryStatusDto.FINISHED))
+            .expect(HttpStatusCode.OK)
+        api.updatePantryItem(demo.owner, id, jam.id, UpdatePantryItemRequestDto(status = PantryStatusDto.DISCARDED))
+            .expect(HttpStatusCode.OK)
+        assertEquals(items.size - 2, api.pantryItems(demo.owner, id).size)
+        assertEquals(items.size, api.pantryItems(demo.owner, id, "all").size)
+
+        val rice = CreatePantryItemRequestDto(
+            name = "Basmati rice",
+            category = CategoryDto.STAPLES,
+            quantity = QuantityDto(5_000_000, QuantityUnitDto.MILLIGRAM),
+            locationId = shelf,
+        )
+        api.addPantryItem(demo.cook, id, rice).expect(HttpStatusCode.Created)
+        assertEquals(items.size - 1, api.pantryItems(demo.owner, id).size)
+    }
+
     /** Step 9: a non-member cannot read or change any of it. */
     private suspend fun nonMembersSeeNothing(demo: DemoHousehold) {
         val id = demo.household.id
@@ -132,6 +177,13 @@ class DemoScenario(private val api: DemoApi) {
         api.addLocation(demo.outsider, id, "Sneaky", LocationKindDto.OTHER).expect(HttpStatusCode.NotFound)
         api.invite(demo.outsider, id, RoleDto.MEMBER).expect(HttpStatusCode.NotFound)
         api.importInvoices(demo.outsider, id, Invoices.upload(Invoices.pdf("zepto"))).expect(HttpStatusCode.NotFound)
+        api.pantry(demo.outsider, id).expect(HttpStatusCode.NotFound)
+        val someItem = api.pantryItems(demo.owner, id).first()
+        api.updatePantryItem(demo.outsider, id, someItem.id, UpdatePantryItemRequestDto(name = "Mine now"))
+            .expect(HttpStatusCode.NotFound)
+        val basmati =
+            CreatePantryItemRequestDto("Sneaky", CategoryDto.STAPLES, QuantityDto(1_000, QuantityUnitDto.COUNT))
+        api.addPantryItem(demo.outsider, id, basmati).expect(HttpStatusCode.NotFound)
         demo.bills.forEach { bill ->
             api.bill(demo.outsider, bill.id).expect(HttpStatusCode.NotFound)
             api.editBill(demo.outsider, bill.id, UpdateBillRequestDto(totalPaise = 1)).expect(HttpStatusCode.NotFound)

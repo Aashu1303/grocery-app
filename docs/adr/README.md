@@ -24,3 +24,4 @@ Copy `0000-template.md`. A superseded ADR stays in place with its status changed
 | [0017](0017-invoice-parsing-design.md) | Invoice parsing: positioned-text fixtures, structural detection, per-platform split basis | Accepted |
 | [0018](0018-invoice-upload-and-bill-storage.md) | Invoice upload as JSON, bill storage and draft editing | Accepted |
 | [0019](0019-import-review-flow.md) | Invoice import and review flow on the client | Accepted |
+| [0020](0020-pantry-from-bills.md) | Pantry from bill lines, categories and expiry estimates | Accepted |

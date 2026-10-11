@@ -9,6 +9,7 @@ import app.rasoi.core.contract.bills.BillLineDto
 import app.rasoi.core.contract.bills.BillStatusDto
 import app.rasoi.core.contract.bills.BillWarningCodeDto
 import app.rasoi.core.contract.bills.BillWarningDto
+import app.rasoi.core.contract.bills.CategoryDto
 import app.rasoi.core.contract.bills.ChargeKindDto
 import app.rasoi.core.contract.bills.ImportConfidenceDto
 import app.rasoi.core.contract.bills.PlatformDto
@@ -105,6 +106,8 @@ internal fun BillLine.toDto() = BillLineDto(
     mrpPaise = mrp?.paise,
     hsn = hsn,
     upc = upc,
+    category = CategoryDto.valueOf(category.name),
+    isFood = isFood,
 )
 
 internal fun Quantity.toDto() = QuantityDto(amount, QuantityUnitDto.valueOf(unit.name))
@@ -119,10 +122,11 @@ internal fun BillWarning.toDto() = when (this) {
 internal fun UpdateBillRequestDto.toModel() = BillEdit(
     lines = lines?.map { line ->
         LineEdit(
-            line.id?.takeIf(String::isNotBlank)?.let(::BillLineId),
-            line.displayName,
-            line.units,
-            Money(line.amountPaise),
+            id = line.id?.takeIf(String::isNotBlank)?.let(::BillLineId),
+            displayName = line.displayName,
+            units = line.units,
+            amount = Money(line.amountPaise),
+            isFood = line.isFood,
         )
     },
     charges = charges?.map { charge ->

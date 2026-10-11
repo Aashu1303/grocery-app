@@ -180,7 +180,7 @@ docs/                design-plan.md, kickoff-prompt.md adr/
 | approvals | bill\_id, user\_id, state, comment, decided\_at | State: PENDING, APPROVED, CHANGES\_REQUESTED |
 | periods | id, household\_id, month, status | OPEN or LOCKED |
 | settlements | id, period\_id, from\_user, to\_user, amount\_paise, status | PENDING or PAID |
-| pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED |
+| pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, added\_on, price\_paise, payer\_id, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED; one item per source line (ADR 0020) |
 | jobs | id, kind, run\_at, payload, status | Survives restarts |
 | device\_tokens | user\_id, token, platform | For FCM |
 | sessions | token\_hash, user\_id, expires\_at | Opaque bearer sessions; only the hash is stored (ADR 0015) |
@@ -240,7 +240,8 @@ interface InvoiceParser {
 | POST | /households/{id}/invites | Create an invite (owner only, ADR 0014) |
 | POST | /invites/{code}/accept | Join a household |
 | GET, POST | /households/{id}/locations | List and add locations |
-| GET, POST, PATCH | /households/{id}/pantry | List, add and update pantry items |
+| GET, POST | /households/{id}/pantry | List (`?status=`) and add pantry items |
+| PATCH | /households/{id}/pantry/{itemId} | Move, edit, finish or discard an item (ADR 0020) |
 | POST | /households/{id}/invoices | Upload one or more PDFs (JSON, Base64); returns a parsed draft bill (ADR 0018) |
 | GET | /bills/{id} | One bill with its review warnings (ADR 0018) |
 | GET, POST | /households/{id}/bills | List by period; create a manual bill |

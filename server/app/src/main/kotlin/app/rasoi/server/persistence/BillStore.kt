@@ -7,10 +7,12 @@ import app.rasoi.core.model.BillCharge
 import app.rasoi.core.model.BillId
 import app.rasoi.core.model.BillLine
 import app.rasoi.core.model.BillStatus
+import app.rasoi.core.model.Category
 import app.rasoi.core.model.ChargeKind
 import app.rasoi.core.model.HouseholdId
 import app.rasoi.core.model.ImportConfidence
 import app.rasoi.core.model.Money
+import app.rasoi.core.model.PantryItem
 import app.rasoi.core.model.Platform
 import app.rasoi.core.model.Quantity
 import app.rasoi.core.model.QuantityUnit
@@ -53,7 +55,12 @@ class BillStore(private val db: RasoiDatabase) {
     }
 
     /** Inserts the bill, its documents, lines and charges atomically; a concurrent duplicate is a conflict. */
-    suspend fun create(bill: Bill, documents: List<NewDocument>, now: Instant): AppResult<Bill> = try {
+    suspend fun create(
+        bill: Bill,
+        documents: List<NewDocument>,
+        pantryItems: List<PantryItem>,
+        now: Instant,
+    ): AppResult<Bill> = try {
         db.query {
             BillsTable.insert {
                 it[id] = bill.id.uuid()
@@ -82,6 +89,7 @@ class BillStore(private val db: RasoiDatabase) {
             }
             insertLines(bill.id, bill.lines.withIndex().toList())
             insertCharges(bill.id, bill.charges)
+            insertPantryItems(pantryItems, now)
         }
         AppResult.Success(bill)
     } catch (error: ExposedSQLException) {
@@ -111,7 +119,7 @@ class BillStore(private val db: RasoiDatabase) {
      * Saves edited lines, charges and total. Lines keep their ids (allocations will reference them), so existing
      * rows are updated in place, removed ones deleted and new ones inserted.
      */
-    suspend fun updateContents(bill: Bill, now: Instant): Bill = db.query {
+    suspend fun updateContents(bill: Bill, pantry: PantryChanges, now: Instant): Bill = db.query {
         val billId = bill.id.uuid()
         val keep = bill.lines.map { it.id.value.let(Uuid::parse) }
         BillLinesTable.deleteWhere { (BillLinesTable.billId eq billId) and (BillLinesTable.id notInList keep) }
@@ -126,6 +134,8 @@ class BillStore(private val db: RasoiDatabase) {
         insertLines(bill.id, added)
         BillChargesTable.deleteWhere { BillChargesTable.billId eq billId }
         insertCharges(bill.id, bill.charges)
+        if (pantry.removeForLines.isNotEmpty()) deleteInStockItemsFor(pantry.removeForLines)
+        insertPantryItems(pantry.add, now)
         BillsTable.update({ BillsTable.id eq billId }) {
             it[totalPaise] = bill.total.paise
             it[updatedAt] = now
@@ -163,6 +173,8 @@ class BillStore(private val db: RasoiDatabase) {
         this[BillLinesTable.mrpPaise] = line.mrp?.paise
         this[BillLinesTable.hsn] = line.hsn
         this[BillLinesTable.upc] = line.upc
+        this[BillLinesTable.category] = line.category.name
+        this[BillLinesTable.isFood] = line.isFood
     }
 
     private fun ResultRow.toBill(lines: List<BillLine>, charges: List<BillCharge>) = Bill(
@@ -193,6 +205,8 @@ class BillStore(private val db: RasoiDatabase) {
         mrp = this[BillLinesTable.mrpPaise]?.let(::Money),
         hsn = this[BillLinesTable.hsn],
         upc = this[BillLinesTable.upc],
+        category = this[BillLinesTable.category]?.let(Category::valueOf) ?: Category.OTHER,
+        isFood = this[BillLinesTable.isFood] ?: false,
     )
 
     private fun ResultRow.toCharge() = BillCharge(
