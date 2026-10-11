@@ -1,5 +1,6 @@
 package app.rasoi.server
 
+import app.rasoi.server.parsing.fallback.OpenAiChatClient
 import app.rasoi.server.persistence.DatabaseConfig
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -14,6 +15,9 @@ data class ServerConfig(
     val authMode: AuthMode,
     val firebaseProjectId: String?,
     val sessionTtl: Duration = 30.days,
+    val storageDir: String = "data/documents",
+    /** The LLM fallback for unknown invoice formats; off unless all three RASOI_LLM_* variables are set. */
+    val llm: OpenAiChatClient.Config? = null,
 ) {
     companion object {
         private const val DEFAULT_PORT = 8080
@@ -35,8 +39,28 @@ data class ServerConfig(
                 authMode = authMode,
                 firebaseProjectId = projectId,
                 sessionTtl = env["SESSION_TTL_DAYS"]?.toLongOrNull()?.days ?: 30.days,
+                storageDir = env["RASOI_STORAGE_DIR"]?.takeIf { it.isNotBlank() } ?: "data/documents",
+                llm = llmConfig(env),
             )
         }
+
+        private fun llmConfig(env: Map<String, String>): OpenAiChatClient.Config? {
+            val values = LLM_VARIABLES.map { env[it]?.takeIf(String::isNotBlank) }
+            require(values.all { it == null } || values.none { it == null }) {
+                "Set all of ${LLM_VARIABLES.joinToString()} or none"
+            }
+            val (baseUrl, apiKey, model) = values
+            return if (baseUrl == null ||
+                apiKey == null ||
+                model == null
+            ) {
+                null
+            } else {
+                OpenAiChatClient.Config(baseUrl, apiKey, model)
+            }
+        }
+
+        private val LLM_VARIABLES = listOf("RASOI_LLM_BASE_URL", "RASOI_LLM_API_KEY", "RASOI_LLM_MODEL")
 
         private fun Map<String, String>.required(name: String): String =
             requireNotNull(this[name]?.takeIf { it.isNotBlank() }) { "$name must be set" }

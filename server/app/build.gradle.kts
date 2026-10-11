@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
     implementation(project(":core:contract"))
+    implementation(project(":server:parsing"))
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)
@@ -27,10 +28,19 @@ dependencies {
     implementation(libs.java.jwt)
     implementation(libs.jwks.rsa)
     implementation(libs.logback)
+    implementation(libs.ktor.client.okhttp)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.content.negotiation)
     testImplementation(libs.testcontainers.postgres)
-    testImplementation(libs.ktor.client.okhttp)
+    testImplementation(testFixtures(project(":server:parsing")))
+}
+
+tasks.withType<Test>().configureEach {
+    val fixtures = rootProject.file("fixtures/invoices")
+    inputs.files(fileTree(fixtures) { include("**/*.redacted.txt") })
+        .withPropertyName("invoiceFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    systemProperty("rasoi.fixtures", fixtures.absolutePath)
 }
 
 tasks.register<JavaExec>("seedDemo") {
@@ -38,4 +48,5 @@ tasks.register<JavaExec>("seedDemo") {
     description = "Seeds the demo household into a running dev server (RASOI_DEMO_URL)."
     classpath = sourceSets["test"].runtimeClasspath
     mainClass = "app.rasoi.server.demo.DemoSeedMainKt"
+    systemProperty("rasoi.fixtures", rootProject.file("fixtures/invoices").absolutePath)
 }

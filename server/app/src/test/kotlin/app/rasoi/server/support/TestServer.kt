@@ -8,6 +8,7 @@ import app.rasoi.server.AppGraph
 import app.rasoi.server.AuthMode
 import app.rasoi.server.ServerConfig
 import app.rasoi.server.auth.DevIdTokenVerifier
+import app.rasoi.server.parsing.InvoiceFallback
 import app.rasoi.server.persistence.DatabaseConfig
 import app.rasoi.server.rasoiModule
 import io.ktor.client.HttpClient
@@ -27,7 +28,12 @@ import io.ktor.server.testing.testApplication
 import java.util.UUID
 
 /** Runs [block] against the real module, a real (reset) database, dev sign-in and a controllable clock. */
-fun rasoiTest(clock: MutableClock = MutableClock(), block: suspend TestScope.() -> Unit) = testApplication {
+fun rasoiTest(
+    clock: MutableClock = MutableClock(),
+    storage: InMemoryDocumentStorage = InMemoryDocumentStorage(),
+    fallback: InvoiceFallback? = null,
+    block: suspend TestScope.() -> Unit,
+) = testApplication {
     TestPostgres.reset()
     val config = ServerConfig(
         port = 0,
@@ -38,14 +44,19 @@ fun rasoiTest(clock: MutableClock = MutableClock(), block: suspend TestScope.() 
     )
     lateinit var server: Application
     application {
-        rasoiModule(AppGraph(config, TestPostgres.database, DevIdTokenVerifier(), clock))
+        rasoiModule(AppGraph(config, TestPostgres.database, DevIdTokenVerifier(), clock, storage, fallback))
         server = this
     }
     startApplication()
-    TestScope(this, clock, server).block()
+    TestScope(this, clock, server, storage).block()
 }
 
-class TestScope(private val builder: ApplicationTestBuilder, val clock: MutableClock, val application: Application) {
+class TestScope(
+    private val builder: ApplicationTestBuilder,
+    val clock: MutableClock,
+    val application: Application,
+    val storage: InMemoryDocumentStorage,
+) {
     val client: HttpClient = builder.createClient { install(ContentNegotiation) { json(ContractJson) } }
 
     suspend fun signIn(phone: String, name: String): SessionDto = client.post("/auth/session") {

@@ -15,6 +15,9 @@ fun main() = runBlocking {
     val baseUrl = System.getenv("RASOI_DEMO_URL") ?: "http://localhost:8080"
     HttpClient(OkHttp) { install(ContentNegotiation) { json(ContractJson) } }.use { client ->
         val demo = DemoScenario(DemoApi(client, baseUrl)).run()
-        println("Seeded '${demo.household.name}' (${demo.household.id}) with ${demo.household.members.size} members")
+        println(
+            "Seeded '${demo.household.name}' (${demo.household.id}) with ${demo.household.members.size} members " +
+                "and ${demo.bills.size} draft bills",
+        )
     }
 }

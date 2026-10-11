@@ -83,14 +83,7 @@ class HouseholdService(
     /** Returns the caller's role when they are a member holding [permission]. */
     suspend fun authorize(userId: UserId, householdId: HouseholdId, permission: Permission): AppResult<Role> {
         val role = households.roleOf(householdId, userId) ?: return AppResult.Failure(AppError.NotFound("household"))
-        return if (RolePolicy.allows(
-                role,
-                permission,
-            )
-        ) {
-            AppResult.Success(role)
-        } else {
-            AppResult.Failure(AppError.Forbidden)
-        }
+        if (!RolePolicy.allows(role, permission)) return AppResult.Failure(AppError.Forbidden)
+        return AppResult.Success(role)
     }
 }

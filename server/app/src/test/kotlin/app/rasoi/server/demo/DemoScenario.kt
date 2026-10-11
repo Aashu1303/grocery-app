@@ -2,9 +2,14 @@ package app.rasoi.server.demo
 
 import app.rasoi.core.contract.ErrorDto
 import app.rasoi.core.contract.auth.SessionDto
+import app.rasoi.core.contract.bills.BillDto
+import app.rasoi.core.contract.bills.BillWarningCodeDto
+import app.rasoi.core.contract.bills.PlatformDto
+import app.rasoi.core.contract.bills.UpdateBillRequestDto
 import app.rasoi.core.contract.household.HouseholdDto
 import app.rasoi.core.contract.household.LocationKindDto
 import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.server.support.Invoices
 import io.ktor.client.call.body
 import io.ktor.http.HttpStatusCode
 import kotlin.test.assertEquals
@@ -17,6 +22,7 @@ data class DemoHousehold(
     val cook: SessionDto,
     val outsider: SessionDto,
     val household: HouseholdDto,
+    val bills: List<BillDto> = emptyList(),
 )
 
 /**
@@ -26,8 +32,10 @@ data class DemoHousehold(
 class DemoScenario(private val api: DemoApi) {
     suspend fun run(): DemoHousehold {
         assertEquals("ok", api.health().status)
-        val demo = signInAndInvite()
-        storagePlaces(demo)
+        val people = signInAndInvite()
+        storagePlaces(people)
+        val demo = people.copy(bills = importInvoices(people))
+        duplicatesAreRejected(demo)
         nonMembersSeeNothing(demo)
         return demo
     }
@@ -69,10 +77,51 @@ class DemoScenario(private val api: DemoApi) {
         api.addLocation(demo.cook, id, "Balcony", LocationKindDto.OTHER).expect(HttpStatusCode.Forbidden)
         assertEquals(
             listOf("Freezer", "Fridge", "Shelf", "Spice rack"),
-            api.locationList(demo.cook, id).map {
-                it.name
-            },
+            api.locationList(demo.cook, id).map { it.name },
         )
+    }
+
+    /**
+     * Step 2: import all four invoices, including one order delivered as two PDFs, and resolve a reconciliation
+     * warning. The PDFs are rendered from the redacted fixtures; the Zepto one carries a misprinted total.
+     */
+    private suspend fun importInvoices(demo: DemoHousehold): List<BillDto> {
+        val id = demo.household.id
+        val zepto = api.imported(demo.owner, id, Invoices.upload(Invoices.pdf("zepto", "867.00" to "868.00")))
+        assertEquals(listOf(BillWarningCodeDto.TOTAL_MISMATCH), zepto.warnings.map { it.code })
+        val resolved: BillDto = api.editBill(demo.owner, zepto.id, UpdateBillRequestDto(totalPaise = 86_700))
+            .expect(HttpStatusCode.OK).body()
+        assertTrue(resolved.warnings.isEmpty())
+
+        val blinkit = api.imported(
+            demo.flatmate,
+            id,
+            Invoices.upload(Invoices.pdf("blinkit"), Invoices.pdf("blinkit", "INV0000000000002" to "INV0000000000009")),
+        )
+        val instamart = api.imported(demo.owner, id, Invoices.upload(Invoices.pdf("instamart")))
+        val handpickd = api.imported(demo.owner, id, Invoices.upload(Invoices.pdf("handpickd")))
+        api.importInvoices(demo.cook, id, Invoices.upload(Invoices.pdf("zepto"))).expect(HttpStatusCode.Forbidden)
+
+        val bills = listOf(resolved, blinkit, instamart, handpickd)
+        assertEquals(
+            mapOf(
+                PlatformDto.ZEPTO to 86_700L,
+                PlatformDto.BLINKIT to 25_800L,
+                PlatformDto.INSTAMART to 46_901L,
+                PlatformDto.HANDPICKD to 13_000L,
+            ),
+            bills.associate { it.platform to it.totalPaise },
+        )
+        assertTrue(bills.all { it.warnings.isEmpty() })
+        assertEquals(blinkit, api.bill(demo.flatmate, blinkit.id).expect(HttpStatusCode.OK).body<BillDto>())
+        api.bill(demo.owner, blinkit.id).expect(HttpStatusCode.NotFound)
+        return bills
+    }
+
+    /** Step 7: uploading an invoice twice is rejected. */
+    private suspend fun duplicatesAreRejected(demo: DemoHousehold) {
+        val response = api.importInvoices(demo.flatmate, demo.household.id, Invoices.upload(Invoices.pdf("handpickd")))
+        assertEquals("duplicate_invoice", response.expect(HttpStatusCode.Conflict).body<ErrorDto>().code)
     }
 
     /** Step 9: a non-member cannot read or change any of it. */
@@ -82,5 +131,10 @@ class DemoScenario(private val api: DemoApi) {
         api.locations(demo.outsider, id).expect(HttpStatusCode.NotFound)
         api.addLocation(demo.outsider, id, "Sneaky", LocationKindDto.OTHER).expect(HttpStatusCode.NotFound)
         api.invite(demo.outsider, id, RoleDto.MEMBER).expect(HttpStatusCode.NotFound)
+        api.importInvoices(demo.outsider, id, Invoices.upload(Invoices.pdf("zepto"))).expect(HttpStatusCode.NotFound)
+        demo.bills.forEach { bill ->
+            api.bill(demo.outsider, bill.id).expect(HttpStatusCode.NotFound)
+            api.editBill(demo.outsider, bill.id, UpdateBillRequestDto(totalPaise = 1)).expect(HttpStatusCode.NotFound)
+        }
     }
 }

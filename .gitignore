@@ -37,3 +37,6 @@ fixtures/invoices/**
 iosApp/iosApp.xcodeproj/
 iosApp/iosApp/Info.plist
 build-*.log
+
+# Invoice PDFs stored by a local dev server (personal data, ADR 0018)
+**/data/documents/

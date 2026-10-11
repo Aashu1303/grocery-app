@@ -172,9 +172,9 @@ docs/                design-plan.md, kickoff-prompt.md adr/
 | memberships | household\_id, user\_id, role | Role: OWNER, MEMBER, COOK; unique per pair |
 | invites | code, household\_id, role, expires\_at | Single use |
 | locations | id, household\_id, name, kind | Kind: FRIDGE, FREEZER, SHELF, OTHER |
-| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, total\_paise, status, period\_id | Unique (household\_id, platform, invoice\_no) |
-| bill\_documents | bill\_id, storage\_key, sha256 | Several PDFs per bill |
-| bill\_lines | id, bill\_id, raw\_name, display\_name, quantity, unit, amount\_paise, hsn, upc, category, is\_food | amount\_paise = what was paid for the line |
+| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, created\_by, total\_paise, status, confidence, period\_id | Unique (household\_id, platform, invoice\_no); period\_id arrives in M5 (ADR 0018) |
+| bill\_documents | bill\_id, household\_id, platform, invoice\_no, storage\_key, sha256 | Several PDFs per bill; unique per household by sha256 and by platform + invoice\_no |
+| bill\_lines | id, bill\_id, position, raw\_name, display\_name, units, measure\_amount, measure\_unit, amount\_paise, mrp\_paise, hsn, upc, category, is\_food | amount\_paise = what was paid for the line; units drive QUANTITY splits (ADR 0018) |
 | bill\_charges | id, bill\_id, kind, amount\_paise, distribution | Kind: HANDLING, DELIVERY, DISCOUNT, ROUND\_OFF, OTHER; signed amount |
 | allocations | line\_id, user\_id, mode, quantity, amount\_paise | Amounts stored after computation; sum = line amount |
 | approvals | bill\_id, user\_id, state, comment, decided\_at | State: PENDING, APPROVED, CHANGES\_REQUESTED |
@@ -241,7 +241,8 @@ interface InvoiceParser {
 | POST | /invites/{code}/accept | Join a household |
 | GET, POST | /households/{id}/locations | List and add locations |
 | GET, POST, PATCH | /households/{id}/pantry | List, add and update pantry items |
-| POST | /households/{id}/invoices | Upload one or more PDFs; returns a parsed draft bill |
+| POST | /households/{id}/invoices | Upload one or more PDFs (JSON, Base64); returns a parsed draft bill (ADR 0018) |
+| GET | /bills/{id} | One bill with its review warnings (ADR 0018) |
 | GET, POST | /households/{id}/bills | List by period; create a manual bill |
 | PATCH | /bills/{id} | Edit lines, payer, allocations, charges |
 | POST | /bills/{id}/submit | Send for approval |

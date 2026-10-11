@@ -7,6 +7,7 @@ import app.rasoi.server.auth.UserPrincipal
 import app.rasoi.server.http.describeForLog
 import app.rasoi.server.http.toHttp
 import app.rasoi.server.routes.authRoutes
+import app.rasoi.server.routes.billRoutes
 import app.rasoi.server.routes.householdRoutes
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -50,6 +51,9 @@ fun Application.rasoiModule(graph: AppGraph) {
     routing {
         healthRoutes(graph.config)
         authRoutes(graph.auth)
-        authenticate(SESSION_AUTH) { householdRoutes(graph.households, graph.idempotency) }
+        authenticate(SESSION_AUTH) {
+            householdRoutes(graph.households, graph.idempotency)
+            billRoutes(graph.imports, graph.bills, graph.idempotency)
+        }
     }
 }

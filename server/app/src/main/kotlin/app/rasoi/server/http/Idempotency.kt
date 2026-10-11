@@ -11,7 +11,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
-import io.ktor.server.request.receiveText
+import io.ktor.server.request.receiveChannel
+import io.ktor.utils.io.readBuffer
+import kotlinx.io.readByteArray
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import java.security.MessageDigest
@@ -26,10 +28,16 @@ internal class Idempotency(private val store: IdempotencyStore, private val cloc
         call: ApplicationCall,
         userId: UserId,
         requestSerializer: KSerializer<Req>,
+        maxBodyBytes: Long = DEFAULT_MAX_BODY,
         block: suspend (Req) -> JsonResponse,
     ) {
         val key = call.request.headers[ApiHeaders.IDEMPOTENCY_KEY]?.takeIf { it.length in KEY_LENGTH }
-        val body = call.receiveText()
+        val body = call.receiveChannel().readBuffer(maxBodyBytes + 1).readByteArray()
+            .takeIf { it.size <= maxBodyBytes }
+            ?.decodeToString()
+            ?: return call.respondJson(
+                AppError.Validation(listOf(AppError.FieldViolation("body", "too_large"))).asResponse(),
+            )
         val requestHash = sha256("${call.request.httpMethod.value} ${call.request.path()}\n$body")
         val stored = key?.let { store.find(userId, it) }
         val request = if (key == null || stored != null) null else decode(requestSerializer, body)
@@ -72,5 +80,6 @@ internal class Idempotency(private val store: IdempotencyStore, private val cloc
     private companion object {
         val KEY_LENGTH = 8..128
         const val SERVER_ERROR = 500
+        const val DEFAULT_MAX_BODY = 64L * 1024
     }
 }

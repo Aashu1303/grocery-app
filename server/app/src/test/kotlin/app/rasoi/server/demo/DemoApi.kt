@@ -5,6 +5,9 @@ import app.rasoi.core.contract.HealthDto
 import app.rasoi.core.contract.auth.CreateSessionRequestDto
 import app.rasoi.core.contract.auth.MeDto
 import app.rasoi.core.contract.auth.SessionDto
+import app.rasoi.core.contract.bills.BillDto
+import app.rasoi.core.contract.bills.UpdateBillRequestDto
+import app.rasoi.core.contract.bills.UploadInvoicesRequestDto
 import app.rasoi.core.contract.household.CreateHouseholdRequestDto
 import app.rasoi.core.contract.household.CreateInviteRequestDto
 import app.rasoi.core.contract.household.CreateLocationRequestDto
@@ -19,6 +22,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -89,6 +93,28 @@ class DemoApi(private val client: HttpClient, private val baseUrl: String = "") 
             setBody(CreateLocationRequestDto(name, kind))
         }
     }
+
+    suspend fun importInvoices(session: SessionDto, householdId: String, body: UploadInvoicesRequestDto): HttpResponse =
+        call("POST /households/{id}/invoices") {
+            client.post("$baseUrl/households/$householdId/invoices") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun bill(session: SessionDto, id: String): HttpResponse =
+        call("GET /bills/{id}") { client.get("$baseUrl/bills/$id") { authed(session) } }
+
+    suspend fun editBill(session: SessionDto, id: String, body: UpdateBillRequestDto): HttpResponse =
+        call("PATCH /bills/{id}") {
+            client.patch("$baseUrl/bills/$id") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun imported(session: SessionDto, householdId: String, body: UploadInvoicesRequestDto): BillDto =
+        importInvoices(session, householdId, body).expect(HttpStatusCode.Created).body()
 
     suspend fun createdInvite(owner: SessionDto, householdId: String, role: RoleDto): InviteDto =
         invite(owner, householdId, role).expect(HttpStatusCode.Created).body()

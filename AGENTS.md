@@ -35,7 +35,8 @@ server that share `core:model`, `core:domain` and `core:contract`.
 ./gradlew ktlintFormat                # auto-fix formatting
 ./gradlew :core:model:jvmTest         # one module's tests
 ./gradlew :server:app:test            # server tests
-./gradlew :server:app:run             # run the server (env: DATABASE_URL/USER/PASSWORD, RASOI_AUTH_MODE=dev, PORT)
+./gradlew :server:app:run             # run the server (env: DATABASE_URL/USER/PASSWORD, RASOI_AUTH_MODE=dev, PORT,
+                                      #   RASOI_STORAGE_DIR; optional RASOI_LLM_BASE_URL/API_KEY/MODEL)
 ./gradlew :server:app:seedDemo        # seed the demo household into a running dev server (RASOI_DEMO_URL)
 ./gradlew :androidApp:assembleDebug   # Android debug APK
 ./gradlew iosSimulatorArm64Test       # shared tests on the iOS simulator (macOS)
