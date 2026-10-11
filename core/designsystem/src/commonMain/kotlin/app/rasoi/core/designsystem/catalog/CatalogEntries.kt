@@ -1,7 +1,12 @@
 package app.rasoi.core.designsystem.catalog
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import app.rasoi.core.designsystem.component.AmountText
 import app.rasoi.core.designsystem.component.AmountTone
 import app.rasoi.core.designsystem.component.AppBottomBar
@@ -10,6 +15,7 @@ import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppCard
 import app.rasoi.core.designsystem.component.AppKeyboard
+import app.rasoi.core.designsystem.component.AppScaffold
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.AppTextField
 import app.rasoi.core.designsystem.component.AppTopBar
@@ -60,6 +66,9 @@ val catalogEntries: List<CatalogEntry> = buildList {
             AppBottomBar(bottomBarItems, selectedKey = "pantry", onSelect = {})
         },
     )
+    listOf(true, false).forEach { visible ->
+        add(CatalogEntry("AppScaffold", if (visible) "bars" else "no_bars") { ScaffoldSample(barsVisible = visible) })
+    }
 
     add(CatalogEntry("AmountText", "neutral") { AmountText(Money(46_901)) })
     add(CatalogEntry("AmountText", "owed_to_you") { AmountText(Money(12_345_600), tone = AmountTone.OWED_TO_YOU) })
@@ -152,6 +161,19 @@ val catalogEntries: List<CatalogEntry> = buildList {
         },
     )
 }
+
+@Composable
+private fun ScaffoldSample(barsVisible: Boolean) {
+    Box(Modifier.height(AppTheme.spacing.xxl * SCAFFOLD_HEIGHT_UNITS)) {
+        AppScaffold(
+            barsVisible = barsVisible,
+            topBar = { AppTopBar(title = S.TITLE) },
+            bottomBar = { AppBottomBar(bottomBarItems, selectedKey = "pantry", onSelect = {}) },
+        ) { padding -> AppText(S.ITEM, Modifier.padding(padding).padding(AppTheme.spacing.md)) }
+    }
+}
+
+private const val SCAFFOLD_HEIGHT_UNITS = 6
 
 private val bottomBarItems = listOf(
     AppBottomBarItem("kitchen", "Kitchen", AppIcons.Kitchen),
