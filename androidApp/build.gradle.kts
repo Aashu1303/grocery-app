@@ -1,7 +1,12 @@
 plugins {
     id("rasoi.android-application")
     id("rasoi.quality")
-    id("com.google.gms.google-services")
+}
+
+// google-services.json is git-ignored, so CI and fresh clones build without it; sign-in then reports that Firebase
+// is not configured (PhoneAuth.kt) instead of the build failing.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 dependencies {
