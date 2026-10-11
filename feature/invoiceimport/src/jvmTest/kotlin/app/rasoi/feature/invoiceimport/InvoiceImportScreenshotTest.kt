@@ -49,7 +49,7 @@ class InvoiceImportScreenshotTest {
     private val bill = Builders.bill(lines = lines, charges = charges).copy(platform = Platform.HANDPICKD)
     private val mismatch = bill.copy(total = Money(13_100))
     private val fallback = bill.copy(confidence = ImportConfidence.LOW)
-    private val edit = LineEditState(BillLineId("l2"), "Beans Lobia", 1, "28.00")
+    private val edit = LineEditState(BillLineId("l2"), "Beans Lobia", 1, "28.00", isFood = true)
 
     private val screens: List<Pair<String, @Composable () -> Unit>> = listOf(
         "import_empty" to { ImportScreen(ImportUiState(), {}, {}, {}) },
@@ -62,6 +62,10 @@ class InvoiceImportScreenshotTest {
         "review_clean" to { BillReviewScreen(BillReviewUiState.Content(bill), {}, {}) },
         "review_mismatch" to { BillReviewScreen(BillReviewUiState.Content(mismatch), {}, {}) },
         "review_fallback" to { BillReviewScreen(BillReviewUiState.Content(fallback), {}, {}) },
+        "review_non_food" to {
+            val pack = lines.last().copy(displayName = "Reusable hot / cold pack", isFood = false)
+            BillReviewScreen(BillReviewUiState.Content(bill.copy(lines = lines.dropLast(1) + pack)), {}, {})
+        },
         "review_save_failed" to {
             BillReviewScreen(BillReviewUiState.Content(mismatch, error = BillError.OFFLINE), {}, {})
         },

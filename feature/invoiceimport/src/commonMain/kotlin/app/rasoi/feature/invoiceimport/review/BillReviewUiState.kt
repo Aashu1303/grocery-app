@@ -30,6 +30,7 @@ data class LineEditState(
     val name: String,
     val units: Int,
     val amountText: String,
+    val isFood: Boolean,
     val nameError: LineFieldError? = null,
     val amountError: LineFieldError? = null,
     val error: BillError? = null,

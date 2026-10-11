@@ -13,6 +13,9 @@ sealed interface BillReviewUiEvent {
 
     data class AmountChanged(val value: String) : BillReviewUiEvent
 
+    /** Whether the item goes to the pantry. */
+    data class FoodChanged(val isFood: Boolean) : BillReviewUiEvent
+
     data object SaveLine : BillReviewUiEvent
 
     data object DismissEdit : BillReviewUiEvent

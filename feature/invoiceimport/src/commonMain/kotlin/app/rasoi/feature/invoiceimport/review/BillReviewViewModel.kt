@@ -47,6 +47,7 @@ class BillReviewViewModel(
             }
             is BillReviewUiEvent.AmountChanged ->
                 updateEdit { it.copy(amountText = event.value, amountError = null, error = null) }
+            is BillReviewUiEvent.FoodChanged -> updateEdit { it.copy(isFood = event.isFood, error = null) }
             BillReviewUiEvent.SaveLine -> saveLine()
             BillReviewUiEvent.DismissEdit -> updateContent { it.copy(edit = null) }
             BillReviewUiEvent.UseCalculatedTotal -> useCalculatedTotal()
@@ -66,7 +67,7 @@ class BillReviewViewModel(
     private fun openEdit(event: BillReviewUiEvent.EditLine) = updateContent { content ->
         val line = content.bill.lines.firstOrNull { it.id == event.lineId } ?: return@updateContent content
         content.copy(
-            edit = LineEditState(line.id, line.displayName, line.units, line.amount.toDecimalString()),
+            edit = LineEditState(line.id, line.displayName, line.units, line.amount.toDecimalString(), line.isFood),
             error = null,
         )
     }
@@ -82,7 +83,7 @@ class BillReviewViewModel(
         }
         val lines = content.bill.lines.map { line ->
             if (line.id == edit.lineId) {
-                LineEdit(line.id, edit.name, edit.units, amount)
+                LineEdit(line.id, edit.name, edit.units, amount, edit.isFood)
             } else {
                 LineEdit(line.id, line.displayName, line.units, line.amount)
             }

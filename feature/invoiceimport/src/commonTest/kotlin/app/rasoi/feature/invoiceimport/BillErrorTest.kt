@@ -1,12 +1,10 @@
 package app.rasoi.feature.invoiceimport
 
 import app.rasoi.core.model.AppError
-import app.rasoi.core.model.Quantity
-import app.rasoi.core.model.QuantityUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class BillErrorAndMeasureTest {
+class BillErrorTest {
     private fun invalid(code: String) = AppError.Validation(listOf(AppError.FieldViolation("documents[0]", code)))
 
     @Test
@@ -46,17 +44,5 @@ class BillErrorAndMeasureTest {
     @Test
     fun everyErrorHasAMessage() {
         assertEquals(BillError.entries.toSet(), billErrorMessages.keys)
-    }
-
-    @Test
-    fun formatsMeasuresTheWayInvoicesPrintThem() {
-        assertEquals("470 g", Quantity.grams(470).measureText())
-        assertEquals("1.235 g", Quantity(1_235, QuantityUnit.MILLIGRAM).measureText())
-        assertEquals("1.5 kg", Quantity.grams(1_500).measureText())
-        assertEquals("2 kg", Quantity.kilograms(2).measureText())
-        assertEquals("500 ml", Quantity.millilitres(500).measureText())
-        assertEquals("1.5 L", Quantity.millilitres(1_500).measureText())
-        assertEquals("6 pc", Quantity.count(6).measureText())
-        assertEquals("0.5 pc", Quantity(500, QuantityUnit.COUNT).measureText())
     }
 }

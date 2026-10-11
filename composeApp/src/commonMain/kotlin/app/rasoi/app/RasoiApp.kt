@@ -46,6 +46,7 @@ import app.rasoi.feature.household.setup.HouseholdSetupRoute
 import app.rasoi.feature.household.signin.SignInRoute
 import app.rasoi.feature.invoiceimport.review.BillReviewRoute
 import app.rasoi.feature.invoiceimport.upload.ImportRoute
+import app.rasoi.feature.pantry.PantryRoute
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -94,34 +95,7 @@ private fun MainScreen(
             })
         }
         NavHost(navController, startDestination = Route.Kitchen, modifier = Modifier.weight(1f)) {
-            TopLevelDestination.entries.forEach { tab -> placeholder(tab) }
-            composable<Route.Bills> {
-                BillsPlaceholder(state, onImport = { navController.navigate(Route.ImportInvoices) })
-            }
-            composable<Route.ImportInvoices> {
-                ImportRoute(
-                    householdId = state.household.household.id,
-                    myRole = state.household.role,
-                    onBack = { navController.popBackStack() },
-                    onBillImported = { billId ->
-                        navController.navigate(Route.BillReview(billId.value)) { popUpTo<Route.Bills>() }
-                    },
-                )
-            }
-            composable<Route.BillReview> { entry ->
-                BillReviewRoute(
-                    billId = BillId(entry.toRoute<Route.BillReview>().billId),
-                    onDone = { navController.popBackStack() },
-                )
-            }
-            composable<Route.Catalog> { CatalogScreen(onBack = { navController.popBackStack() }) }
-            composable<Route.Household> {
-                HouseholdRoute(
-                    householdId = state.household.household.id,
-                    myRole = state.household.role,
-                    onBack = { navController.popBackStack() },
-                )
-            }
+            appDestinations(state, navController)
         }
         if (selected != null) {
             AppBottomBar(
@@ -132,6 +106,40 @@ private fun MainScreen(
                 onSelect = { key -> navController.navigateToTab(TopLevelDestination.valueOf(key)) },
             )
         }
+    }
+}
+
+private fun NavGraphBuilder.appDestinations(state: AppState.Ready, navController: NavHostController) {
+    TopLevelDestination.entries.forEach { tab -> placeholder(tab) }
+    composable<Route.Pantry> {
+        PantryRoute(householdId = state.household.household.id, myRole = state.household.role)
+    }
+    composable<Route.Bills> {
+        BillsPlaceholder(state, onImport = { navController.navigate(Route.ImportInvoices) })
+    }
+    composable<Route.ImportInvoices> {
+        ImportRoute(
+            householdId = state.household.household.id,
+            myRole = state.household.role,
+            onBack = { navController.popBackStack() },
+            onBillImported = { billId ->
+                navController.navigate(Route.BillReview(billId.value)) { popUpTo<Route.Bills>() }
+            },
+        )
+    }
+    composable<Route.BillReview> { entry ->
+        BillReviewRoute(
+            billId = BillId(entry.toRoute<Route.BillReview>().billId),
+            onDone = { navController.popBackStack() },
+        )
+    }
+    composable<Route.Catalog> { CatalogScreen(onBack = { navController.popBackStack() }) }
+    composable<Route.Household> {
+        HouseholdRoute(
+            householdId = state.household.household.id,
+            myRole = state.household.role,
+            onBack = { navController.popBackStack() },
+        )
     }
 }
 
@@ -158,9 +166,8 @@ private fun NavGraphBuilder.placeholder(tab: TopLevelDestination) {
     }
     when (tab.route) {
         Route.Kitchen -> composable<Route.Kitchen> { content() }
-        Route.Pantry -> composable<Route.Pantry> { content() }
         Route.Balances -> composable<Route.Balances> { content() }
-        Route.Bills, Route.Catalog, Route.Household, Route.ImportInvoices, is Route.BillReview -> Unit
+        Route.Pantry, Route.Bills, Route.Catalog, Route.Household, Route.ImportInvoices, is Route.BillReview -> Unit
     }
 }
 

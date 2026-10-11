@@ -7,6 +7,8 @@ import app.rasoi.core.domain.auth.AuthRepository
 import app.rasoi.core.domain.bills.BillRepository
 import app.rasoi.core.domain.bills.GetBillUseCase
 import app.rasoi.core.domain.household.HouseholdRepository
+import app.rasoi.core.domain.pantry.ListPantryUseCase
+import app.rasoi.core.domain.pantry.PantryRepository
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import kotlin.test.AfterTest
@@ -31,6 +33,8 @@ class KoinModulesTest {
         assertNotNull(koin.get<AuthRepository>())
         assertNotNull(koin.get<HouseholdRepository>())
         assertNotNull(koin.get<BillRepository>())
+        assertNotNull(koin.get<PantryRepository>())
+        assertNotNull(koin.get<ListPantryUseCase>())
         assertNotNull(koin.get<GetBillUseCase>())
     }
 }

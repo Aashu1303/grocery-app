@@ -11,6 +11,7 @@ kotlin {
             implementation(project(":core:designsystem"))
             implementation(project(":feature:household"))
             implementation(project(":feature:invoiceimport"))
+            implementation(project(":feature:pantry"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.resources)

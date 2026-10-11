@@ -10,6 +10,8 @@ import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppKeyboard
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.AppTextField
+import app.rasoi.core.designsystem.component.ChoiceChips
+import app.rasoi.core.designsystem.component.ChoiceOption
 import app.rasoi.core.designsystem.component.QuantityStepper
 import app.rasoi.core.designsystem.theme.AppTheme
 import app.rasoi.core.domain.bills.BillRules
@@ -18,9 +20,12 @@ import app.rasoi.feature.invoiceimport.resources.field_invalid_amount
 import app.rasoi.feature.invoiceimport.resources.field_required
 import app.rasoi.feature.invoiceimport.resources.field_too_long
 import app.rasoi.feature.invoiceimport.resources.review_edit_amount
+import app.rasoi.feature.invoiceimport.resources.review_edit_kind
 import app.rasoi.feature.invoiceimport.resources.review_edit_name
 import app.rasoi.feature.invoiceimport.resources.review_edit_save
 import app.rasoi.feature.invoiceimport.resources.review_edit_units
+import app.rasoi.feature.invoiceimport.resources.review_kind_food
+import app.rasoi.feature.invoiceimport.resources.review_kind_other
 import app.rasoi.feature.invoiceimport.text
 import org.jetbrains.compose.resources.stringResource
 
@@ -45,6 +50,15 @@ fun LineEditContent(state: LineEditState, onEvent: (BillReviewUiEvent) -> Unit, 
             error = state.amountError?.text(),
             keyboard = AppKeyboard.DECIMAL,
             modifier = Modifier.fillMaxWidth(),
+        )
+        AppText(stringResource(Res.string.review_edit_kind), style = AppTheme.type.label)
+        ChoiceChips(
+            options = listOf(
+                ChoiceOption(true, stringResource(Res.string.review_kind_food)),
+                ChoiceOption(false, stringResource(Res.string.review_kind_other)),
+            ),
+            selected = state.isFood,
+            onSelect = { onEvent(BillReviewUiEvent.FoodChanged(it)) },
         )
         AppText(stringResource(Res.string.review_edit_units), style = AppTheme.type.label)
         QuantityStepper(

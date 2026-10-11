@@ -73,6 +73,7 @@ class BillReviewViewModelTest : ViewModelTest() {
         viewModel.onEvent(BillReviewUiEvent.EditLine(BillLineId("l2")))
         val edit = assertNotNull(viewModel.content().edit)
         assertEquals(Triple("Tea", 2, "90.00"), Triple(edit.name, edit.units, edit.amountText))
+        assertEquals(false, edit.isFood)
         viewModel.onEvent(BillReviewUiEvent.EditLine(BillLineId("missing")))
         assertEquals(BillLineId("l2"), viewModel.content().edit?.lineId)
     }
@@ -168,5 +169,16 @@ class BillReviewViewModelTest : ViewModelTest() {
         viewModel.onEvent(BillReviewUiEvent.UseCalculatedTotal)
         assertEquals(BillError.OFFLINE, viewModel.content().error)
         assertEquals(false, viewModel.content().isSaving)
+    }
+
+    @Test
+    fun markingAnItemAsFoodIsSavedWithTheEdit() {
+        val viewModel = viewModel()
+        viewModel.onEvent(BillReviewUiEvent.EditLine(BillLineId("l1")))
+        viewModel.onEvent(BillReviewUiEvent.FoodChanged(true))
+        assertEquals(true, viewModel.content().edit?.isFood)
+        viewModel.onEvent(BillReviewUiEvent.SaveLine)
+        assertEquals(true, viewModel.content().bill.lines.first().isFood)
+        assertEquals(true, repository.updates.single().second.lines?.first()?.isFood)
     }
 }

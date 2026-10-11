@@ -32,8 +32,8 @@ import app.rasoi.core.model.Bill
 import app.rasoi.core.model.BillId
 import app.rasoi.core.model.BillLine
 import app.rasoi.core.model.BillWarning
+import app.rasoi.core.model.format
 import app.rasoi.feature.invoiceimport.label
-import app.rasoi.feature.invoiceimport.measureText
 import app.rasoi.feature.invoiceimport.resources.Res
 import app.rasoi.feature.invoiceimport.resources.months_short
 import app.rasoi.feature.invoiceimport.resources.review_charges
@@ -47,6 +47,7 @@ import app.rasoi.feature.invoiceimport.resources.review_lines
 import app.rasoi.feature.invoiceimport.resources.review_load_error
 import app.rasoi.feature.invoiceimport.resources.review_mismatch_message
 import app.rasoi.feature.invoiceimport.resources.review_mismatch_title
+import app.rasoi.feature.invoiceimport.resources.review_not_food
 import app.rasoi.feature.invoiceimport.resources.review_quantity
 import app.rasoi.feature.invoiceimport.resources.review_quantity_measure
 import app.rasoi.feature.invoiceimport.resources.review_title
@@ -182,9 +183,15 @@ private fun SectionTitle(text: String) {
 
 @Composable
 private fun LineRow(line: BillLine, onClick: () -> Unit) {
-    val summary = line.measure?.let { stringResource(Res.string.review_quantity_measure, line.units, it.measureText()) }
+    val summary = line.measure?.let { stringResource(Res.string.review_quantity_measure, line.units, it.format()) }
         ?: stringResource(Res.string.review_quantity, line.units)
-    BillLineRow(name = line.displayName, amount = line.amount, allocationSummary = summary, onClick = onClick)
+    BillLineRow(
+        name = line.displayName,
+        amount = line.amount,
+        allocationSummary = summary,
+        tag = if (line.isFood) null else stringResource(Res.string.review_not_food),
+        onClick = onClick,
+    )
 }
 
 @Composable
