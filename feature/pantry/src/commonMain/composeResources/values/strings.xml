@@ -1,0 +1,56 @@
+<resources>
+    <string name="pantry_filter_all">All</string>
+    <string name="pantry_add">Add item</string>
+    <string name="pantry_empty_title">Your pantry is empty</string>
+    <string name="pantry_empty_message">Items from your grocery invoices appear here, or add one yourself.</string>
+    <string name="pantry_empty_filtered_title">Nothing here</string>
+    <string name="pantry_empty_filtered_message">No items are kept in this place.</string>
+    <string name="pantry_load_error">Couldn’t load the pantry. %1$s</string>
+    <string name="pantry_no_place">No storage place</string>
+    <string name="pantry_add_title">Add to pantry</string>
+    <string name="pantry_name">Item name</string>
+    <string name="pantry_amount">Quantity</string>
+    <string name="pantry_place">Storage place</string>
+    <string name="pantry_save">Add to pantry</string>
+    <string name="pantry_move_to">Move to</string>
+    <string name="pantry_best_before">Best before</string>
+    <string name="pantry_no_date">No date</string>
+    <string name="pantry_finish">Mark as finished</string>
+    <string name="pantry_discard">Discard</string>
+    <string name="pantry_discard_title">Discard this item?</string>
+    <string name="pantry_discard_message">%1$s will be removed from your pantry.</string>
+    <string name="pantry_discard_confirm">Discard item</string>
+    <string name="pantry_expiry_none">No expiry</string>
+    <string name="pantry_expiry_today">Expires today</string>
+    <string name="pantry_expiry_one">1 day left</string>
+    <string name="pantry_expiry_days">%1$d days left</string>
+    <string name="pantry_expired_one">Expired yesterday</string>
+    <string name="pantry_expired_days">Expired %1$d days ago</string>
+    <string name="pantry_date_format">%1$d %2$s</string>
+    <string name="unit_pieces">pcs</string>
+    <string name="unit_grams">g</string>
+    <string name="unit_kilograms">kg</string>
+    <string name="unit_millilitres">ml</string>
+    <string name="unit_litres">L</string>
+    <string name="error_offline">You appear to be offline. Try again when you’re connected.</string>
+    <string name="error_forbidden">Your role doesn’t allow changing the pantry.</string>
+    <string name="error_not_found">This item is no longer in the pantry.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="field_required">This can’t be empty.</string>
+    <string name="field_too_long">That’s too long.</string>
+    <string name="field_invalid_quantity">Enter an amount like 250 or 1.5.</string>
+    <string-array name="months_short">
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
+    </string-array>
+</resources>

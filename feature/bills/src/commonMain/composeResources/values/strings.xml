@@ -1,0 +1,106 @@
+<resources>
+    <string name="bills_title">Bills</string>
+    <string name="bills_import">Import invoice</string>
+    <string name="bills_add">Add a bill</string>
+    <string name="bills_empty_title">No bills yet</string>
+    <string name="bills_empty_message">Import a grocery invoice or add a bill by hand to start splitting costs.</string>
+    <string name="bills_load_error">Couldn’t load the bills. %1$s</string>
+    <string name="bills_paid_by">Paid by %1$s</string>
+    <string name="bills_lines_count">%1$d items</string>
+    <string name="bills_line_one">1 item</string>
+    <string name="platform_zepto">Zepto</string>
+    <string name="platform_blinkit">Blinkit</string>
+    <string name="platform_instamart">Instamart</string>
+    <string name="platform_handpickd">Handpickd</string>
+    <string name="platform_manual">Added by hand</string>
+    <string name="platform_other">Other store</string>
+    <string name="bills_status_draft">Draft</string>
+    <string name="bills_status_pending">Waiting for approval</string>
+    <string name="bills_status_changes">Changes requested</string>
+    <string name="bills_status_approved">Approved</string>
+    <string name="bills_status_locked">Locked</string>
+    <string name="bills_new_title">Add a bill</string>
+    <string name="bills_new_name">What was it for?</string>
+    <string name="bills_new_amount">Amount</string>
+    <string name="bills_new_save">Create bill</string>
+    <string name="bills_date_format">%1$d %2$s %3$d</string>
+    <string-array name="bills_months_short">
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
+    </string-array>
+
+    <string name="detail_title">Bill</string>
+    <string name="detail_load_error">Couldn’t load this bill. %1$s</string>
+    <string name="detail_items">Items</string>
+    <string name="detail_charges">Fees and discounts</string>
+    <string name="detail_shares">Who owes what</string>
+    <string name="detail_shares_hint">Split every item to see what each person owes.</string>
+    <string name="detail_approvals">Approvals</string>
+    <string name="detail_payer">Paid by</string>
+    <string name="detail_change_payer">Change who paid</string>
+    <string name="detail_not_split">Not split yet</string>
+    <string name="detail_non_food">Not food</string>
+    <string name="detail_charge_proportional">Shared in proportion to items</string>
+    <string name="detail_charge_equal">Shared equally</string>
+    <string name="detail_you">You</string>
+    <string name="detail_edit_items">Edit items</string>
+    <string name="detail_submit">Send for approval</string>
+    <string name="detail_approve">Approve</string>
+    <string name="detail_request_changes">Ask for changes</string>
+
+    <string name="banner_draft_title">Draft</string>
+    <string name="banner_draft_message">Split each item, then send it for approval.</string>
+    <string name="banner_mismatch_title">Totals don’t match</string>
+    <string name="banner_mismatch_message">The items add up to %1$s but the bill says %2$s. Edit the items to fix it.</string>
+    <string name="banner_locked_title">Locked</string>
+    <string name="banner_locked_message">This month is closed, so the bill can’t change.</string>
+    <string name="banner_pending_progress">%1$d of %2$d approved</string>
+    <string name="banner_changes_from">%1$s: %2$s</string>
+    <string name="banner_approved_everyone">Everyone agreed.</string>
+    <string name="banner_approved_automatic">Approved automatically after 48 hours.</string>
+
+    <string name="approval_pending">Waiting</string>
+    <string name="approval_approved">Approved</string>
+    <string name="approval_automatic">Approved automatically</string>
+    <string name="approval_changes">Asked for changes</string>
+
+    <string name="split_title">Split %1$s</string>
+    <string name="split_who">Who shares it?</string>
+    <string name="split_units_of">%1$d of %2$d assigned</string>
+    <string name="split_save">Save split</string>
+    <string name="split_error_members">Choose at least one person.</string>
+    <string name="split_error_one">Choose exactly one person.</string>
+    <string name="split_error_units">Assign all %1$d units between the people you chose.</string>
+
+    <string name="payer_title">Who paid?</string>
+    <string name="charge_title">How is %1$s shared?</string>
+    <string name="charge_proportional">In proportion to items</string>
+    <string name="charge_equal">Equally</string>
+
+    <string name="changes_title">Ask for changes</string>
+    <string name="changes_comment">What should change?</string>
+    <string name="changes_send">Send request</string>
+
+    <string name="field_required">This can’t be empty.</string>
+    <string name="field_too_long">That’s too long.</string>
+    <string name="field_invalid_amount">Enter an amount like 950.00.</string>
+
+    <string name="error_offline">You appear to be offline. Try again when you’re connected.</string>
+    <string name="error_forbidden">Your role doesn’t allow this.</string>
+    <string name="error_not_found">This bill is no longer available.</string>
+    <string name="error_locked">This bill is locked for the month, so it can’t be changed.</string>
+    <string name="error_changed">Someone just changed this bill. It has been reloaded; please try again.</string>
+    <string name="error_not_split">Every item needs to be split before the bill can be sent.</string>
+    <string name="error_mismatch">The items don’t add up to the bill’s total. Fix that first.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+</resources>

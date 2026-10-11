@@ -29,7 +29,7 @@ Phase 1 builds a Kotlin Multiplatform app (Android and iOS) plus a Kotlin backen
 | M4 | Bill split and approvals | Allocation, approval flow, auto-approve job, edits with re-approval |
 | M5 | Ledger and settlement | Month close, debt simplification, UPI deep link, mark as settled |
 | M6 | Kitchen | Use-first list, expiry notifications, dish suggestions from stock |
-| M7 | Hardening | End-to-end demo scenario passes, accessibility pass, release builds |
+| M7 | Hardening | End-to-end demo scenario passes, accessibility pass, release builds with production Firebase phone sign-in (ADR 0016) |
 
 ## 2. What the sample invoices tell us
 
@@ -44,12 +44,12 @@ All four samples have a text layer, so text extraction works without OCR, but ea
 
 **Parser requirements these samples force**
 
-- **Platform detection** by seller and footer signatures ("Swinsta", "Blink Commerce", "ZEPTO MARKETPLACE", "handpickd"), not by file name.
+- **Platform detection** by seller and footer signatures ("Swinsta", "Blink Commerce", "ZEPTO MARKETPLACE"), not by file name. Handpickd prints its name only in the logo image, so it is detected by its bill structure (ADR 0017).
 - **Wrapped descriptions:** item names span several lines (Instamart, Zepto), so rows are rebuilt from text positions, not split by newline.
 - **Multi-page tables** with repeated headers (Zepto).
 - **Zero-value promo lines** must be dropped (Instamart "Flyer - Nat Habit Shampoo", total 0).
 - **Non-food items** appear (Blinkit hot/cold pack). They are splittable but never enter the pantry.
-- **Split basis** = the amount actually paid per line: tax-inclusive Total for GST invoices; amount minus line promo for Handpickd (20 - 1 = 19).
+- **Split basis** = the amount actually paid per line: tax-inclusive Total for GST invoices; amount minus line promo for Handpickd (20 - 1 = 19). The exact columns per platform are in ADR 0017.
 - **Bill-level charges and discounts** (handling, delivery, extras, delivery discount) are separate charge lines, distributed by the split rules.
 - **Reconciliation check:** lines + charges - discounts + round-off must equal the invoice total, or the bill is flagged on the review screen. All four samples pass this check.
 - **HSN code as a category signal:** chapter 07/08 produce, 04 dairy, 19/21 packaged food, 22 beverages, 39 and 49 non-food. Use it for category, default location and expiry estimate.
@@ -75,7 +75,7 @@ Most of the logic lives in shared, pure Kotlin that is tested on the JVM; platfo
 **Correctness**
 
 1. **Money is `Long` paise.** Never `Float` or `Double`. One `Money` value class with arithmetic and formatting.
-2. **Quantities are `Long` base units** (milligrams, millilitres, or count × 1000) with a `Unit` enum.
+2. **Quantities are `Long` base units** (milligrams, millilitres, or count × 1000) with a `QuantityUnit` enum (named to avoid `kotlin.Unit`; ADR 0002).
 3. **Splits always sum exactly** to the source amount, using largest-remainder rounding. Tested as an invariant.
 4. **Time:** store UTC `Instant`s with `kotlinx-datetime`; convert to the household time zone only for display and month boundaries.
 5. **Errors are values:** repositories return a sealed `Result`-style type with typed failures. No exceptions cross layer boundaries.
@@ -114,9 +114,9 @@ The whole system is Kotlin, so the app and server share models and domain logic.
 | Auth | Firebase Auth phone OTP; server verifies the ID token | Phone numbers fit Indian flatmates and cooks |
 | Push | Firebase Cloud Messaging (Android, and iOS via APNs) | One channel for approvals and expiry alerts |
 | File storage | S3-compatible object storage | Invoice PDFs for re-parsing and dispute evidence |
-| Scheduled jobs | In-server scheduler with a jobs table | Auto-approve, expiry alerts, month close; no extra infrastructure |
+| Scheduled jobs | In-server `JobRunner` (`server:jobs`) running sweeps that derive due work from stored state | Auto-approve, expiry alerts, month close; no extra infrastructure and no queue to lose (ADR 0021) |
 | Payments | UPI deep link (`upi://pay`) + manual "mark settled" | No payment processing or licensing needed |
-| Build | Gradle version catalog + convention plugins | Consistent module setup |
+| Build | Gradle version catalog + convention plugins | Consistent module setup; every shared module also has a `jvm` target for fast local tests (ADR 0007) |
 | CI | GitHub Actions | Build, lint, test on every push |
 
 **Decisions to record as ADRs at M0:** server-side PDF parsing, money as paise, server-authoritative ledger, Firebase for auth and push, offline reads with online-only writes in Phase 1.
@@ -138,7 +138,8 @@ The LLD fixes the module layout, schema, bill lifecycle, algorithms, parser pipe
 ### 6.1 Module layout
 
 ```text
-composeApp/          Android + iOS entry, navigation graph, DI wiring
+composeApp/          shared app: navigation graph, DI wiring, iOS framework export
+androidApp/          Android entry (Application, MainActivity, manifest); AGP 9 needs it separate (ADR 0013)
 iosApp/              Xcode wrapper
 core/model/          entities, Money, Quantity, typed ids
 core/domain/         use cases: split, settlement, expiry, categorizer
@@ -149,14 +150,16 @@ core/testing/        fakes, builders, fixture loaders
 feature/household/   setup, invites, roles
 feature/pantry/      list, locations, item detail, manual add
 feature/invoiceimport/ pick PDF, parse review
-feature/bills/       bill editor, allocation, approvals
-feature/ledger/      balances, month close, settle up
+feature/bills/       bill list and detail, splitting, approvals
+feature/ledger/      balances, transfers, UPI pay, close month
 feature/kitchen/     use-first list, dish suggestions
 server/app/          Ktor entry, routing, auth, DI
 server/parsing/      extraction, detection, template parsers, LLM fallback
 server/jobs/         auto-approve, expiry alerts, month close
-server/notifications/ FCM
-fixtures/invoices/   redacted text fixtures (committed)
+server/notifications/ Notifier, FCM (ADR 0023)
+fixtures/invoices/   redacted text fixtures (committed; real PDFs git-ignored, ADR 0009)
+build-logic/         convention plugins and module/design-system rule checks (ADR 0010)
+build-logic-android/ Android convention plugins, used when rasoi.android=true (ADR 0007)
 docs/                design-plan.md, kickoff-prompt.md adr/
 ```
 
@@ -169,17 +172,19 @@ docs/                design-plan.md, kickoff-prompt.md adr/
 | memberships | household\_id, user\_id, role | Role: OWNER, MEMBER, COOK; unique per pair |
 | invites | code, household\_id, role, expires\_at | Single use |
 | locations | id, household\_id, name, kind | Kind: FRIDGE, FREEZER, SHELF, OTHER |
-| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, total\_paise, status, period\_id | Unique (household\_id, platform, invoice\_no) |
-| bill\_documents | bill\_id, storage\_key, sha256 | Several PDFs per bill |
-| bill\_lines | id, bill\_id, raw\_name, display\_name, quantity, unit, amount\_paise, hsn, upc, category, is\_food | amount\_paise = what was paid for the line |
+| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, created\_by, total\_paise, status, confidence, title, submitted\_at, version, period\_id | Unique (household\_id, platform, invoice\_no); every bill belongs to a period (ADR 0022) |
+| bill\_documents | bill\_id, household\_id, platform, invoice\_no, storage\_key, sha256 | Several PDFs per bill; unique per household by sha256 and by platform + invoice\_no |
+| bill\_lines | id, bill\_id, position, raw\_name, display\_name, units, measure\_amount, measure\_unit, amount\_paise, mrp\_paise, hsn, upc, category, is\_food | amount\_paise = what was paid for the line; units drive QUANTITY splits (ADR 0018) |
 | bill\_charges | id, bill\_id, kind, amount\_paise, distribution | Kind: HANDLING, DELIVERY, DISCOUNT, ROUND\_OFF, OTHER; signed amount |
-| allocations | line\_id, user\_id, mode, quantity, amount\_paise | Amounts stored after computation; sum = line amount |
-| approvals | bill\_id, user\_id, state, comment, decided\_at | State: PENDING, APPROVED, CHANGES\_REQUESTED |
-| periods | id, household\_id, month, status | OPEN or LOCKED |
-| settlements | id, period\_id, from\_user, to\_user, amount\_paise, status | PENDING or PAID |
-| pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED |
-| jobs | id, kind, run\_at, payload, status | Survives restarts |
-| device\_tokens | user\_id, token, platform | For FCM |
+| allocations | line\_id, user\_id, mode, units, amount\_paise | Amounts stored after computation; a line's rows sum to its amount; charge shares are derived, not stored (ADR 0021) |
+| approvals | bill\_id, user\_id, state, comment, decided\_at, automatic | State: PENDING, APPROVED, CHANGES\_REQUESTED; `automatic` marks the 48 h approval |
+| periods | id, household\_id, month, status, created\_at, closed\_at | Month is `YYYY-MM`; at most one OPEN period per household (ADR 0022) |
+| settlements | id, period\_id, from\_user, to\_user, amount\_paise, status, paid\_at | PENDING or PAID; written when a period closes |
+| pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, added\_on, price\_paise, payer\_id, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED; one item per source line (ADR 0020) |
+| device\_tokens | token, user\_id, platform, updated\_at | For FCM; the token is the key (ADR 0023) |
+| expiry\_alerts\_sent | item\_id, kind, sent\_at | Kind: EXPIRES\_SOON, EXPIRED; one row per item and kind so alerts are sent once (ADR 0023) |
+| sessions | token\_hash, user\_id, expires\_at | Opaque bearer sessions; only the hash is stored (ADR 0015) |
+| idempotency\_keys | user\_id, key, request\_hash, status\_code, response\_body | Replays the first response to a retried write (ADR 0015) |
 
 ### 6.3 Bill lifecycle
 
@@ -189,9 +194,9 @@ A bill moves from draft to locked through approval; only approved bills count to
 
 A change request loops the bill back to its uploader; an edit to an approved bill also returns it to pending, for affected members only.
 
-- **Affected members** = everyone with a non-zero share, excluding the payer if the payer submitted.
+- **Affected members** = everyone with a non-zero share, excluding the payer if the payer submitted. Cooks never hold a share.
 - **Auto-approve:** 48 hours after submission, remaining PENDING approvals become APPROVED by the system.
-- **Edits after approval** reset approval only for members whose share changed.
+- **Edits after approval** reset approval only for members whose share changed or who became affected (for example when the payer changes). Only the uploader or an owner may edit a submitted bill.
 - **Month close** (1st of the month, household time zone): the previous period locks; bills not yet approved move to the new period.
 
 ### 6.4 Core algorithms
@@ -204,6 +209,7 @@ A change request loops the bill back to its uploader; an edit to an approved bil
 6. **Categorizer.** HSN chapter gives the category and `is_food`; keyword rules override. Category sets default location (dairy to fridge) and expiry.
 7. **Expiry estimate.** A config table of default shelf life per category (for example milk 2 days, leafy vegetables 3), editable per item.
 8. **Use-first ranking.** In-stock food items sorted by days to expiry, then by quantity.
+9. **Dish ideas.** Only in-stock item names go to the model; dishes using anything else are dropped (ADR 0023).
 
 ### 6.5 Invoice parsing pipeline
 
@@ -219,8 +225,9 @@ A change request loops the bill back to its uploader; an edit to an approved bil
 interface InvoiceParser {
     val platform: Platform
     fun matches(document: ExtractedDocument): Boolean
-    fun parse(document: ExtractedDocument): ParseResult
+    fun parse(document: ExtractedDocument): AppResult<ParsedInvoice> // typed "unreadable" failures, no guessed totals
 }
+// InvoicePipeline runs steps 2-7 and returns AppResult<ParseResult(invoice, warnings, confidence)> (ADR 0017).
 ```
 
 ### 6.6 API (Phase 1)
@@ -228,18 +235,23 @@ interface InvoiceParser {
 | Method | Path | Purpose |
 | --- | --- | --- |
 | POST | /auth/session | Exchange a Firebase ID token for a session |
+| GET | /me | The caller and their households (ADR 0015) |
 | POST | /households | Create a household |
-| POST | /households/{id}/invites | Create an invite |
+| GET | /households/{id} | Household with members and locations (ADR 0015) |
+| POST | /households/{id}/invites | Create an invite (owner only, ADR 0014) |
 | POST | /invites/{code}/accept | Join a household |
 | GET, POST | /households/{id}/locations | List and add locations |
-| GET, POST, PATCH | /households/{id}/pantry | List, add and update pantry items |
-| POST | /households/{id}/invoices | Upload one or more PDFs; returns a parsed draft bill |
-| GET, POST | /households/{id}/bills | List by period; create a manual bill |
+| GET, POST | /households/{id}/pantry | List (`?status=`) and add pantry items |
+| PATCH | /households/{id}/pantry/{itemId} | Move, edit, finish or discard an item (ADR 0020) |
+| POST | /households/{id}/invoices | Upload one or more PDFs (JSON, Base64); returns a parsed draft bill (ADR 0018) |
+| GET | /bills/{id} | One bill with its review warnings (ADR 0018) |
+| GET, POST | /households/{id}/bills | List (other members' drafts are hidden); create a manual bill (ADR 0021) |
 | PATCH | /bills/{id} | Edit lines, payer, allocations, charges |
 | POST | /bills/{id}/submit | Send for approval |
 | POST | /bills/{id}/approvals | Approve or request changes |
-| GET | /households/{id}/ledger?period= | Balances and suggested transfers |
-| POST | /households/{id}/periods/{month}/close | Close a month early (owner only) |
+| GET | /households/{id}/ledger?period=YYYY-MM | Balances and transfers of a period; open periods show suggestions, closed ones stored settlements (ADR 0022) |
+| POST | /households/{id}/periods/{month}/close | Close the open period early (owner only) |
+| PATCH | /me | Set or clear the caller's UPI address (ADR 0022) |
 | POST | /settlements/{id}/paid | Mark a transfer as paid |
 | GET | /households/{id}/kitchen/use-first | Use-first list |
 | POST | /households/{id}/kitchen/suggestions | Dish ideas from current stock |
@@ -280,6 +292,8 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 | ApprovalBanner | Pending, approved, changes requested |
 | StateViews: Loading (skeleton), Empty, Error | Every screen's non-content states |
 | AppBottomSheet, ConfirmDialog | Pickers and destructive confirmation |
+| NoticeBanner | A warning or note above content, such as an import total mismatch (ADR 0019) |
+| FileRow | A picked file with its size and a remove button (ADR 0019) |
 
 Every component appears in a **catalog screen** (debug builds) in all states, light and dark, and each has screenshot tests.
 
@@ -345,7 +359,7 @@ Code follows the official Kotlin coding conventions, enforced by ktlint and dete
 **Git**
 
 - Conventional Commits (`feat(bills): add approval flow`), small and focused.
-- `main` is always green; work on short-lived branches named `m2/invoice-parsing`.
+- `main` is always green; work on short-lived branches named `m2/invoice-parsing` (Phase 1 is built on a single designated branch; ADR 0008).
 - Each milestone ends with a tag (`m2-complete`).
 
 **Review before every commit**

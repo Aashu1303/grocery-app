@@ -1,0 +1,24 @@
+{
+  "platform": "ZEPTO",
+  "invoiceNumber": "INV0000000000001",
+  "orderId": "ORDERDEMO000001",
+  "invoiceDate": "2026-10-10",
+  "lines": [
+    { "rawName": "Potato 900 g - 1 kg", "units": 1, "amount": "26.00", "mrp": "55.00", "hsn": "07101000" },
+    { "rawName": "Lijjat Papad - Punjabi Masala 1 pack (250 g)", "units": 1, "amount": "115.00", "mrp": "115.00", "hsn": "19059040" },
+    { "rawName": "Let's Try Flying Chilli Chips 1 pack (45 g)", "units": 1, "amount": "24.00", "mrp": "60.00", "hsn": "21069099" },
+    { "rawName": "Let's Try Boondi | Made With Real Groundnut Oil 1 pack(105 g)", "units": 1, "amount": "47.99", "mrp": "80.00", "hsn": "21069099" },
+    { "rawName": "Country Delight 40g Protein Taaza Paneer 1 pack (200 g)", "units": 1, "amount": "105.00", "mrp": "130.00", "hsn": "04061000" },
+    { "rawName": "Lemon 200 g", "units": 1, "amount": "52.00", "mrp": "164.00", "hsn": "07099990" },
+    { "rawName": "Desi Farms Low Fat Dahi Pouch 1 pack (400 g)", "units": 1, "amount": "32.00", "mrp": "34.00", "hsn": "04061000" },
+    { "rawName": "Let'S Try Purani Delhi Papdi 1 pack(193 g)", "units": 1, "amount": "100.00", "mrp": "150.00", "hsn": "21069099" },
+    { "rawName": "Tata Sampann Teekhi Imli Saunth Chutney Dip | Made with Tamarind & Dry Ginger | Tangy & Spicy Flavor 1 pack (200 g)", "units": 1, "amount": "71.00", "mrp": "75.00", "hsn": "21039090" },
+    { "rawName": "Akshayakalpa Organic High Protein Paneer 1 pack (200 g)", "units": 1, "amount": "176.00", "mrp": "176.00", "hsn": "04061000" },
+    { "rawName": "Let's Try Purani Delhi Methi Mathri 1 pack(193 g)", "units": 1, "amount": "118.00", "mrp": "150.00", "hsn": "21069099" }
+  ],
+  "charges": [
+    { "kind": "ROUND_OFF", "label": "Round off to", "amount": "0.01" }
+  ],
+  "total": "867.00",
+  "warnings": []
+}

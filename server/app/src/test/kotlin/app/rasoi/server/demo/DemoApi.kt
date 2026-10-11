@@ -1,0 +1,267 @@
+package app.rasoi.server.demo
+
+import app.rasoi.core.contract.ApiHeaders
+import app.rasoi.core.contract.HealthDto
+import app.rasoi.core.contract.auth.CreateSessionRequestDto
+import app.rasoi.core.contract.auth.MeDto
+import app.rasoi.core.contract.auth.SessionDto
+import app.rasoi.core.contract.auth.UpdateProfileRequestDto
+import app.rasoi.core.contract.bills.BillDto
+import app.rasoi.core.contract.bills.BillSummaryDto
+import app.rasoi.core.contract.bills.CreateBillRequestDto
+import app.rasoi.core.contract.bills.DecideApprovalRequestDto
+import app.rasoi.core.contract.bills.UpdateBillRequestDto
+import app.rasoi.core.contract.bills.UploadInvoicesRequestDto
+import app.rasoi.core.contract.devices.RegisterDeviceRequestDto
+import app.rasoi.core.contract.household.CreateHouseholdRequestDto
+import app.rasoi.core.contract.household.CreateInviteRequestDto
+import app.rasoi.core.contract.household.CreateLocationRequestDto
+import app.rasoi.core.contract.household.HouseholdDto
+import app.rasoi.core.contract.household.InviteDto
+import app.rasoi.core.contract.household.LocationDto
+import app.rasoi.core.contract.household.LocationKindDto
+import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.core.contract.kitchen.UseFirstEntryDto
+import app.rasoi.core.contract.ledger.LedgerDto
+import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
+import app.rasoi.core.contract.pantry.PantryItemDto
+import app.rasoi.core.contract.pantry.UpdatePantryItemRequestDto
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.patch
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import java.util.UUID
+import kotlin.test.assertEquals
+
+/**
+ * The demo scenario's view of the server: typed calls over real HTTP that remember which endpoints were
+ * exercised, so the scenario can prove it touches every endpoint (design-plan section 8).
+ */
+class DemoApi(private val client: HttpClient, private val baseUrl: String = "") {
+    val exercised = mutableSetOf<String>()
+
+    suspend fun health(): HealthDto = call("GET /health") { client.get("$baseUrl/health") }.body()
+
+    suspend fun signIn(phone: String, name: String): SessionDto = call("POST /auth/session") {
+        client.post("$baseUrl/auth/session") {
+            contentType(ContentType.Application.Json)
+            setBody(CreateSessionRequestDto("dev:$phone", name))
+        }
+    }.expect(HttpStatusCode.OK).body()
+
+    suspend fun me(session: SessionDto): MeDto = call("GET /me") {
+        client.get("$baseUrl/me") { authed(session) }
+    }.expect(HttpStatusCode.OK).body()
+
+    suspend fun createHousehold(owner: SessionDto, name: String): HouseholdDto = call("POST /households") {
+        client.post("$baseUrl/households") {
+            write(owner)
+            setBody(CreateHouseholdRequestDto(name, "Asia/Kolkata"))
+        }
+    }.expect(HttpStatusCode.Created).body()
+
+    suspend fun household(session: SessionDto, id: String): HttpResponse =
+        call("GET /households/{id}") { client.get("$baseUrl/households/$id") { authed(session) } }
+
+    suspend fun invite(session: SessionDto, householdId: String, role: RoleDto): HttpResponse =
+        call("POST /households/{id}/invites") {
+            client.post("$baseUrl/households/$householdId/invites") {
+                write(session)
+                setBody(CreateInviteRequestDto(role))
+            }
+        }
+
+    suspend fun accept(session: SessionDto, code: String): HttpResponse = call("POST /invites/{code}/accept") {
+        client.post("$baseUrl/invites/$code/accept") {
+            write(session)
+            setBody("{}")
+        }
+    }
+
+    suspend fun locations(session: SessionDto, householdId: String): HttpResponse =
+        call("GET /households/{id}/locations") {
+            client.get("$baseUrl/households/$householdId/locations") { authed(session) }
+        }
+
+    suspend fun addLocation(
+        session: SessionDto,
+        householdId: String,
+        name: String,
+        kind: LocationKindDto,
+    ): HttpResponse = call("POST /households/{id}/locations") {
+        client.post("$baseUrl/households/$householdId/locations") {
+            write(session)
+            setBody(CreateLocationRequestDto(name, kind))
+        }
+    }
+
+    suspend fun importInvoices(session: SessionDto, householdId: String, body: UploadInvoicesRequestDto): HttpResponse =
+        call("POST /households/{id}/invoices") {
+            client.post("$baseUrl/households/$householdId/invoices") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun bill(session: SessionDto, id: String): HttpResponse =
+        call("GET /bills/{id}") { client.get("$baseUrl/bills/$id") { authed(session) } }
+
+    suspend fun editBill(session: SessionDto, id: String, body: UpdateBillRequestDto): HttpResponse =
+        call("PATCH /bills/{id}") {
+            client.patch("$baseUrl/bills/$id") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun bills(session: SessionDto, householdId: String): HttpResponse =
+        call("GET /households/{id}/bills") { client.get("$baseUrl/households/$householdId/bills") { authed(session) } }
+
+    suspend fun createBill(session: SessionDto, householdId: String, body: CreateBillRequestDto): HttpResponse =
+        call("POST /households/{id}/bills") {
+            client.post("$baseUrl/households/$householdId/bills") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun submitBill(session: SessionDto, id: String): HttpResponse = call("POST /bills/{id}/submit") {
+        client.post("$baseUrl/bills/$id/submit") {
+            write(session)
+            setBody("{}")
+        }
+    }
+
+    suspend fun decide(session: SessionDto, id: String, body: DecideApprovalRequestDto): HttpResponse =
+        call("POST /bills/{id}/approvals") {
+            client.post("$baseUrl/bills/$id/approvals") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun billList(session: SessionDto, householdId: String): List<BillSummaryDto> =
+        bills(session, householdId).expect(HttpStatusCode.OK).body()
+
+    suspend fun imported(session: SessionDto, householdId: String, body: UploadInvoicesRequestDto): BillDto =
+        importInvoices(session, householdId, body).expect(HttpStatusCode.Created).body()
+
+    suspend fun pantry(session: SessionDto, householdId: String, status: String? = null): HttpResponse =
+        call("GET /households/{id}/pantry") {
+            client.get("$baseUrl/households/$householdId/pantry${status?.let { "?status=$it" }.orEmpty()}") {
+                authed(session)
+            }
+        }
+
+    suspend fun addPantryItem(session: SessionDto, householdId: String, body: CreatePantryItemRequestDto) =
+        call("POST /households/{id}/pantry") {
+            client.post("$baseUrl/households/$householdId/pantry") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun updatePantryItem(
+        session: SessionDto,
+        householdId: String,
+        itemId: String,
+        body: UpdatePantryItemRequestDto,
+    ): HttpResponse = call("PATCH /households/{id}/pantry/{itemId}") {
+        client.patch("$baseUrl/households/$householdId/pantry/$itemId") {
+            write(session)
+            setBody(body)
+        }
+    }
+
+    suspend fun pantryItems(session: SessionDto, householdId: String, status: String? = null): List<PantryItemDto> =
+        pantry(session, householdId, status).expect(HttpStatusCode.OK).body()
+
+    suspend fun setUpi(session: SessionDto, vpa: String?): HttpResponse = call("PATCH /me") {
+        client.patch("$baseUrl/me") {
+            write(session)
+            setBody(UpdateProfileRequestDto(vpa))
+        }
+    }
+
+    suspend fun ledgerResponse(session: SessionDto, householdId: String, month: String? = null): HttpResponse =
+        call("GET /households/{id}/ledger") {
+            client.get("$baseUrl/households/$householdId/ledger${month?.let { "?period=$it" }.orEmpty()}") {
+                authed(session)
+            }
+        }
+
+    suspend fun ledger(session: SessionDto, householdId: String, month: String? = null): LedgerDto =
+        ledgerResponse(session, householdId, month).expect(HttpStatusCode.OK).body()
+
+    suspend fun closeMonth(session: SessionDto, householdId: String, month: String): HttpResponse =
+        call("POST /households/{id}/periods/{month}/close") {
+            client.post("$baseUrl/households/$householdId/periods/$month/close") {
+                write(session)
+                setBody("{}")
+            }
+        }
+
+    suspend fun markPaid(session: SessionDto, settlementId: String): HttpResponse =
+        call("POST /settlements/{id}/paid") {
+            client.post("$baseUrl/settlements/$settlementId/paid") {
+                write(session)
+                setBody("{}")
+            }
+        }
+
+    suspend fun registerDevice(session: SessionDto, body: RegisterDeviceRequestDto): HttpResponse =
+        call("POST /devices") {
+            client.post("$baseUrl/devices") {
+                write(session)
+                setBody(body)
+            }
+        }
+
+    suspend fun useFirstResponse(session: SessionDto, householdId: String): HttpResponse =
+        call("GET /households/{id}/kitchen/use-first") {
+            client.get("$baseUrl/households/$householdId/kitchen/use-first") { authed(session) }
+        }
+
+    suspend fun useFirst(session: SessionDto, householdId: String): List<UseFirstEntryDto> =
+        useFirstResponse(session, householdId).expect(HttpStatusCode.OK).body()
+
+    suspend fun suggestions(session: SessionDto, householdId: String): HttpResponse =
+        call("POST /households/{id}/kitchen/suggestions") {
+            client.post("$baseUrl/households/$householdId/kitchen/suggestions") {
+                write(session)
+                setBody("{}")
+            }
+        }
+
+    suspend fun createdInvite(owner: SessionDto, householdId: String, role: RoleDto): InviteDto =
+        invite(owner, householdId, role).expect(HttpStatusCode.Created).body()
+
+    suspend fun locationList(session: SessionDto, householdId: String): List<LocationDto> =
+        locations(session, householdId).expect(HttpStatusCode.OK).body()
+
+    private suspend fun call(endpoint: String, request: suspend () -> HttpResponse): HttpResponse {
+        exercised += endpoint
+        return request()
+    }
+
+    private fun HttpRequestBuilder.authed(session: SessionDto) = bearerAuth(session.token)
+
+    private fun HttpRequestBuilder.write(session: SessionDto) {
+        authed(session)
+        contentType(ContentType.Application.Json)
+        header(ApiHeaders.IDEMPOTENCY_KEY, UUID.randomUUID().toString())
+    }
+}
+
+fun HttpResponse.expect(status: HttpStatusCode): HttpResponse = also {
+    assertEquals(status, it.status, "${call.request.url}")
+}

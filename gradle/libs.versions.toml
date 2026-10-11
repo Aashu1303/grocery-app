@@ -1,0 +1,106 @@
+# Every dependency has a one-line justification as a trailing comment.
+[versions]
+kotlin = "2.4.21"
+compose = "1.12.1"
+composeMaterial3 = "1.9.0"
+lifecycle = "2.11.0"
+navigation = "2.9.2"
+activityCompose = "1.10.1"
+agp = "9.1.0"
+firebaseAuth = "23.2.0"
+coroutines = "1.11.0"
+serialization = "1.11.0"
+datetime = "0.8.0"
+ktor = "3.6.0"
+koin = "4.2.2"
+sqldelight = "2.4.1"
+exposed = "1.5.1"
+flyway = "13.10.0"
+postgres = "42.7.14"
+hikari = "7.1.0"
+pdfbox = "3.0.8"
+logback = "1.6.5"
+turbine = "1.2.1"
+kover = "0.9.11"
+detekt = "1.23.8"
+ktlintGradle = "14.2.0"
+roborazzi = "1.76.0"
+testcontainers = "2.0.5"
+javaJwt = "4.6.1"
+settings = "1.3.0"
+jwksRsa = "0.24.1"
+
+[libraries]
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" } # structured concurrency and Flow
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" } # virtual time in tests
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" } # shared DTO serialization
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" } # multiplatform Instant and time zones
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" } # DI without code generation
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" } # Koin integration for Compose
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" } # ViewModel injection in Compose
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" } # module verification in tests
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" } # multiplatform HTTP client
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" } # JSON bodies on the client
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" } # MockEngine for data-layer tests
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" } # Android and JVM engine
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" } # iOS engine
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" } # kotlinx.serialization bridge
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" } # server routing and plugins
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" } # production server engine
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" } # JSON bodies on the server
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" } # typed error mapping
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" } # bearer session authentication
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" } # testApplication for route tests
+sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" } # typed SQL runtime
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" } # query Flows
+sqldelight-driver-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" } # Android SQLite driver
+sqldelight-driver-native = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" } # iOS SQLite driver
+sqldelight-driver-sqlite = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" } # in-memory JVM driver for tests
+exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" } # server SQL DSL
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" } # JDBC transactions
+exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" } # kotlin.time.Instant columns
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" } # schema migrations
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" } # PostgreSQL support for Flyway
+postgres-driver = { module = "org.postgresql:postgresql", version.ref = "postgres" } # PostgreSQL JDBC driver
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" } # connection pool
+java-jwt = { module = "com.auth0:java-jwt", version.ref = "javaJwt" } # verifies Firebase ID tokens and signs the FCM service-account assertion
+jwks-rsa = { module = "com.auth0:jwks-rsa", version.ref = "jwksRsa" } # fetches and caches Google signing keys
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" } # PDF text with positions
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" } # server logging
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "settings" } # Keychain-backed session storage on iOS
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" } # Flow assertions
+testcontainers-postgres = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" } # real PostgreSQL in route tests
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" } # Compose runtime
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" } # layout and gestures
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" } # core UI primitives
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMaterial3" } # Material 3 wrapped by AppTheme
+compose-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" } # multiplatform string resources
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "compose" } # @Preview in common code
+compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "compose" } # multiplatform UI tests
+compose-ui-test-junit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "compose" } # desktop UI test rule for screenshots
+lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" } # MVI ViewModels in common code
+lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" } # collectAsStateWithLifecycle
+lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" } # ViewModel base class in common code
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" } # type-safe navigation
+firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" } # production phone OTP sign-in in Android release builds (ADR 0024)
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" } # Android entry point for Compose
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" } # Main dispatcher for desktop tests
+junit4 = { module = "junit:junit", version = "4.13.2" } # runner required by the Compose desktop test rule
+# Gradle plugin artifacts used by build-logic
+plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+plugin-kotlin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin" }
+plugin-compose-compiler = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+plugin-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose" }
+plugin-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+plugin-kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
+plugin-detekt = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
+plugin-roborazzi = { module = "io.github.takahirom.roborazzi:io.github.takahirom.roborazzi.gradle.plugin", version.ref = "roborazzi" }
+plugin-sqldelight = { module = "app.cash.sqldelight:gradle-plugin", version.ref = "sqldelight" }
+roborazzi-compose-desktop = { module = "io.github.takahirom.roborazzi:roborazzi-compose-desktop", version.ref = "roborazzi" } # screenshot tests on Compose Desktop
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Rasoi</string>
+    <string name="tab_kitchen">Kitchen</string>
+    <string name="tab_pantry">Pantry</string>
+    <string name="tab_bills">Bills</string>
+    <string name="tab_balances">Balances</string>
+    <string name="open_catalog">Design system</string>
+    <string name="app_load_error">Couldn’t load your household. Check your connection.</string>
+</resources>

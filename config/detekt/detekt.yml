@@ -1,0 +1,46 @@
+build:
+  maxIssues: 0
+
+style:
+  MagicNumber:
+    ignoreNamedArgument: true
+    ignoreEnums: true
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    excludes: ['**/commonTest/**', '**/jvmTest/**', '**/test/**', '**/designsystem/**/tokens/**', '**/designsystem/**/theme/**', '**/designsystem/**/icon/**']
+  MaxLineLength:
+    maxLineLength: 120
+  ForbiddenComment:
+    comments: ['TODO', 'FIXME', 'STOPSHIP', 'XXX']
+  ReturnCount:
+    max: 3
+  UnusedPrivateMember:
+    active: true
+
+potential-bugs:
+  UnsafeCallOnNullableType:
+    active: true
+  UnsafeCast:
+    active: true
+
+coroutines:
+  GlobalCoroutineUsage:
+    active: true
+
+complexity:
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
+    ignoreDefaultParameters: true
+  TooManyFunctions:
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    thresholdInObjects: 20
+    thresholdInInterfaces: 20
+    excludes: ['**/commonTest/**', '**/jvmTest/**', '**/test/**']
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9]*|[A-Z][_A-Z0-9]*'

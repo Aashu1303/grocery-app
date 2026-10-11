@@ -1,0 +1,12 @@
+{
+  "platform": "BLINKIT",
+  "invoiceNumber": "INV0000000000002",
+  "orderId": "9000000002",
+  "invoiceDate": "2026-10-02",
+  "lines": [
+    { "rawName": "Boldfit Reusable Hot / Cold Pack", "units": 1, "amount": "129.00", "mrp": "399.00", "hsn": "39269099", "upc": "8906135454263" }
+  ],
+  "charges": [],
+  "total": "129.00",
+  "warnings": []
+}
