@@ -15,6 +15,9 @@ import app.rasoi.core.contract.household.CreateLocationRequestDto
 import app.rasoi.core.contract.household.HouseholdDto
 import app.rasoi.core.contract.household.InviteDto
 import app.rasoi.core.contract.household.LocationDto
+import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
+import app.rasoi.core.contract.pantry.PantryItemDto
+import app.rasoi.core.contract.pantry.UpdatePantryItemRequestDto
 import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import io.ktor.client.HttpClient
@@ -34,6 +37,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.ListSerializer
 import kotlin.uuid.Uuid
 
 /**
@@ -76,6 +80,24 @@ class RasoiApi(
 
     suspend fun updateBill(id: String, request: UpdateBillRequestDto): AppResult<BillDto> =
         write("/bills/$id", BillDto.serializer(), HttpMethod.Patch) { jsonBody(request) }
+
+    suspend fun pantry(householdId: String, status: String): AppResult<List<PantryItemDto>> = send(
+        HttpMethod.Get,
+        "/households/$householdId/pantry?status=$status",
+        ListSerializer(PantryItemDto.serializer()),
+    )
+
+    suspend fun addPantryItem(householdId: String, request: CreatePantryItemRequestDto): AppResult<PantryItemDto> =
+        write("/households/$householdId/pantry", PantryItemDto.serializer()) { jsonBody(request) }
+
+    suspend fun updatePantryItem(
+        householdId: String,
+        itemId: String,
+        request: UpdatePantryItemRequestDto,
+    ): AppResult<PantryItemDto> =
+        write("/households/$householdId/pantry/$itemId", PantryItemDto.serializer(), HttpMethod.Patch) {
+            jsonBody(request)
+        }
 
     private suspend fun <T> write(
         path: String,

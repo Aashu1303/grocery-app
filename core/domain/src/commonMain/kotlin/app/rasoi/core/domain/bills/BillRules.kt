@@ -1,5 +1,6 @@
 package app.rasoi.core.domain.bills
 
+import app.rasoi.core.domain.pantry.Categorizer
 import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import app.rasoi.core.model.Bill
@@ -66,17 +67,40 @@ object BillRules {
             }
         }
         if (unknown.isNotEmpty()) return AppResult.Failure(AppError.Validation(unknown))
-        val lines = edit.lines?.map { line ->
-            val name = line.displayName.trim()
-            line.id?.let { existingLines.getValue(it) }
-                ?.copy(displayName = name, units = line.units, amount = line.amount)
-                ?: BillLine(newLineId(), rawName = name, displayName = name, units = line.units, amount = line.amount)
-        }
+        val lines = edit.lines?.map { line -> editedLine(line, existingLines, bill, newLineId) }
         val charges = edit.charges?.map { charge ->
             BillCharge(charge.id ?: newChargeId(), charge.kind, charge.label.trim(), charge.amount)
         }
         return AppResult.Success(
             bill.copy(lines = lines ?: bill.lines, charges = charges ?: bill.charges, total = edit.total ?: bill.total),
+        )
+    }
+
+    private fun editedLine(
+        edit: LineEdit,
+        existing: Map<BillLineId, BillLine>,
+        bill: Bill,
+        newLineId: () -> BillLineId,
+    ): BillLine {
+        val name = edit.displayName.trim()
+        val current = edit.id?.let { existing.getValue(it) }
+        if (current != null) {
+            return current.copy(
+                displayName = name,
+                units = edit.units,
+                amount = edit.amount,
+                isFood = edit.isFood ?: current.isFood,
+            )
+        }
+        val categorization = Categorizer.categorize(name, hsn = null, platform = bill.platform)
+        return BillLine(
+            id = newLineId(),
+            rawName = name,
+            displayName = name,
+            units = edit.units,
+            amount = edit.amount,
+            category = categorization.category,
+            isFood = edit.isFood ?: categorization.isFood,
         )
     }
 

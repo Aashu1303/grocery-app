@@ -1,7 +1,4 @@
-package app.rasoi.feature.invoiceimport
-
-import app.rasoi.core.model.Quantity
-import app.rasoi.core.model.QuantityUnit
+package app.rasoi.core.model
 
 private const val MILLIGRAMS_PER_GRAM = 1_000L
 private const val MILLIGRAMS_PER_KILOGRAM = 1_000_000L
@@ -10,8 +7,8 @@ private const val THOUSANDTHS = 1_000L
 private const val GRAM_DIGITS = 3
 private const val KILOGRAM_DIGITS = 6
 
-/** A measure as printed on invoices: `470 g`, `1.5 kg`, `500 ml`, `1.5 L`, `6 pc`. Unit symbols are not translated. */
-fun Quantity.measureText(): String = when (unit) {
+/** A quantity as written on invoices: `470 g`, `1.5 kg`, `500 ml`, `1.5 L`, `6 pc`. Unit symbols are not translated. */
+fun Quantity.format(): String = when (unit) {
     QuantityUnit.MILLIGRAM ->
         if (amount < MILLIGRAMS_PER_KILOGRAM) {
             "${decimal(amount, MILLIGRAMS_PER_GRAM, GRAM_DIGITS)} g"

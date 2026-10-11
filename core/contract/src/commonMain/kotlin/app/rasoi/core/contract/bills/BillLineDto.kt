@@ -13,4 +13,6 @@ data class BillLineDto(
     val mrpPaise: Long? = null,
     val hsn: String? = null,
     val upc: String? = null,
+    val category: CategoryDto = CategoryDto.OTHER,
+    val isFood: Boolean = false,
 )

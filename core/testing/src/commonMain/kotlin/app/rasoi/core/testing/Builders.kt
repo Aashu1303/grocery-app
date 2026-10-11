@@ -7,6 +7,7 @@ import app.rasoi.core.model.BillId
 import app.rasoi.core.model.BillLine
 import app.rasoi.core.model.BillLineId
 import app.rasoi.core.model.BillStatus
+import app.rasoi.core.model.Category
 import app.rasoi.core.model.ChargeId
 import app.rasoi.core.model.ChargeKind
 import app.rasoi.core.model.Household
@@ -17,8 +18,12 @@ import app.rasoi.core.model.LocationId
 import app.rasoi.core.model.LocationKind
 import app.rasoi.core.model.Member
 import app.rasoi.core.model.Money
+import app.rasoi.core.model.PantryItem
+import app.rasoi.core.model.PantryItemId
+import app.rasoi.core.model.PantryStatus
 import app.rasoi.core.model.PhoneNumber
 import app.rasoi.core.model.Platform
+import app.rasoi.core.model.Quantity
 import app.rasoi.core.model.Role
 import app.rasoi.core.model.User
 import app.rasoi.core.model.UserId
@@ -76,5 +81,25 @@ object Builders {
         lines = lines,
         charges = charges,
         total = total,
+    )
+
+    fun pantryItem(
+        id: String = "p1",
+        name: String = "Rice",
+        category: Category = Category.STAPLES,
+        quantity: Quantity = Quantity.count(1),
+        locationId: String? = "l1",
+        expiresOn: LocalDate? = null,
+        status: PantryStatus = PantryStatus.IN_STOCK,
+    ) = PantryItem(
+        id = PantryItemId(id),
+        householdId = HouseholdId("h1"),
+        name = name,
+        category = category,
+        quantity = quantity,
+        locationId = locationId?.let(::LocationId),
+        expiresOn = expiresOn,
+        status = status,
+        addedOn = LocalDate.parse("2026-10-04"),
     )
 }

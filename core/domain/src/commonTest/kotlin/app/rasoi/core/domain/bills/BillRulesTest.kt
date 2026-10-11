@@ -6,6 +6,7 @@ import app.rasoi.core.model.Bill
 import app.rasoi.core.model.BillLineId
 import app.rasoi.core.model.BillStatus
 import app.rasoi.core.model.BillWarning
+import app.rasoi.core.model.Category
 import app.rasoi.core.model.ChargeId
 import app.rasoi.core.model.ChargeKind
 import app.rasoi.core.model.ImportConfidence
@@ -138,5 +139,37 @@ class BillRulesTest {
         val charge = BillEdit(charges = listOf(ChargeEdit(ChargeId("nope"), ChargeKind.OTHER, "Fee", Money(1))))
         val chargeResult = BillRules.apply(Builders.bill(), charge, { BillLineId("n") }, { ChargeId("n") })
         assertEquals(listOf("charges[0].id" to "unknown"), violations(chargeResult))
+    }
+
+    @Test
+    fun newLinesAreCategorizedFromTheirName() {
+        val edit = BillEdit(
+            lines = listOf(
+                LineEdit(null, "Amul Paneer", 1, Money(9_000)),
+                LineEdit(null, "Colgate Toothpaste", 1, Money(2_000)),
+                LineEdit(null, "Mystery item", 1, Money(500), isFood = true),
+            ),
+        )
+        var next = 0
+        val result = BillRules.apply(Builders.bill(), edit, { BillLineId("n${next++}") }, { ChargeId("c") })
+        val lines = assertIs<AppResult.Success<Bill>>(result).value.lines
+        assertEquals(
+            listOf(Category.DAIRY to true, Category.PERSONAL_CARE to false, Category.OTHER to true),
+            lines.map { it.category to it.isFood },
+        )
+    }
+
+    @Test
+    fun editingALineKeepsItsCategoryAndOnlyChangesFoodWhenAsked() {
+        val dairy = Builders.line(id = "l1", name = "Paneer").copy(category = Category.DAIRY, isFood = true)
+        val bill = Builders.bill(lines = listOf(dairy))
+
+        fun foodAfter(isFood: Boolean?): Pair<Category, Boolean> {
+            val edit = BillEdit(lines = listOf(LineEdit(dairy.id, "Fresh paneer", 1, dairy.amount, isFood)))
+            val result = BillRules.apply(bill, edit, { BillLineId("n") }, { ChargeId("c") })
+            return assertIs<AppResult.Success<Bill>>(result).value.lines.single().let { it.category to it.isFood }
+        }
+        assertEquals(Category.DAIRY to true, foodAfter(null))
+        assertEquals(Category.DAIRY to false, foodAfter(false))
     }
 }
