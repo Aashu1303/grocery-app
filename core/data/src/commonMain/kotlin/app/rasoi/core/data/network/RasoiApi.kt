@@ -6,6 +6,9 @@ import app.rasoi.core.contract.ErrorDto
 import app.rasoi.core.contract.auth.CreateSessionRequestDto
 import app.rasoi.core.contract.auth.MeDto
 import app.rasoi.core.contract.auth.SessionDto
+import app.rasoi.core.contract.bills.BillDto
+import app.rasoi.core.contract.bills.UpdateBillRequestDto
+import app.rasoi.core.contract.bills.UploadInvoicesRequestDto
 import app.rasoi.core.contract.household.CreateHouseholdRequestDto
 import app.rasoi.core.contract.household.CreateInviteRequestDto
 import app.rasoi.core.contract.household.CreateLocationRequestDto
@@ -66,15 +69,24 @@ class RasoiApi(
     suspend fun addLocation(householdId: String, request: CreateLocationRequestDto): AppResult<LocationDto> =
         write("/households/$householdId/locations", LocationDto.serializer()) { jsonBody(request) }
 
+    suspend fun importInvoices(householdId: String, request: UploadInvoicesRequestDto): AppResult<BillDto> =
+        write("/households/$householdId/invoices", BillDto.serializer()) { jsonBody(request) }
+
+    suspend fun bill(id: String): AppResult<BillDto> = send(HttpMethod.Get, "/bills/$id", BillDto.serializer())
+
+    suspend fun updateBill(id: String, request: UpdateBillRequestDto): AppResult<BillDto> =
+        write("/bills/$id", BillDto.serializer(), HttpMethod.Patch) { jsonBody(request) }
+
     private suspend fun <T> write(
         path: String,
         serializer: KSerializer<T>,
+        method: HttpMethod = HttpMethod.Post,
         body: HttpRequestBuilder.() -> Unit,
     ): AppResult<T> {
         val key = newIdempotencyKey()
         var attempt = 0
         while (true) {
-            val result = send(HttpMethod.Post, path, serializer) {
+            val result = send(method, path, serializer) {
                 header(ApiHeaders.IDEMPOTENCY_KEY, key)
                 body()
             }
