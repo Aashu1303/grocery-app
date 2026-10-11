@@ -11,17 +11,23 @@ import app.rasoi.core.model.AppResult
 import app.rasoi.core.model.UserId
 import app.rasoi.core.model.map
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.plus
 
-/** Auth state is derived from the stored session, so a 401 anywhere signs the user out everywhere. */
+/**
+ * Auth state is derived from the stored session, so a 401 anywhere signs the user out everywhere. The derivation runs
+ * unconfined so [state] is already current when `SessionHolder.restore` or `save` returns; on another dispatcher the
+ * start-up routing read a stale SignedOut and a restored session landed on the sign-in screen.
+ */
 class DefaultAuthRepository(private val api: RasoiApi, private val sessions: SessionHolder, scope: CoroutineScope) :
     AuthRepository {
     override val state: StateFlow<AuthState> = sessions.session
         .map { it?.let { session -> AuthState.SignedIn(session.toAccount()) } ?: AuthState.SignedOut }
-        .stateIn(scope, SharingStarted.Eagerly, AuthState.SignedOut)
+        .stateIn(scope + Dispatchers.Unconfined, SharingStarted.Eagerly, AuthState.SignedOut)
 
     override suspend fun signIn(idToken: String, displayName: String?): AppResult<Account> =
         api.createSession(CreateSessionRequestDto(idToken, displayName)).map { dto ->
