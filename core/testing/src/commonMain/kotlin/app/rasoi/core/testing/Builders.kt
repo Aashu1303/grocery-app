@@ -1,16 +1,28 @@
 package app.rasoi.core.testing
 
 import app.rasoi.core.domain.household.HouseholdDetails
+import app.rasoi.core.model.Bill
+import app.rasoi.core.model.BillCharge
+import app.rasoi.core.model.BillId
+import app.rasoi.core.model.BillLine
+import app.rasoi.core.model.BillLineId
+import app.rasoi.core.model.BillStatus
+import app.rasoi.core.model.ChargeId
+import app.rasoi.core.model.ChargeKind
 import app.rasoi.core.model.Household
 import app.rasoi.core.model.HouseholdId
+import app.rasoi.core.model.ImportConfidence
 import app.rasoi.core.model.Location
 import app.rasoi.core.model.LocationId
 import app.rasoi.core.model.LocationKind
 import app.rasoi.core.model.Member
+import app.rasoi.core.model.Money
 import app.rasoi.core.model.PhoneNumber
+import app.rasoi.core.model.Platform
 import app.rasoi.core.model.Role
 import app.rasoi.core.model.User
 import app.rasoi.core.model.UserId
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 
 /** Test data builders with sensible defaults; override only what a test cares about. */
@@ -31,4 +43,38 @@ object Builders {
         members: List<Member> = listOf(member()),
         locations: List<Location> = listOf(location()),
     ) = HouseholdDetails(household, members, locations)
+
+    fun line(id: String = "line1", name: String = "Onion", amount: Long = 4_000, units: Int = 1) =
+        BillLine(BillLineId(id), rawName = name, displayName = name, units = units, amount = Money(amount))
+
+    fun charge(
+        id: String = "c1",
+        kind: ChargeKind = ChargeKind.HANDLING,
+        label: String = "Handling",
+        amount: Long = 500,
+    ) = BillCharge(ChargeId(id), kind, label, Money(amount))
+
+    /** A reconciled draft unless [total] says otherwise. */
+    fun bill(
+        id: String = "b1",
+        lines: List<BillLine> = listOf(line()),
+        charges: List<BillCharge> = emptyList(),
+        total: Money = Money(lines.sumOf { it.amount.paise } + charges.sumOf { it.amount.paise }),
+        status: BillStatus = BillStatus.DRAFT,
+        confidence: ImportConfidence = ImportConfidence.HIGH,
+    ) = Bill(
+        id = BillId(id),
+        householdId = HouseholdId("h1"),
+        platform = Platform.ZEPTO,
+        invoiceNumber = "INV-1",
+        orderId = "ORDER-1",
+        invoiceDate = LocalDate.parse("2026-10-04"),
+        payerId = UserId("u1"),
+        createdBy = UserId("u1"),
+        status = status,
+        confidence = confidence,
+        lines = lines,
+        charges = charges,
+        total = total,
+    )
 }

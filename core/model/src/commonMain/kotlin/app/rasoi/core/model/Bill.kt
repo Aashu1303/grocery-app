@@ -1,0 +1,20 @@
+package app.rasoi.core.model
+
+import kotlinx.datetime.LocalDate
+
+/** A household bill built from one or more invoices of one order, or entered by hand (design-plan 6.2). */
+data class Bill(
+    val id: BillId,
+    val householdId: HouseholdId,
+    val platform: Platform,
+    val invoiceNumber: String,
+    val orderId: String?,
+    val invoiceDate: LocalDate,
+    val payerId: UserId,
+    val createdBy: UserId,
+    val status: BillStatus,
+    val confidence: ImportConfidence,
+    val lines: List<BillLine>,
+    val charges: List<BillCharge>,
+    val total: Money,
+)
