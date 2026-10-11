@@ -11,6 +11,7 @@ import app.rasoi.core.domain.auth.AuthRepository
 import app.rasoi.core.domain.bills.BillRepository
 import app.rasoi.core.domain.household.HouseholdRepository
 import app.rasoi.core.domain.pantry.PantryRepository
+import app.rasoi.feature.bills.billsFeatureModule
 import app.rasoi.feature.household.householdFeatureModule
 import app.rasoi.feature.invoiceimport.invoiceImportFeatureModule
 import app.rasoi.feature.pantry.pantryFeatureModule
@@ -30,7 +31,12 @@ val appModule: Module = module {
 }
 
 /** One Koin module per feature module; the app and its tests load them all. */
-val featureModules: List<Module> = listOf(householdFeatureModule, invoiceImportFeatureModule, pantryFeatureModule)
+val featureModules: List<Module> = listOf(
+    householdFeatureModule,
+    invoiceImportFeatureModule,
+    pantryFeatureModule,
+    billsFeatureModule,
+)
 
 fun dataModule(platform: PlatformDependencies): Module = module {
     single { platform.phoneAuth }

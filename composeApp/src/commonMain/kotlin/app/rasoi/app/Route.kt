@@ -28,4 +28,7 @@ sealed interface Route {
 
     @Serializable
     data class BillReview(val billId: String) : Route
+
+    @Serializable
+    data class BillDetail(val billId: String) : Route
 }

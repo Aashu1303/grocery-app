@@ -9,6 +9,7 @@ kotlin {
             implementation(project(":core:model"))
             implementation(project(":core:domain"))
             implementation(project(":core:designsystem"))
+            implementation(project(":feature:bills"))
             implementation(project(":feature:household"))
             implementation(project(":feature:invoiceimport"))
             implementation(project(":feature:pantry"))

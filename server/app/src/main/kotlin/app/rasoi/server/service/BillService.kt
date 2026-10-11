@@ -54,7 +54,7 @@ class BillService(
 
     suspend fun createManual(userId: UserId, householdId: HouseholdId, draft: ManualBillDraft): AppResult<Bill> =
         households.authorize(userId, householdId, Permission.EDIT_BILLS)
-            .flatMap { ensureParticipants(householdId, listOf(draft.payerId), "payerId") }
+            .flatMap { ensureParticipants(householdId, listOfNotNull(draft.payerId), "payerId") }
             .flatMap {
                 ManualBills.create(
                     id = Uuid.random().toBillId(),

@@ -19,12 +19,12 @@ import kotlinx.datetime.LocalDate
 
 /**
  * A bill typed in by hand (design-plan 6.3), for what no invoice covers: rent, a gas cylinder, a shared gift.
- * A null [invoiceDate] means today in the household's time zone.
+ * A null [invoiceDate] means today in the household's time zone, and a null [payerId] the person creating the bill.
  */
 data class ManualBillDraft(
     val title: String,
     val invoiceDate: LocalDate? = null,
-    val payerId: UserId,
+    val payerId: UserId? = null,
     val lines: List<LineEdit>,
     val charges: List<ChargeEdit>,
 )
@@ -57,7 +57,7 @@ object ManualBills {
             invoiceNumber = "manual-${id.value.take(INVOICE_SUFFIX_LENGTH)}",
             orderId = null,
             invoiceDate = valid.invoiceDate ?: today,
-            payerId = valid.payerId,
+            payerId = valid.payerId ?: creator,
             createdBy = creator,
             status = BillStatus.DRAFT,
             confidence = ImportConfidence.HIGH,

@@ -41,6 +41,17 @@ entered.
   typed in. The server sets the total to the lines plus charges, so they never carry a mismatch. Each gets a unique
   invoice number derived from its id.
 
+## Client
+- `feature:bills` has two screens. The **list** shows every bill with its status and offers "Import invoice" and "Add a
+  bill"; the second takes a title and a total, creates a one-line manual bill and opens it. The **detail** screen shows
+  the status, the items with who shares each, what each person owes, and the next step for the viewer: split items,
+  send for approval, approve, or ask for changes with a reason.
+- Splitting works one item at a time in a sheet (one person, equal, or by quantity), with the same allocator the
+  server uses so mistakes show before a request is sent. Cooks are never offered as sharers.
+- Editing the lines of a draft stays in the invoice review screen (ADR 0019); the detail screen links to it.
+- Every change is saved to the server straight away. If the server answers `bill_changed`, the screen reloads the bill
+  and says so; the user repeats the change.
+
 ## Consequences
 - Charge edits and payer changes need no data repair.
 - Auto-approval is testable by moving the test clock and calling the sweep; the demo scenario does exactly that.

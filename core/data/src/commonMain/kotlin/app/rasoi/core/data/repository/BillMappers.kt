@@ -119,7 +119,7 @@ internal fun ManualBillDraft.toDto() = CreateBillRequestDto(
     invoiceDate = invoiceDate?.toString(),
     lines = lines.map { it.toDto() },
     charges = charges.map { it.toDto() },
-    payerId = payerId.value,
+    payerId = payerId?.value,
 )
 
 private fun LineEdit.toDto() = BillLineEditDto(id?.value, displayName, units, amount.paise, isFood)

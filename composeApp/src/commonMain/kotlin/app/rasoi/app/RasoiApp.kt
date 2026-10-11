@@ -23,9 +23,6 @@ import androidx.navigation.toRoute
 import app.rasoi.app.resources.Res
 import app.rasoi.app.resources.app_load_error
 import app.rasoi.app.resources.app_name
-import app.rasoi.app.resources.bills_empty_message
-import app.rasoi.app.resources.bills_empty_title
-import app.rasoi.app.resources.bills_import
 import app.rasoi.app.resources.open_catalog
 import app.rasoi.core.designsystem.catalog.CatalogScreen
 import app.rasoi.core.designsystem.component.AppBottomBar
@@ -38,9 +35,9 @@ import app.rasoi.core.designsystem.component.ErrorView
 import app.rasoi.core.designsystem.component.LoadingView
 import app.rasoi.core.designsystem.component.MemberAvatar
 import app.rasoi.core.designsystem.theme.AppTheme
-import app.rasoi.core.domain.household.Permission
-import app.rasoi.core.domain.household.RolePolicy
 import app.rasoi.core.model.BillId
+import app.rasoi.feature.bills.detail.BillDetailRoute
+import app.rasoi.feature.bills.list.BillsRoute
 import app.rasoi.feature.household.detail.HouseholdRoute
 import app.rasoi.feature.household.setup.HouseholdSetupRoute
 import app.rasoi.feature.household.signin.SignInRoute
@@ -115,7 +112,21 @@ private fun NavGraphBuilder.appDestinations(state: AppState.Ready, navController
         PantryRoute(householdId = state.household.household.id, myRole = state.household.role)
     }
     composable<Route.Bills> {
-        BillsPlaceholder(state, onImport = { navController.navigate(Route.ImportInvoices) })
+        BillsRoute(
+            householdId = state.household.household.id,
+            myRole = state.household.role,
+            onOpenBill = { billId -> navController.navigate(Route.BillDetail(billId.value)) },
+            onImport = { navController.navigate(Route.ImportInvoices) },
+        )
+    }
+    composable<Route.BillDetail> { entry ->
+        BillDetailRoute(
+            billId = BillId(entry.toRoute<Route.BillDetail>().billId),
+            myUserId = state.account.id,
+            myRole = state.household.role,
+            onBack = { navController.popBackStack() },
+            onEditItems = { billId -> navController.navigate(Route.BillReview(billId.value)) },
+        )
     }
     composable<Route.ImportInvoices> {
         ImportRoute(
@@ -143,19 +154,6 @@ private fun NavGraphBuilder.appDestinations(state: AppState.Ready, navController
     }
 }
 
-/** The Bills list arrives with bill splitting (M4); until then this tab starts invoice import. */
-@Composable
-private fun BillsPlaceholder(state: AppState.Ready, onImport: () -> Unit) {
-    val canImport = RolePolicy.allows(state.household.role, Permission.EDIT_BILLS)
-    EmptyView(
-        title = stringResource(Res.string.bills_empty_title),
-        message = stringResource(Res.string.bills_empty_message),
-        actionLabel = if (canImport) stringResource(Res.string.bills_import) else null,
-        onAction = if (canImport) onImport else null,
-        modifier = Modifier.padding(AppTheme.spacing.screenPadding),
-    )
-}
-
 private fun NavGraphBuilder.placeholder(tab: TopLevelDestination) {
     val content: @Composable () -> Unit = {
         EmptyView(
@@ -167,7 +165,8 @@ private fun NavGraphBuilder.placeholder(tab: TopLevelDestination) {
     when (tab.route) {
         Route.Kitchen -> composable<Route.Kitchen> { content() }
         Route.Balances -> composable<Route.Balances> { content() }
-        Route.Pantry, Route.Bills, Route.Catalog, Route.Household, Route.ImportInvoices, is Route.BillReview -> Unit
+        Route.Pantry, Route.Bills, Route.Catalog, Route.Household, Route.ImportInvoices -> Unit
+        is Route.BillReview, is Route.BillDetail -> Unit
     }
 }
 
