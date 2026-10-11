@@ -289,6 +289,8 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 | ApprovalBanner | Pending, approved, changes requested |
 | StateViews: Loading (skeleton), Empty, Error | Every screen's non-content states |
 | AppBottomSheet, ConfirmDialog | Pickers and destructive confirmation |
+| NoticeBanner | A warning or note above content, such as an import total mismatch (ADR 0019) |
+| FileRow | A picked file with its size and a remove button (ADR 0019) |
 
 Every component appears in a **catalog screen** (debug builds) in all states, light and dark, and each has screenshot tests.
 
