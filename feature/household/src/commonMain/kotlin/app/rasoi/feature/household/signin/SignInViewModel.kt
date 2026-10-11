@@ -15,11 +15,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 
 /**
  * Phone, then code, then (first time only) a display name. Signing in updates the auth state, which the app
  * observes to leave this screen, so there is no navigation effect.
  */
+@KoinViewModel
 class SignInViewModel(
     private val requestOtp: RequestOtpUseCase,
     private val verifyOtp: VerifyOtpUseCase,

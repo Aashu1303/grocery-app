@@ -34,15 +34,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /**
  * One bill: who paid, how each item is split, what everyone owes, and where it stands in the approval flow. Every
  * change is saved to the server straight away; the server is authoritative (design-plan principle 6).
  */
+@KoinViewModel
 class BillDetailViewModel(
-    private val billId: BillId,
-    private val me: UserId,
-    private val myRole: Role,
+    @InjectedParam private val billId: BillId,
+    @InjectedParam private val me: UserId,
+    @InjectedParam private val myRole: Role,
     private val households: HouseholdRepository,
     private val getBill: GetBillUseCase,
     private val updateBill: UpdateBillUseCase,

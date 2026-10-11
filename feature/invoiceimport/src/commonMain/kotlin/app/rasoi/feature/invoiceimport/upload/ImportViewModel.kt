@@ -15,11 +15,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /** Collects the PDFs of one order and uploads them; the server answers with a draft bill to review. */
+@KoinViewModel
 class ImportViewModel(
-    private val householdId: HouseholdId,
-    private val myRole: Role,
+    @InjectedParam private val householdId: HouseholdId,
+    @InjectedParam private val myRole: Role,
     private val importInvoices: ImportInvoicesUseCase,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(ImportUiState())

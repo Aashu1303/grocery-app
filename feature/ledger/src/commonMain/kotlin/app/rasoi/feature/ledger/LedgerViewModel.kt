@@ -24,12 +24,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /** Who owes whom this month, the transfers that settle it, and paying, marking paid or closing the month. */
+@KoinViewModel
 class LedgerViewModel(
-    private val householdId: HouseholdId,
-    private val me: UserId,
-    private val myRole: Role,
+    @InjectedParam private val householdId: HouseholdId,
+    @InjectedParam private val me: UserId,
+    @InjectedParam private val myRole: Role,
     private val households: HouseholdRepository,
     private val ledgers: LedgerRepository,
     private val getLedger: GetLedgerUseCase,

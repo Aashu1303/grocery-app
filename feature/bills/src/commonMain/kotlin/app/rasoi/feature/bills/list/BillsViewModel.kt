@@ -25,11 +25,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /** The household's bills, newest first, with entry points for importing an invoice or typing a bill in. */
+@KoinViewModel
 class BillsViewModel(
-    private val householdId: HouseholdId,
-    private val myRole: Role,
+    @InjectedParam private val householdId: HouseholdId,
+    @InjectedParam private val myRole: Role,
     private val households: HouseholdRepository,
     private val listBills: ListBillsUseCase,
     private val createBill: CreateManualBillUseCase,

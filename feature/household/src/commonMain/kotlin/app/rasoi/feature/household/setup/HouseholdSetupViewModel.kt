@@ -16,12 +16,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import org.koin.core.annotation.KoinViewModel
 
 /** Create a household in the device's time zone, or join one with an invite code. */
+@KoinViewModel
 class HouseholdSetupViewModel(
     private val createHousehold: CreateHouseholdUseCase,
     private val joinHousehold: JoinHouseholdUseCase,
-    private val timeZoneId: () -> String,
+    private val timeZoneId: () -> String = { TimeZone.currentSystemDefault().id },
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(HouseholdSetupUiState())
     val state: StateFlow<HouseholdSetupUiState> = mutableState.asStateFlow()

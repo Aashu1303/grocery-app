@@ -18,13 +18,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /**
  * Reviews an imported draft: shows what the server read, lets the user fix a line and accept the calculated
  * total. Every change is saved to the server straight away; the server is authoritative (design-plan principle 6).
  */
+@KoinViewModel
 class BillReviewViewModel(
-    private val billId: BillId,
+    @InjectedParam private val billId: BillId,
     private val getBill: GetBillUseCase,
     private val updateBill: UpdateBillUseCase,
 ) : ViewModel() {
