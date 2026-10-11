@@ -1,5 +1,6 @@
 package app.rasoi.feature.ledger
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -106,7 +107,9 @@ class LedgerScreenshotTest {
                     setContent {
                         AppTheme(darkTheme = dark) {
                             Box(
-                                Modifier.testTag(TAG).size(DpSize(AppTheme.spacing.xxl * 8, AppTheme.spacing.xxl * 14)),
+                                Modifier.testTag(TAG)
+                                    .size(DpSize(AppTheme.spacing.xxl * 8, AppTheme.spacing.xxl * 14))
+                                    .background(AppTheme.colors.surface),
                             ) {
                                 screen()
                             }
