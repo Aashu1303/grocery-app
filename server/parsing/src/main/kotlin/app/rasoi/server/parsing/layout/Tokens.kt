@@ -3,7 +3,7 @@ package app.rasoi.server.parsing.layout
 import app.rasoi.core.model.Money
 import kotlinx.datetime.LocalDate
 
-private val DMY = Regex("""^(\d{2})-(\d{2})-(\d{4})$""")
+private val DMY = Regex("""^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$""")
 private val YMD = Regex("""^(\d{4})-(\d{2})-(\d{2})$""")
 private val CURRENCY = Regex("""^-?(Rs\.?|₹)$""", RegexOption.IGNORE_CASE)
 
@@ -17,7 +17,7 @@ fun parseAmount(words: List<String>): Money? {
 
 fun parseAmount(text: String): Money? = parseAmount(text.trim().split(Regex("\\s+")))
 
-/** Dates printed as `04-10-2026` (day first) or `2026-10-02`. */
+/** Dates printed day first (`04-10-2026`, `4/10/2026`, `04.10.2026`) or as ISO `2026-10-02`. */
 fun parseDate(text: String): LocalDate? {
     DMY.matchEntire(text)?.destructured?.let { (d, m, y) ->
         return runCatching { LocalDate(y.toInt(), m.toInt(), d.toInt()) }.getOrNull()

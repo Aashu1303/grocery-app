@@ -34,13 +34,15 @@ class TokensTest {
     fun parsesDayFirstAndIsoDates() {
         assertEquals(LocalDate(2026, 10, 4), parseDate("04-10-2026"))
         assertEquals(LocalDate(2026, 10, 2), parseDate("2026-10-02"))
+        assertEquals(LocalDate(2026, 10, 4), parseDate("4/10/2026"))
+        assertEquals(LocalDate(2026, 10, 4), parseDate("04.10.2026"))
     }
 
     @Test
     fun rejectsImpossibleOrUnknownDates() {
         assertNull(parseDate("31-02-2026"))
         assertNull(parseDate("2026-13-01"))
-        assertNull(parseDate("4/10/2026"))
+        assertNull(parseDate("04-10-26"))
         assertNull(parseDate("Oct 4, 2026"))
     }
 }

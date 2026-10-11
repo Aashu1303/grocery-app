@@ -4,7 +4,9 @@ dependencies {
     api(project(":core:model"))
     implementation(libs.pdfbox)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.ktor.client.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.ktor.client.mock)
 }
 
 tasks.withType<Test>().configureEach {
