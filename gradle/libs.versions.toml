@@ -13,6 +13,7 @@ serialization = "1.11.0"
 datetime = "0.8.0"
 ktor = "3.6.0"
 koin = "4.2.2"
+koinCompiler = "1.2.1"
 sqldelight = "2.4.1"
 exposed = "1.5.1"
 flyway = "13.10.0"
@@ -38,6 +39,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" } # DI without code generation
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" } # Koin integration for Compose
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" } # ViewModel injection in Compose
+koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin" } # @KoinViewModel and @InjectedParam, checked at compile time
 koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" } # module verification in tests
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" } # multiplatform HTTP client
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" } # JSON bodies on the client
@@ -96,6 +98,7 @@ plugin-kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.r
 plugin-detekt = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
 plugin-roborazzi = { module = "io.github.takahirom.roborazzi:io.github.takahirom.roborazzi.gradle.plugin", version.ref = "roborazzi" }
+plugin-koin-compiler = { module = "io.insert-koin:koin-compiler-gradle-plugin", version.ref = "koinCompiler" }
 plugin-sqldelight = { module = "app.cash.sqldelight:gradle-plugin", version.ref = "sqldelight" }
 roborazzi-compose-desktop = { module = "io.github.takahirom.roborazzi:roborazzi-compose-desktop", version.ref = "roborazzi" } # screenshot tests on Compose Desktop
 

@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.plugin.detekt)
     implementation(libs.plugin.ktlint)
     implementation(libs.plugin.sqldelight)
+    implementation(libs.plugin.koin.compiler)
     implementation(libs.plugin.roborazzi)
     testImplementation(kotlin("test"))
 }
