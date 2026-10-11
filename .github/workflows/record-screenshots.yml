@@ -28,5 +28,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add '**/screenshots/*.png'
           if git diff --cached --quiet; then echo "No screenshot changes."; exit 0; fi
-          git commit -m "test(designsystem): record screenshot goldens"
-          git push
+          git commit -m "test: record screenshot goldens"
+          # The branch may have moved while recording; goldens only touch screenshot files, so rebase and retry.
+          for attempt in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1

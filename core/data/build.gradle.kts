@@ -17,12 +17,15 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
         }
-        findByName("androidMain")?.dependencies {
-            implementation(libs.ktor.client.okhttp)
+        // Platform source sets exist only when their targets are enabled (ADR 0007), so configure them lazily.
+        matching { it.name == "androidMain" }.configureEach {
+            dependencies { implementation(libs.ktor.client.okhttp) }
         }
-        findByName("iosMain")?.dependencies {
-            implementation(libs.ktor.client.darwin)
-            implementation(libs.multiplatform.settings)
+        matching { it.name == "iosMain" }.configureEach {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+                implementation(libs.multiplatform.settings)
+            }
         }
     }
 }
