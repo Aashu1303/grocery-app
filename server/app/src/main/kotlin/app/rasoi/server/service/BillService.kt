@@ -25,6 +25,7 @@ import app.rasoi.server.persistence.PantryStore
 import app.rasoi.server.persistence.toBillId
 import app.rasoi.server.persistence.toBillLineId
 import app.rasoi.server.persistence.toChargeId
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -60,6 +61,7 @@ class BillService(
                     householdId = householdId,
                     creator = userId,
                     draft = draft,
+                    today = clock.now().toLocalDateTime(households.timeZone(householdId)).date,
                     newLineId = { Uuid.random().toBillLineId() },
                     newChargeId = { Uuid.random().toChargeId() },
                 )

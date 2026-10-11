@@ -6,18 +6,12 @@ import app.rasoi.core.contract.ErrorDto
 import app.rasoi.core.contract.auth.CreateSessionRequestDto
 import app.rasoi.core.contract.auth.MeDto
 import app.rasoi.core.contract.auth.SessionDto
-import app.rasoi.core.contract.bills.BillDto
-import app.rasoi.core.contract.bills.UpdateBillRequestDto
-import app.rasoi.core.contract.bills.UploadInvoicesRequestDto
 import app.rasoi.core.contract.household.CreateHouseholdRequestDto
 import app.rasoi.core.contract.household.CreateInviteRequestDto
 import app.rasoi.core.contract.household.CreateLocationRequestDto
 import app.rasoi.core.contract.household.HouseholdDto
 import app.rasoi.core.contract.household.InviteDto
 import app.rasoi.core.contract.household.LocationDto
-import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
-import app.rasoi.core.contract.pantry.PantryItemDto
-import app.rasoi.core.contract.pantry.UpdatePantryItemRequestDto
 import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import io.ktor.client.HttpClient
@@ -26,18 +20,14 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.header
 import io.ktor.client.request.request
-import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.ListSerializer
 import kotlin.uuid.Uuid
 
 /**
@@ -73,33 +63,7 @@ class RasoiApi(
     suspend fun addLocation(householdId: String, request: CreateLocationRequestDto): AppResult<LocationDto> =
         write("/households/$householdId/locations", LocationDto.serializer()) { jsonBody(request) }
 
-    suspend fun importInvoices(householdId: String, request: UploadInvoicesRequestDto): AppResult<BillDto> =
-        write("/households/$householdId/invoices", BillDto.serializer()) { jsonBody(request) }
-
-    suspend fun bill(id: String): AppResult<BillDto> = send(HttpMethod.Get, "/bills/$id", BillDto.serializer())
-
-    suspend fun updateBill(id: String, request: UpdateBillRequestDto): AppResult<BillDto> =
-        write("/bills/$id", BillDto.serializer(), HttpMethod.Patch) { jsonBody(request) }
-
-    suspend fun pantry(householdId: String, status: String): AppResult<List<PantryItemDto>> = send(
-        HttpMethod.Get,
-        "/households/$householdId/pantry?status=$status",
-        ListSerializer(PantryItemDto.serializer()),
-    )
-
-    suspend fun addPantryItem(householdId: String, request: CreatePantryItemRequestDto): AppResult<PantryItemDto> =
-        write("/households/$householdId/pantry", PantryItemDto.serializer()) { jsonBody(request) }
-
-    suspend fun updatePantryItem(
-        householdId: String,
-        itemId: String,
-        request: UpdatePantryItemRequestDto,
-    ): AppResult<PantryItemDto> =
-        write("/households/$householdId/pantry/$itemId", PantryItemDto.serializer(), HttpMethod.Patch) {
-            jsonBody(request)
-        }
-
-    private suspend fun <T> write(
+    internal suspend fun <T> write(
         path: String,
         serializer: KSerializer<T>,
         method: HttpMethod = HttpMethod.Post,
@@ -118,7 +82,7 @@ class RasoiApi(
         }
     }
 
-    private suspend fun <T> send(
+    internal suspend fun <T> send(
         method: HttpMethod,
         path: String,
         serializer: KSerializer<T>,
@@ -167,11 +131,6 @@ class RasoiApi(
             HttpStatusCode.Conflict -> AppError.Conflict(dto?.code ?: "conflict")
             else -> AppError.Server(status.value)
         }
-    }
-
-    private inline fun <reified B> HttpRequestBuilder.jsonBody(body: B) {
-        contentType(ContentType.Application.Json)
-        setBody(body)
     }
 
     private companion object {

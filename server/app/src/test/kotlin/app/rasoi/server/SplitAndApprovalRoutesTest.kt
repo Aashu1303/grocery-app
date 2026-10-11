@@ -41,6 +41,7 @@ import io.ktor.http.HttpStatusCode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 class SplitAndApprovalRoutesTest {
     private class Flat(
@@ -146,6 +147,23 @@ class SplitAndApprovalRoutesTest {
         val others: List<BillSummaryDto> = client.get("/households/${flat.home.id}/bills") { authed(flat.dev) }.body()
         assertEquals(emptyList(), others)
         assertEquals(HttpStatusCode.NotFound, client.get("/bills/${flat.bill.id}") { authed(flat.dev) }.status)
+    }
+
+    @Test
+    fun aHandTypedBillWithoutADateIsDatedTodayInTheHouseholdZone() = rasoiTest {
+        val flat = flat()
+        clock.advance(14.hours + 30.minutes)
+        val bill: BillDto = client.post("/households/${flat.home.id}/bills") {
+            authed(flat.meera)
+            setBody(
+                CreateBillRequestDto(
+                    title = "Late night cylinder",
+                    lines = listOf(BillLineEditDto(displayName = "Cylinder", units = 1, amountPaise = 95_000)),
+                ),
+            )
+        }.body()
+        // 19:00 UTC on the 11th is already 00:30 on the 12th in Kolkata.
+        assertEquals("2026-10-12", bill.invoiceDate)
     }
 
     @Test

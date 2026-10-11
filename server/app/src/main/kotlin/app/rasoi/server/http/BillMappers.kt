@@ -131,7 +131,7 @@ internal fun UpdateBillRequestDto.toModel() = BillEdit(
     splits = splits?.map { it.toModel() },
 )
 
-internal fun CreateBillRequestDto.toModel(caller: UserId, invoiceDate: LocalDate) = ManualBillDraft(
+internal fun CreateBillRequestDto.toModel(caller: UserId, invoiceDate: LocalDate?) = ManualBillDraft(
     title = title,
     invoiceDate = invoiceDate,
     payerId = payerId?.let(::UserId) ?: caller,

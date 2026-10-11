@@ -21,6 +21,7 @@ import app.rasoi.server.persistence.HouseholdStore
 import app.rasoi.server.persistence.InviteStore
 import app.rasoi.server.persistence.LocationStore
 import app.rasoi.server.persistence.UserStore
+import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
 
 /**
@@ -79,6 +80,9 @@ class HouseholdService(
     ): AppResult<Location> = authorize(userId, householdId, Permission.MANAGE_LOCATIONS)
         .flatMap { HouseholdRules.validateLocationName(name) }
         .flatMap { validName -> locations.create(householdId, validName, kind) }
+
+    suspend fun timeZone(householdId: HouseholdId): TimeZone =
+        requireNotNull(households.find(householdId)) { "Member of a missing household" }.timeZone
 
     /** Members who can owe a share of a bill: everyone whose role may approve bills, so never a cook. */
     suspend fun billParticipants(householdId: HouseholdId): Set<UserId> =

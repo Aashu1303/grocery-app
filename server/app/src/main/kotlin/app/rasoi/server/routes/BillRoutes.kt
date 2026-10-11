@@ -117,8 +117,8 @@ private fun decode(request: UploadInvoicesRequestDto): AppResult<List<ByteArray>
     return AppResult.Success(documents)
 }
 
-private fun invoiceDate(raw: String): AppResult<LocalDate> = try {
-    AppResult.Success(LocalDate.parse(raw))
+private fun invoiceDate(raw: String?): AppResult<LocalDate?> = try {
+    AppResult.Success(raw?.let(LocalDate::parse))
 } catch (_: IllegalArgumentException) {
     AppResult.Failure(AppError.Validation(listOf(AppError.FieldViolation("invoiceDate", "invalid"))))
 }

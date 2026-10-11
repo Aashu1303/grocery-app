@@ -1,6 +1,10 @@
 package app.rasoi.core.testing
 
 import app.rasoi.core.domain.household.HouseholdDetails
+import app.rasoi.core.domain.split.LineAllocator
+import app.rasoi.core.model.Allocation
+import app.rasoi.core.model.AppResult
+import app.rasoi.core.model.Approval
 import app.rasoi.core.model.Bill
 import app.rasoi.core.model.BillCharge
 import app.rasoi.core.model.BillId
@@ -13,6 +17,7 @@ import app.rasoi.core.model.ChargeKind
 import app.rasoi.core.model.Household
 import app.rasoi.core.model.HouseholdId
 import app.rasoi.core.model.ImportConfidence
+import app.rasoi.core.model.LineSplit
 import app.rasoi.core.model.Location
 import app.rasoi.core.model.LocationId
 import app.rasoi.core.model.LocationKind
@@ -25,6 +30,8 @@ import app.rasoi.core.model.PhoneNumber
 import app.rasoi.core.model.Platform
 import app.rasoi.core.model.Quantity
 import app.rasoi.core.model.Role
+import app.rasoi.core.model.SplitEntry
+import app.rasoi.core.model.SplitMode
 import app.rasoi.core.model.User
 import app.rasoi.core.model.UserId
 import kotlinx.datetime.LocalDate
@@ -67,21 +74,36 @@ object Builders {
         total: Money = Money(lines.sumOf { it.amount.paise } + charges.sumOf { it.amount.paise }),
         status: BillStatus = BillStatus.DRAFT,
         confidence: ImportConfidence = ImportConfidence.HIGH,
+        payerId: String = "u1",
+        createdBy: String = payerId,
+        allocations: List<Allocation> = emptyList(),
+        approvals: List<Approval> = emptyList(),
+        title: String? = null,
+        platform: Platform = Platform.ZEPTO,
     ) = Bill(
         id = BillId(id),
         householdId = HouseholdId("h1"),
-        platform = Platform.ZEPTO,
+        platform = platform,
         invoiceNumber = "INV-1",
         orderId = "ORDER-1",
         invoiceDate = LocalDate.parse("2026-10-04"),
-        payerId = UserId("u1"),
-        createdBy = UserId("u1"),
+        payerId = UserId(payerId),
+        createdBy = UserId(createdBy),
         status = status,
         confidence = confidence,
         lines = lines,
         charges = charges,
         total = total,
+        allocations = allocations,
+        approvals = approvals,
+        title = title,
     )
+
+    /** The allocations of [line] shared by [mode] among [users]; fails the test if the split is invalid. */
+    fun split(line: BillLine, mode: SplitMode, vararg users: String): List<Allocation> {
+        val split = LineSplit(mode, users.map { SplitEntry(UserId(it)) })
+        return (LineAllocator.allocate(line, split) as AppResult.Success).value
+    }
 
     fun pantryItem(
         id: String = "p1",

@@ -33,6 +33,7 @@ class ManualBillsTest {
         householdId = HouseholdId("h1"),
         creator = meera,
         draft = draft,
+        today = LocalDate(2026, 10, 11),
         newLineId = { BillLineId("line${++counter}") },
         newChargeId = { ChargeId("charge${++counter}") },
     )
@@ -61,6 +62,13 @@ class ManualBillsTest {
         assertEquals(meera, bill.payerId)
         assertEquals(ImportConfidence.HIGH, bill.confidence)
         assertEquals(emptyList(), BillRules.warnings(bill))
+    }
+
+    @Test
+    fun usesTodayWhenNoDateIsGiven() {
+        val bill = (create(draft().copy(invoiceDate = null)) as AppResult.Success).value
+        assertEquals(LocalDate(2026, 10, 11), bill.invoiceDate)
+        assertEquals(LocalDate(2026, 10, 3), (create(draft()) as AppResult.Success).value.invoiceDate)
     }
 
     @Test
