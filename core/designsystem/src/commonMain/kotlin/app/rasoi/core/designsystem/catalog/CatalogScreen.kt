@@ -1,12 +1,12 @@
 package app.rasoi.core.designsystem.catalog
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,17 +39,28 @@ fun DesignSystemCatalog(
     onBack: (() -> Unit)? = null,
 ) {
     AppTheme(darkTheme = darkTheme) {
-        Column(modifier = modifier.fillMaxSize().background(AppTheme.colors.surface)) {
-            AppTopBar(title = stringResource(Res.string.ds_catalog_title), onBack = onBack, actions = {
-                AppButton(
-                    text = stringResource(
-                        if (darkTheme) Res.string.ds_catalog_light_theme else Res.string.ds_catalog_dark_theme,
-                    ),
-                    onClick = onToggleTheme,
-                    variant = AppButtonVariant.TEXT,
+        Scaffold(
+            topBar = {
+                AppTopBar(
+                    title = stringResource(Res.string.ds_catalog_title),
+                    onBack = onBack,
+                    actions = {
+                        AppButton(
+                            text = stringResource(
+                                if (darkTheme) Res.string.ds_catalog_light_theme else Res.string.ds_catalog_dark_theme,
+                            ),
+                            onClick = onToggleTheme,
+                            variant = AppButtonVariant.TEXT,
+                        )
+                    },
                 )
-            })
+            },
+            modifier = modifier,
+            containerColor = AppTheme.colors.surface,
+            contentColor = AppTheme.colors.onSurface,
+        ) { innerPadding ->
             LazyColumn(
+                modifier = Modifier.padding(innerPadding),
                 contentPadding = PaddingValues(AppTheme.spacing.screenPadding),
                 verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.lg),
             ) {
