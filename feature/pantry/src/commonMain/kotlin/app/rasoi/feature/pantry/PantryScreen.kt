@@ -46,12 +46,17 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+/** The screen's ViewModel, keyed per [key]; the app creates all tab ViewModels up front so tabs open already loaded. */
+@Composable
+fun pantryViewModel(householdId: HouseholdId, myRole: Role, key: String = householdId.value): PantryViewModel =
+    koinViewModel(key = key) { parametersOf(householdId, myRole) }
+
 @Composable
 fun PantryRoute(
     householdId: HouseholdId,
     myRole: Role,
     modifier: Modifier = Modifier,
-    viewModel: PantryViewModel = koinViewModel(key = householdId.value) { parametersOf(householdId, myRole) },
+    viewModel: PantryViewModel = pantryViewModel(householdId, myRole),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     PantryScreen(state = state, onEvent = viewModel::onEvent, modifier = modifier)
