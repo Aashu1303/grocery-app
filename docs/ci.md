@@ -1,14 +1,23 @@
-# CI on a self-hosted runner
+# CI runners
 
-GitHub Actions runs on a self-hosted **macOS (Apple silicon)** runner with the labels `self-hosted`, `macOS`, `ARM64`
-(ADR 0025). Workflows pick their runner from the repository variables `RASOI_RUNNER` (guard, check and screenshot
-recording) and `RASOI_IOS_RUNNER` (iOS job); both default to those labels. To use GitHub-hosted runners again, set
-`RASOI_RUNNER` to `["ubuntu-latest"]` and `RASOI_IOS_RUNNER` to `["macos-latest"]` (Settings, Secrets and variables,
-Actions, Variables), then re-record the screenshots (see below).
+CI runs on **GitHub-hosted runners**. Only when those cannot start (for example the account's Actions minutes are used
+up) do the jobs fall back to a **self-hosted macOS (Apple silicon) runner** with the labels `self-hosted`, `macOS`,
+`ARM64` (ADR 0025). The first job, `choose-runner`, decides: if it fails to start on `ubuntu-latest`, the others pick
+the self-hosted labels automatically.
+
+To force a choice, set the repository variables `RASOI_RUNNER` and `RASOI_IOS_RUNNER` to JSON label lists, for example
+`["self-hosted","macOS","ARM64"]` for both (Settings, Secrets and variables, Actions, Variables). Do this if hosted jobs
+queue forever instead of failing. Delete the variables to return to the default.
+
+## Screenshots
+
+Goldens are Linux renderings. The recorder workflow always runs on `ubuntu-latest`, and the self-hosted fallback skips
+screenshot verification (it prints a notice) because macOS draws text differently. New goldens therefore need hosted
+runners.
 
 ## One-time setup of the Mac
 
-The workflows install Java 21 and the Android SDK themselves. Everything else must exist on the machine:
+This only matters for the fallback. The workflows install Java 21 and the Android SDK themselves. Everything else must exist on the machine:
 
 | Needed | Why | How |
 | --- | --- | --- |
@@ -21,12 +30,6 @@ The workflows install Java 21 and the Android SDK themselves. Everything else mu
 Run the runner as a normal user session (`./run.sh`, or `./svc.sh install` as a LaunchAgent) so Docker and Xcode are
 available to it. Jobs run one at a time on one runner, so a full CI run takes the sum of its three jobs. A job fails
 fast with a clear message if Docker or Xcode is missing.
-
-## Screenshot goldens belong to the runner type
-
-Roborazzi compares pixels, and text rendering differs between Linux and macOS. Goldens are recorded and verified on the
-same kind of runner. After changing `RASOI_RUNNER` to a different OS, push a commit whose message contains
-`[record screenshots]` and review the diff.
 
 ## Security
 

@@ -1,7 +1,7 @@
 name: Record screenshots
 
 # Re-records Roborazzi golden images and commits them to the branch, so every golden change is a reviewed diff.
-# It must run on the same kind of runner as CI (ADR 0025): goldens rendered on another OS would not match.
+# Always on a Linux runner (ADR 0025): the goldens are Linux renderings and other OSes would not match.
 # Run it manually, or push a commit whose message contains "[record screenshots]".
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ permissions:
 jobs:
   record:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[record screenshots]')
-    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -22,7 +22,6 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
-      - uses: android-actions/setup-android@v3
       - run: ./gradlew recordRoborazziJvm -Prasoi.ios=false
       - name: Commit goldens
         run: |

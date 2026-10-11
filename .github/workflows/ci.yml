@@ -15,13 +15,32 @@ permissions:
 env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false
 
-# Jobs run on the self-hosted Mac runner (ADR 0025). Set the repository variables RASOI_RUNNER and RASOI_IOS_RUNNER to
-# JSON label lists, for example '["ubuntu-latest"]' and '["macos-latest"]', to use GitHub-hosted runners instead.
+# Jobs run on GitHub-hosted runners. If the first job cannot start there (for example the account's minutes are used
+# up), the others fall back to the self-hosted Mac runner (ADR 0025). The repository variables RASOI_RUNNER and
+# RASOI_IOS_RUNNER (JSON label lists) force a choice.
 
 jobs:
+  choose-runner:
+    name: Choose runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      linux: ${{ steps.pick.outputs.linux }}
+      ios: ${{ steps.pick.outputs.ios }}
+    steps:
+      - id: pick
+        env:
+          FORCED_LINUX: ${{ vars.RASOI_RUNNER }}
+          FORCED_IOS: ${{ vars.RASOI_IOS_RUNNER }}
+        run: |
+          echo "linux=${FORCED_LINUX:-[\"ubuntu-latest\"]}" >> "$GITHUB_OUTPUT"
+          echo "ios=${FORCED_IOS:-[\"macos-latest\"]}" >> "$GITHUB_OUTPUT"
+
   guard:
     name: Privacy and resource guards
-    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || '["self-hosted","macOS","ARM64"]') }}
+    needs: choose-runner
+    if: ${{ !cancelled() }}
+    runs-on: ${{ fromJSON(needs.choose-runner.outputs.linux || '["self-hosted","macOS","ARM64"]') }}
     steps:
       - uses: actions/checkout@v5
       - run: ./scripts/check-no-real-invoices.sh
@@ -29,7 +48,9 @@ jobs:
 
   check:
     name: Build, lint and test (JVM, Compose, Android)
-    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || '["self-hosted","macOS","ARM64"]') }}
+    needs: choose-runner
+    if: ${{ !cancelled() }}
+    runs-on: ${{ fromJSON(needs.choose-runner.outputs.linux || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
@@ -39,12 +60,15 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
       - uses: android-actions/setup-android@v3
+      - name: Screenshots are not verified on the self-hosted runner
+        if: ${{ runner.environment == 'self-hosted' }}
+        run: echo "::notice::Goldens are rendered on Linux (ADR 0025); verifyRoborazziJvm is skipped on this runner."
       - name: Docker is needed for the server tests
         run: docker info > /dev/null || { echo "::error::Docker is not running on this runner (Testcontainers needs it); see docs/ci.md"; exit 1; }
       - name: Check (JVM, Compose desktop, lint)
         run: |
           set -o pipefail
-          ./gradlew check --continue -Prasoi.android=false -Prasoi.ios=false 2>&1 | tee build-check.log
+          ./gradlew check --continue -Prasoi.android=false -Prasoi.ios=false ${{ runner.environment == 'self-hosted' && '-x verifyRoborazziJvm' || '' }} 2>&1 | tee build-check.log
       - name: Assemble Android
         run: |
           set -o pipefail
@@ -69,7 +93,9 @@ jobs:
 
   ios:
     name: Build and test (iOS)
-    runs-on: ${{ fromJSON(vars.RASOI_IOS_RUNNER || '["self-hosted","macOS","ARM64"]') }}
+    needs: choose-runner
+    if: ${{ !cancelled() }}
+    runs-on: ${{ fromJSON(needs.choose-runner.outputs.ios || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
