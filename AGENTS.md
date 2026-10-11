@@ -35,7 +35,8 @@ server that share `core:model`, `core:domain` and `core:contract`.
 ./gradlew ktlintFormat                # auto-fix formatting
 ./gradlew :core:model:jvmTest         # one module's tests
 ./gradlew :server:app:test            # server tests
-./gradlew :server:app:run             # run the server locally (PORT, default 8080)
+./gradlew :server:app:run             # run the server (env: DATABASE_URL/USER/PASSWORD, RASOI_AUTH_MODE=dev, PORT)
+./gradlew :server:app:seedDemo        # seed the demo household into a running dev server (RASOI_DEMO_URL)
 ./gradlew :androidApp:assembleDebug   # Android debug APK
 ./gradlew iosSimulatorArm64Test       # shared tests on the iOS simulator (macOS)
 ./gradlew recordRoborazziJvm          # re-record design-system screenshot goldens
@@ -99,7 +100,9 @@ modules are then excluded from the build, and CI verifies them instead. You can 
 - ViewModels: every event and every state (loading, empty, error, content) with fake repositories from `core:testing`.
 - Server routes: Ktor `testApplication`; persistence with Testcontainers PostgreSQL.
 - Design system: every component state in `catalogEntries` gets a Roborazzi screenshot in light and dark.
-- The end-to-end demo scenario (design-plan section 8) must pass before a milestone is tagged.
+- The end-to-end demo scenario (design-plan section 8) lives in `server/app/src/test/.../demo/`. It drives the real
+  HTTP API, must exercise every registered endpoint (`DemoScenarioTest`), grows with each milestone, and must pass
+  before a milestone is tagged.
 
 ## Git workflow
 

@@ -30,4 +30,12 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.content.negotiation)
     testImplementation(libs.testcontainers.postgres)
+    testImplementation(libs.ktor.client.okhttp)
+}
+
+tasks.register<JavaExec>("seedDemo") {
+    group = "application"
+    description = "Seeds the demo household into a running dev server (RASOI_DEMO_URL)."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "app.rasoi.server.demo.DemoSeedMainKt"
 }

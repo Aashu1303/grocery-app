@@ -21,6 +21,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import java.util.UUID
@@ -35,11 +36,16 @@ fun rasoiTest(clock: MutableClock = MutableClock(), block: suspend TestScope.() 
         authMode = AuthMode.DEV,
         firebaseProjectId = null,
     )
-    application { rasoiModule(AppGraph(config, TestPostgres.database, DevIdTokenVerifier(), clock)) }
-    TestScope(this, clock).block()
+    lateinit var server: Application
+    application {
+        rasoiModule(AppGraph(config, TestPostgres.database, DevIdTokenVerifier(), clock))
+        server = this
+    }
+    startApplication()
+    TestScope(this, clock, server).block()
 }
 
-class TestScope(private val builder: ApplicationTestBuilder, val clock: MutableClock) {
+class TestScope(private val builder: ApplicationTestBuilder, val clock: MutableClock, val application: Application) {
     val client: HttpClient = builder.createClient { install(ContentNegotiation) { json(ContractJson) } }
 
     suspend fun signIn(phone: String, name: String): SessionDto = client.post("/auth/session") {
