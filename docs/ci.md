@@ -9,6 +9,9 @@ To force a choice, set the repository variables `RASOI_RUNNER` and `RASOI_IOS_RU
 `["self-hosted","macOS","ARM64"]` for both (Settings, Secrets and variables, Actions, Variables). Do this if hosted jobs
 queue forever instead of failing. Delete the variables to return to the default.
 
+CI runs on `push` (and manually). It does not also listen to `pull_request`: the open pull request shows the same checks
+for its head commit, and a second trigger would run every job twice.
+
 ## Screenshots
 
 Goldens are Linux renderings. The recorder workflow always runs on `ubuntu-latest`, and the self-hosted fallback skips

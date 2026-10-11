@@ -1,13 +1,15 @@
 name: CI
 
+# Push only: the open pull request shows the same checks for its head commit, and listening to pull_request as well
+# would run everything twice per commit (and queue twice on the single self-hosted runner).
 on:
   push:
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.sha }}
-  # Every pushed commit gets a full result (milestone tags need one); superseded PR runs are cancelled.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Every pushed commit gets its own full result (milestone tags need one).
+  group: ci-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
