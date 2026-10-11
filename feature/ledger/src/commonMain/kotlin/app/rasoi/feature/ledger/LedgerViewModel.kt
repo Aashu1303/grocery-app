@@ -49,8 +49,8 @@ class LedgerViewModel(
 
     fun onEvent(event: LedgerUiEvent) {
         when (event) {
-            LedgerUiEvent.Retry -> load(shown()?.month, showLoading = true)
-            LedgerUiEvent.Refresh -> if (mutableState.value != LedgerUiState.Loading) load(shown()?.month, false)
+            LedgerUiEvent.Retry -> load(shown(), showLoading = true)
+            LedgerUiEvent.Refresh -> if (mutableState.value != LedgerUiState.Loading) load(shown(), false)
             is LedgerUiEvent.SelectMonth -> load(event.month, showLoading = false)
             is LedgerUiEvent.PayWithUpi -> payWithUpi(event.settlementId)
             is LedgerUiEvent.MarkPaid -> markTransferPaid(event.settlementId)
@@ -59,12 +59,15 @@ class LedgerViewModel(
             }
             LedgerUiEvent.ConfirmClose -> close()
             LedgerUiEvent.DismissSheet -> updateContent { it.copy(sheet = null, error = null) }
-            LedgerUiEvent.EditUpi -> updateContent {
-                it.copy(sheet = LedgerSheet.Upi(it.myUpi.orEmpty()), error = null)
-            }
-            is LedgerUiEvent.UpiChanged -> updateContent { it.copy(sheet = LedgerSheet.Upi(event.value), error = null) }
-            LedgerUiEvent.SaveUpi -> saveUpi()
+            is LedgerUiEvent.Upi -> onUpi(event)
         }
+    }
+
+    private fun onUpi(event: LedgerUiEvent.Upi) = when (event) {
+        LedgerUiEvent.Upi.Edit -> updateContent { it.copy(sheet = LedgerSheet.Upi(it.myUpi.orEmpty()), error = null) }
+        is LedgerUiEvent.Upi.Changed -> updateContent { it.copy(sheet = LedgerSheet.Upi(event.value), error = null) }
+        LedgerUiEvent.Upi.Save -> saveUpi()
+        LedgerUiEvent.Upi.Unavailable -> updateContent { it.copy(error = LedgerError.NO_UPI_APP) }
     }
 
     private fun shown(): PeriodMonth? = (mutableState.value as? LedgerUiState.Content)?.ledger?.month

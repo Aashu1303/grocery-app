@@ -151,8 +151,8 @@ private fun LedgerContent(state: LedgerUiState.Content, onEvent: (LedgerUiEvent)
                 )
             }
         }
-        ledger.transfers.forEachIndexed { index, item ->
-            item(key = "transfer-$index") { TransferCard(item, state, onEvent) }
+        ledger.transfers.forEachIndexed { index, transfer ->
+            item(key = "transfer-$index") { TransferCard(transfer, state, onEvent) }
         }
         item { UpiRow(state, onEvent) }
         if (state.canClose) {
