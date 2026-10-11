@@ -16,10 +16,8 @@ import kotlin.coroutines.resume
 import com.google.firebase.auth.PhoneAuthProvider as FirebasePhone
 
 /** Phone OTP with the Firebase Auth SDK; the ID token it returns is what the server verifies (ADR 0015). */
-internal class FirebasePhoneAuthProvider(
-    private val auth: FirebaseAuth,
-    private val activities: CurrentActivity,
-) : PhoneAuthProvider {
+internal class FirebasePhoneAuthProvider(private val auth: FirebaseAuth, private val activities: CurrentActivity) :
+    PhoneAuthProvider {
     override suspend fun requestCode(phone: PhoneNumber): AppResult<String> {
         val activity = activities.current ?: return AppResult.Failure(AppError.Unexpected("no_foreground_activity"))
         return suspendCancellableCoroutine { continuation ->
