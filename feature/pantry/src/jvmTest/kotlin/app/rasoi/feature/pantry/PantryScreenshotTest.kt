@@ -3,11 +3,14 @@ package app.rasoi.feature.pantry
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import app.rasoi.core.designsystem.component.BottomSheetSurface
 import app.rasoi.core.designsystem.theme.AppTheme
@@ -42,6 +45,8 @@ class PantryScreenshotTest {
     private val content = PantryUiState.Content(items, listOf(fridge, shelf), today, canEdit = true)
 
     private fun sheetDetails(error: PantryError? = null) = PantrySheet.Details(items[1].id, error = error)
+
+    private val largeTextScreens = setOf("pantry_list", "pantry_add_form", "pantry_item_details")
 
     private val screens: List<Pair<String, @Composable () -> Unit>> = listOf(
         "pantry_loading" to { PantryScreen(PantryUiState.Loading, {}) },
@@ -99,7 +104,32 @@ class PantryScreenshotTest {
         }
     }
 
+    /** Design-plan 7.3 item 10: text at 200% must not clip; the key screens are captured at that size. */
+    @Test
+    fun keyScreensAtTwiceTheTextSize() {
+        screens.filter { (name, _) -> name in largeTextScreens }.forEach { (name, screen) ->
+            runDesktopComposeUiTest(width = WIDTH, height = HEIGHT) {
+                setContent {
+                    AppTheme {
+                        val density = Density(LocalDensity.current.density, fontScale = LARGE_FONT_SCALE)
+                        CompositionLocalProvider(LocalDensity provides density) {
+                            Box(
+                                Modifier.testTag(TAG)
+                                    .size(DpSize(AppTheme.spacing.xxl * 8, AppTheme.spacing.xxl * 14))
+                                    .background(AppTheme.colors.surface),
+                            ) {
+                                screen()
+                            }
+                        }
+                    }
+                }
+                onNodeWithTag(TAG).captureRoboImage("screenshots/${name}_large_text.png")
+            }
+        }
+    }
+
     private companion object {
+        const val LARGE_FONT_SCALE = 2f
         const val TAG = "screen"
         const val WIDTH = 420
         const val HEIGHT = 720

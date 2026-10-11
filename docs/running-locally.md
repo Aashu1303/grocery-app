@@ -63,20 +63,36 @@ On a machine without Google Maven or Kotlin/Native access, see "Platform switche
 Run it behind a TLS-terminating proxy (HTTPS only), run one instance (the 15-minute sweeps that auto-approve bills and
 close months are safe to repeat, but only one process is tested), and back up the database and the storage folder.
 
+### Server image
+`docker build -t rasoi-server .` builds the server only. Run it with the variables above, for example
+`docker run -p 8080:8080 -v rasoi-data:/data -e DATABASE_URL=... -e FIREBASE_PROJECT_ID=... rasoi-server`. It runs as a
+non-root user and keeps invoice PDFs in the `/data` volume.
+
 ### Apps
-- **API address:** Android `-Prasoi.apiBaseUrl=https://api.example.com` at build time; iOS `RASOI_API_BASE_URL` in
-  `iosApp/project.yml`. Use HTTPS; plain HTTP is only meant for local development.
-- **Android release:** add your own signing configuration and build a release bundle. The repository does not hold
-  keystores.
-- **iOS release:** set your team, bundle id and signing in Xcode.
+- **API address:** Android `-Prasoi.apiBaseUrl=https://api.example.com` at build time; iOS `RASOI_API_BASE_URL`. A
+  release build refuses any address that is not `https://` (ADR 0024).
+- **Android release.** Create a Firebase project, enable **Phone** sign-in, add the Android app (`app.rasoi`) with your
+  release key's SHA-1 and SHA-256, and note the app id, API key and project id from the project settings. Then:
+  ```sh
+  export RASOI_KEYSTORE_FILE=/secure/rasoi.jks RASOI_KEYSTORE_PASSWORD=... RASOI_KEY_ALIAS=... RASOI_KEY_PASSWORD=...
+  ./gradlew :androidApp:bundleRelease \
+    -Prasoi.apiBaseUrl=https://api.example.com \
+    -Prasoi.firebase.appId=1:123:android:abc -Prasoi.firebase.apiKey=AIza... -Prasoi.firebase.projectId=my-project
+  ```
+  Keep the properties in `~/.gradle/gradle.properties` rather than on a shared command line. Without the Firebase
+  properties the build works but sign-in reports an error. The release build has no development sign-in.
+- **iOS release.** In the same Firebase project add the iOS app (`app.rasoi`), upload an APNs key (Project settings,
+  Cloud Messaging) and download `GoogleService-Info.plist` into `iosApp/iosApp/` (it is git-ignored). Put its
+  `REVERSED_CLIENT_ID` in the `RASOI_FIREBASE_REVERSED_CLIENT_ID` build setting. Then build the Release configuration
+  with your team and `RASOI_API_BASE_URL=https://api.example.com`:
+  `xcodebuild -scheme iosApp -configuration Release RASOI_API_BASE_URL=https://api.example.com DEVELOPMENT_TEAM=... CODE_SIGNING_ALLOWED=YES`.
+  Debug builds keep the development sign-in.
+- **Server for real sign-in:** `RASOI_AUTH_MODE=firebase` and `FIREBASE_PROJECT_ID` as above.
 
 ### What is not production-ready yet
-These are the gaps between "runs locally" and "ships", all from milestones not built yet:
-1. **Real phone sign-in.** The apps only contain the development sign-in provider (ADR 0016), which the production
-   server rejects. You need a Firebase project with Phone sign-in enabled, `google-services.json` (Android) and
-   `GoogleService-Info.plist` (iOS), release SHA-1/APNs/reCAPTCHA setup, and the two production `PhoneAuthProvider`
-   implementations (planned for M7). Release builds must not ship the dev provider.
+1. **Real phone sign-in is built but unproven.** It compiles in CI, and the unconfigured paths are tested, but it has
+   never run against a Firebase project (there is none in this repository). Expect to debug the first real sign-in.
 2. **Push on the phones.** The server side is built (`POST /devices`, FCM sender, expiry sweep), but the apps do not
-   yet obtain an FCM token; that needs the same Firebase project and files as sign-in and arrives with it in M7.
-3. The final accessibility pass and release polish are M7.
+   yet obtain an FCM token or register it, so no phone receives pushes until that client work is done (ADR 0024).
+3. **Shrinking (R8)** is off in release builds until keep rules are tested on a device.
 4. **File storage** is a local folder, not S3.

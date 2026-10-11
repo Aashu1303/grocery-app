@@ -1,0 +1,11 @@
+.git
+.gradle
+.kotlin
+**/build
+.idea
+fixtures/invoices
+iosApp
+androidApp
+*.keystore
+*.jks
+.env*

@@ -226,10 +226,13 @@ class DemoApi(private val client: HttpClient, private val baseUrl: String = "") 
             }
         }
 
-    suspend fun useFirst(session: SessionDto, householdId: String): List<UseFirstEntryDto> =
+    suspend fun useFirstResponse(session: SessionDto, householdId: String): HttpResponse =
         call("GET /households/{id}/kitchen/use-first") {
             client.get("$baseUrl/households/$householdId/kitchen/use-first") { authed(session) }
-        }.expect(HttpStatusCode.OK).body()
+        }
+
+    suspend fun useFirst(session: SessionDto, householdId: String): List<UseFirstEntryDto> =
+        useFirstResponse(session, householdId).expect(HttpStatusCode.OK).body()
 
     suspend fun suggestions(session: SessionDto, householdId: String): HttpResponse =
         call("POST /households/{id}/kitchen/suggestions") {

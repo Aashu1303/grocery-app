@@ -43,6 +43,10 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew :androidApp:assembleDebug 2>&1 | tee build-android.log
+      - name: Assemble Android release (compiles the Firebase sign-in; unsigned, no Firebase settings)
+        run: |
+          set -o pipefail
+          ./gradlew :androidApp:assembleRelease -Prasoi.apiBaseUrl=https://api.example.invalid 2>&1 | tee build-android-release.log
       - name: Summarize failures
         if: failure()
         run: |

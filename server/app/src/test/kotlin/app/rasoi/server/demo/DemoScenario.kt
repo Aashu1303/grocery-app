@@ -412,6 +412,14 @@ class DemoScenario(private val api: DemoApi, private val hooks: DemoHooks? = nul
         api.bills(demo.outsider, id).expect(HttpStatusCode.NotFound)
         api.ledgerResponse(demo.outsider, id).expect(HttpStatusCode.NotFound)
         api.closeMonth(demo.outsider, id, "1999-01").expect(HttpStatusCode.NotFound)
+        api.useFirstResponse(demo.outsider, id).expect(HttpStatusCode.NotFound)
+        api.suggestions(demo.outsider, id).expect(HttpStatusCode.NotFound)
+        val settlementId = api.ledger(
+            demo.owner,
+            id,
+            api.ledger(demo.owner, id).months.last(),
+        ).transfers.single().settlementId
+        api.markPaid(demo.outsider, settlementId.orEmpty()).expect(HttpStatusCode.NotFound)
         val gas = CreateBillRequestDto(
             "Sneaky",
             "2026-10-05",

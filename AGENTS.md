@@ -19,7 +19,7 @@ server that share `core:model`, `core:domain` and `core:contract`.
 | `core:testing` | KMP | Fakes, builders, fixture loaders (test source sets only) | `core:model`, `core:domain` |
 | `feature:*` | KMP + Compose | Screens, `…ViewModel`, `…UiState`, `…UiEvent` for one feature | `core:model`, `core:domain`, `core:designsystem` |
 | `composeApp` | KMP + Compose | Shared app: navigation graph, Koin wiring, iOS framework | everything client-side |
-| `androidApp` | Android app | `Application`, `MainActivity`, manifest (ADR 0013) | `composeApp` |
+| `androidApp` | Android app | `Application`, `MainActivity`, manifest (ADR 0013); sign-in provider per build type (ADR 0024) | `composeApp` |
 | `server:app` | JVM | Ktor entry, routing, auth, DI | `core:*` except `designsystem`, `data`; `server:*` |
 | `server:parsing` | JVM | PDF extraction, platform detection, template parsers, LLM fallback | `core:model`, `core:domain`, `core:contract` |
 | `server:jobs` | JVM | The periodic `JobRunner`; sweeps (auto-approve, expiry alerts, month close) are registered in `server:app` (ADR 0021) | as above |
@@ -39,6 +39,8 @@ server that share `core:model`, `core:domain` and `core:contract`.
                                       #   RASOI_STORAGE_DIR; optional RASOI_LLM_BASE_URL/API_KEY/MODEL)
 ./gradlew :server:app:seedDemo        # seed the demo household into a running dev server (RASOI_DEMO_URL)
 ./gradlew :androidApp:assembleDebug   # Android debug APK
+./gradlew :androidApp:assembleRelease -Prasoi.apiBaseUrl=https://…  # release variant (HTTPS required; ADR 0024)
+docker build -t rasoi-server .        # server image
 ./gradlew iosSimulatorArm64Test       # shared tests on the iOS simulator (macOS)
 ./gradlew recordRoborazziJvm          # re-record design-system screenshot goldens
 ./gradlew verifyRoborazziJvm          # compare screenshots against goldens

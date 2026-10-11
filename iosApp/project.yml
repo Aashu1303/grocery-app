@@ -8,6 +8,11 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
+packages:
+  # Phone sign-in in release builds (ADR 0024).
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.0.0
 targets:
   iosApp:
     type: application
@@ -24,15 +29,36 @@ targets:
         RasoiApiBaseUrl: "$(RASOI_API_BASE_URL)"
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        CFBundleURLTypes:
+          # Firebase's reCAPTCHA fallback returns through this scheme: the REVERSED_CLIENT_ID in GoogleService-Info.plist.
+          - CFBundleURLSchemes: ["$(RASOI_FIREBASE_REVERSED_CLIENT_ID)"]
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.rasoi
         FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "ComposeApp"]
         ENABLE_USER_SCRIPT_SANDBOXING: NO
-        CODE_SIGNING_ALLOWED: NO
-        RASOI_API_BASE_URL: "http://localhost:8080"
+        RASOI_FIREBASE_REVERSED_CLIENT_ID: "app.rasoi.firebase-not-configured"
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+          RASOI_API_BASE_URL: "http://localhost:8080"
+        Release:
+          # Pass RASOI_API_BASE_URL=https://... (and your signing team) to xcodebuild or set it in Xcode.
+          RASOI_API_BASE_URL: ""
     preBuildScripts:
+      - name: Require HTTPS for release
+        basedOnDependencyAnalysis: false
+        script: |
+          if [ "$CONFIGURATION" = "Release" ]; then
+            case "$RASOI_API_BASE_URL" in
+              https://*) ;;
+              *) echo "error: Release builds need RASOI_API_BASE_URL=https://<your server>"; exit 1 ;;
+            esac
+          fi
       - name: Compile Kotlin framework
         basedOnDependencyAnalysis: false
         script: |

@@ -1,6 +1,6 @@
 # 0016. Client phone sign-in providers
 
-Status: Accepted
+Status: Accepted (production providers: ADR 0024)
 Date: 2026-10-11
 
 ## Context
