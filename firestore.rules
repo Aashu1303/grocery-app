@@ -1,0 +1,89 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function callerUid() {
+      return request.auth.uid;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && callerUid() == uid;
+    }
+
+    // Reads memberIds from the existing Firestore doc (not client payload) —
+    // prevents privilege escalation via crafted request bodies.
+    function isHouseholdMember() {
+      return isSignedIn()
+          && resource.data.memberIds is list
+          && callerUid() in resource.data.memberIds;
+    }
+
+    function isValidUserDoc(data, userId) {
+      return data.uid is string
+          && data.uid == userId
+          && data.uid.size() <= 128
+          && data.phone is string
+          && data.phone.size() > 0
+          && data.phone.size() <= 20
+          && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 64))
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp;
+    }
+
+    function isValidHouseholdDoc(data) {
+      return data.name is string
+          && data.name.size() > 0
+          && data.name.size() <= 128
+          && data.memberIds is list
+          && data.memberIds.size() >= 1
+          && data.memberIds.size() <= 20
+          && data.createdBy is string
+          && data.createdBy.size() > 0
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+                    && isValidUserDoc(request.resource.data, userId);
+
+      // uid and createdAt are immutable anchors.
+      allow update: if isOwner(userId)
+                    && isValidUserDoc(request.resource.data, userId)
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if false;
+    }
+
+    match /households/{householdId} {
+      allow read: if isHouseholdMember();
+
+      // Creator must include themselves in memberIds and own the createdBy field.
+      allow create: if isSignedIn()
+                    && isValidHouseholdDoc(request.resource.data)
+                    && callerUid() in request.resource.data.memberIds
+                    && request.resource.data.createdBy == callerUid();
+
+      // Caller must remain a member after the update; createdBy and createdAt locked.
+      allow update: if isHouseholdMember()
+                    && isValidHouseholdDoc(request.resource.data)
+                    && request.resource.data.createdBy == resource.data.createdBy
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    && callerUid() in request.resource.data.memberIds;
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

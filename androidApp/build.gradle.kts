@@ -1,12 +1,21 @@
 plugins {
     id("rasoi.android-application")
     id("rasoi.quality")
+    id("com.google.gms.google-services")
 }
 
 dependencies {
     implementation(project(":composeApp"))
     implementation(libs.androidx.activity.compose)
-    // Only release builds carry a production sign-in provider; debug builds use the development one (ADR 0024).
-    releaseImplementation(libs.firebase.auth)
+    // Firebase SDK available in all builds; sign-in provider is source-set-selected (ADR 0024 updated).
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     releaseImplementation(libs.kotlinx.coroutines.core)
+}
+android {
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
 }
