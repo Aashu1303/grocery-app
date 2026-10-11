@@ -1,5 +1,6 @@
 package app.rasoi.feature.household.setup
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.rasoi.core.domain.household.CreateHouseholdUseCase
@@ -22,11 +23,17 @@ import org.koin.core.annotation.KoinViewModel
 /** Create a household in the device's time zone, or join one with an invite code. */
 @KoinViewModel
 class HouseholdSetupViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val createHousehold: CreateHouseholdUseCase,
     private val joinHousehold: JoinHouseholdUseCase,
     private val timeZoneId: () -> String = { TimeZone.currentSystemDefault().id },
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(HouseholdSetupUiState())
+    private val mutableState = MutableStateFlow(
+        HouseholdSetupUiState(
+            name = savedStateHandle[KEY_NAME] ?: "",
+            code = savedStateHandle[KEY_CODE] ?: "",
+        ),
+    )
     val state: StateFlow<HouseholdSetupUiState> = mutableState.asStateFlow()
 
     private val effectChannel = Channel<HouseholdSetupEffect>(Channel.BUFFERED)
@@ -34,11 +41,13 @@ class HouseholdSetupViewModel(
 
     fun onEvent(event: HouseholdSetupUiEvent) {
         when (event) {
-            is HouseholdSetupUiEvent.NameChanged -> mutableState.update {
-                it.copy(name = event.value, nameError = null, error = null)
+            is HouseholdSetupUiEvent.NameChanged -> {
+                savedStateHandle[KEY_NAME] = event.value
+                mutableState.update { it.copy(name = event.value, nameError = null, error = null) }
             }
-            is HouseholdSetupUiEvent.CodeChanged -> mutableState.update {
-                it.copy(code = event.value, codeError = null, error = null)
+            is HouseholdSetupUiEvent.CodeChanged -> {
+                savedStateHandle[KEY_CODE] = event.value
+                mutableState.update { it.copy(code = event.value, codeError = null, error = null) }
             }
             HouseholdSetupUiEvent.Create -> create()
             HouseholdSetupUiEvent.Join -> join()
@@ -97,5 +106,10 @@ class HouseholdSetupViewModel(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val KEY_NAME = "name"
+        const val KEY_CODE = "code"
     }
 }

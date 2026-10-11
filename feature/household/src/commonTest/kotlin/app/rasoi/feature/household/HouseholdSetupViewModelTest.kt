@@ -1,5 +1,6 @@
 package app.rasoi.feature.household
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import app.rasoi.core.domain.household.CreateHouseholdUseCase
 import app.rasoi.core.domain.household.JoinHouseholdUseCase
@@ -15,11 +16,27 @@ import kotlin.test.assertEquals
 
 class HouseholdSetupViewModelTest : ViewModelTest() {
     private val repository = FakeHouseholdRepository()
+    private val savedState = SavedStateHandle()
     private val viewModel = HouseholdSetupViewModel(
+        savedState,
         CreateHouseholdUseCase(repository),
         JoinHouseholdUseCase(repository),
         timeZoneId = { "Asia/Kolkata" },
     )
+
+    @Test
+    fun typedNameAndCodeSurviveProcessDeath() {
+        viewModel.onEvent(HouseholdSetupUiEvent.NameChanged("Flat 4B"))
+        viewModel.onEvent(HouseholdSetupUiEvent.CodeChanged("ABC123"))
+        val restored = HouseholdSetupViewModel(
+            SavedStateHandle(savedState.keys().associateWith { savedState.get<String>(it) }),
+            CreateHouseholdUseCase(repository),
+            JoinHouseholdUseCase(repository),
+            timeZoneId = { "Asia/Kolkata" },
+        )
+        assertEquals("Flat 4B", restored.state.value.name)
+        assertEquals("ABC123", restored.state.value.code)
+    }
 
     @Test
     fun creatingEmitsHouseholdReadyInTheDeviceTimeZone() = runTest {

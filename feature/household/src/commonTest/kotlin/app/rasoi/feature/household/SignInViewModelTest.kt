@@ -1,5 +1,6 @@
 package app.rasoi.feature.household
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import app.rasoi.core.domain.auth.AuthState
 import app.rasoi.core.domain.auth.CompleteProfileUseCase
@@ -20,7 +21,9 @@ import kotlin.test.assertIs
 class SignInViewModelTest : ViewModelTest() {
     private val provider = FakePhoneAuthProvider()
     private val auth = FakeAuthRepository()
+    private val savedState = SavedStateHandle()
     private val viewModel = SignInViewModel(
+        savedState,
         RequestOtpUseCase(provider),
         VerifyOtpUseCase(provider, auth),
         CompleteProfileUseCase(auth),
@@ -29,6 +32,20 @@ class SignInViewModelTest : ViewModelTest() {
     @Test
     fun startsOnThePhoneStep() {
         assertEquals(SignInUiState(), viewModel.state.value)
+    }
+
+    @Test
+    fun typedPhoneAndNameSurviveProcessDeath() {
+        viewModel.onEvent(SignInUiEvent.PhoneChanged("9876543210"))
+        viewModel.onEvent(SignInUiEvent.NameChanged("Asha"))
+        val restored = SignInViewModel(
+            SavedStateHandle(savedState.keys().associateWith { savedState.get<String>(it) }),
+            RequestOtpUseCase(provider),
+            VerifyOtpUseCase(provider, auth),
+            CompleteProfileUseCase(auth),
+        )
+        assertEquals("9876543210", restored.state.value.phone)
+        assertEquals("Asha", restored.state.value.name)
     }
 
     @Test
