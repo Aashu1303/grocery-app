@@ -43,6 +43,7 @@ import app.rasoi.feature.household.setup.HouseholdSetupRoute
 import app.rasoi.feature.household.signin.SignInRoute
 import app.rasoi.feature.invoiceimport.review.BillReviewRoute
 import app.rasoi.feature.invoiceimport.upload.ImportRoute
+import app.rasoi.feature.ledger.LedgerRoute
 import app.rasoi.feature.pantry.PantryRoute
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -119,6 +120,13 @@ private fun NavGraphBuilder.appDestinations(state: AppState.Ready, navController
             onImport = { navController.navigate(Route.ImportInvoices) },
         )
     }
+    composable<Route.Balances> {
+        LedgerRoute(
+            householdId = state.household.household.id,
+            myUserId = state.account.id,
+            myRole = state.household.role,
+        )
+    }
     composable<Route.BillDetail> { entry ->
         BillDetailRoute(
             billId = BillId(entry.toRoute<Route.BillDetail>().billId),
@@ -164,8 +172,7 @@ private fun NavGraphBuilder.placeholder(tab: TopLevelDestination) {
     }
     when (tab.route) {
         Route.Kitchen -> composable<Route.Kitchen> { content() }
-        Route.Balances -> composable<Route.Balances> { content() }
-        Route.Pantry, Route.Bills, Route.Catalog, Route.Household, Route.ImportInvoices -> Unit
+        Route.Pantry, Route.Bills, Route.Balances, Route.Catalog, Route.Household, Route.ImportInvoices -> Unit
         is Route.BillReview, is Route.BillDetail -> Unit
     }
 }

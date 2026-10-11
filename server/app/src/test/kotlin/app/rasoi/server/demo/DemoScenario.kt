@@ -20,10 +20,17 @@ import app.rasoi.core.contract.bills.UpdateBillRequestDto
 import app.rasoi.core.contract.household.HouseholdDto
 import app.rasoi.core.contract.household.LocationKindDto
 import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.core.contract.ledger.LedgerDto
+import app.rasoi.core.contract.ledger.PeriodStatusDto
+import app.rasoi.core.contract.ledger.SettlementStatusDto
+import app.rasoi.core.contract.ledger.TransferDto
 import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
 import app.rasoi.core.contract.pantry.PantryItemDto
 import app.rasoi.core.contract.pantry.PantryStatusDto
 import app.rasoi.core.contract.pantry.UpdatePantryItemRequestDto
+import app.rasoi.core.domain.ledger.UpiLink
+import app.rasoi.core.model.Money
+import app.rasoi.core.model.PeriodMonth
 import app.rasoi.server.support.Invoices
 import io.ktor.client.call.body
 import io.ktor.http.HttpStatusCode
@@ -55,6 +62,7 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
         duplicatesAreRejected(demo)
         approveTheBills(demo, splitTheBills(demo))
         pantryFollowsTheKitchen(demo)
+        closeTheMonth(demo)
         nonMembersSeeNothing(demo)
         return demo
     }
@@ -296,6 +304,56 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
         assertEquals(items.size - 1, api.pantryItems(demo.owner, id).size)
     }
 
+    /**
+     * Step 8: balances come from the approved bills only and sum to zero, the month closes into stored transfers
+     * with a UPI link for each, and a transfer is marked paid. Bills still awaiting approval carry on to next month.
+     */
+    private suspend fun closeTheMonth(demo: DemoHousehold) {
+        val id = demo.household.id
+        api.setUpi(demo.owner, "meera@okbank").expect(HttpStatusCode.OK)
+        api.setUpi(demo.flatmate, "aarav@okhdfc").expect(HttpStatusCode.OK)
+        api.setUpi(demo.owner, "no spaces allowed").expect(HttpStatusCode.BadRequest)
+
+        val open = api.ledger(demo.flatmate, id)
+        val month = open.month
+        assertEquals(PeriodStatusDto.OPEN, open.status)
+        assertEquals(0L, open.balances.sumOf { it.netPaise })
+        assertTrue(open.transfers.isNotEmpty() && open.transfers.all { it.settlementId == null })
+        api.ledgerResponse(demo.cook, id).expect(HttpStatusCode.Forbidden)
+        api.ledgerResponse(demo.owner, id, "1999-01").expect(HttpStatusCode.NotFound)
+
+        api.closeMonth(demo.flatmate, id, month).expect(HttpStatusCode.Forbidden)
+        api.closeMonth(demo.owner, id, "1999-01").expect(HttpStatusCode.Conflict)
+        val closed: LedgerDto = api.closeMonth(demo.owner, id, month).expect(HttpStatusCode.OK).body()
+        assertEquals(PeriodStatusDto.LOCKED, closed.status)
+        assertEquals(open.balances, closed.balances)
+        val transfer = closed.transfers.single()
+        assertEquals(SettlementStatusDto.PENDING, transfer.status)
+
+        // What the app opens to pay: the receiver's address and the amount, in rupees.
+        val receiver = if (transfer.to == demo.owner.user.id) demo.owner else demo.flatmate
+        val link = UpiLink.build(
+            transfer.payeeUpiVpa.orEmpty(),
+            receiver.user.displayName,
+            Money(transfer.amountPaise),
+            "Rasoi ${closed.month}",
+        )
+        assertTrue(link?.startsWith("upi://pay?pa=${transfer.payeeUpiVpa}&") == true, link)
+
+        val settlementId = transfer.settlementId.orEmpty()
+        api.markPaid(demo.cook, settlementId).expect(HttpStatusCode.Forbidden)
+        val paid: TransferDto = api.markPaid(demo.flatmate, settlementId).expect(HttpStatusCode.OK).body()
+        assertEquals(SettlementStatusDto.PAID, paid.status)
+        api.markPaid(demo.owner, settlementId).expect(HttpStatusCode.OK)
+        assertEquals(SettlementStatusDto.PAID, api.ledger(demo.owner, id, month).transfers.single().status)
+
+        val next = api.ledger(demo.owner, id)
+        val following = requireNotNull(PeriodMonth.parse(month)).next().toString()
+        assertEquals(following, next.month)
+        assertEquals(listOf(following, month), next.months)
+        assertTrue(api.billList(demo.owner, id).any { it.status == BillStatusDto.LOCKED })
+    }
+
     /** Step 9: a non-member cannot read or change any of it. */
     private suspend fun nonMembersSeeNothing(demo: DemoHousehold) {
         val id = demo.household.id
@@ -312,6 +370,8 @@ class DemoScenario(private val api: DemoApi, private val afterApprovalWindow: (s
             CreatePantryItemRequestDto("Sneaky", CategoryDto.STAPLES, QuantityDto(1_000, QuantityUnitDto.COUNT))
         api.addPantryItem(demo.outsider, id, basmati).expect(HttpStatusCode.NotFound)
         api.bills(demo.outsider, id).expect(HttpStatusCode.NotFound)
+        api.ledgerResponse(demo.outsider, id).expect(HttpStatusCode.NotFound)
+        api.closeMonth(demo.outsider, id, "1999-01").expect(HttpStatusCode.NotFound)
         val gas = CreateBillRequestDto(
             "Sneaky",
             "2026-10-05",

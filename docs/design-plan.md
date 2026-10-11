@@ -150,8 +150,8 @@ core/testing/        fakes, builders, fixture loaders
 feature/household/   setup, invites, roles
 feature/pantry/      list, locations, item detail, manual add
 feature/invoiceimport/ pick PDF, parse review
-feature/bills/       bill editor, allocation, approvals
-feature/ledger/      balances, month close, settle up
+feature/bills/       bill list and detail, splitting, approvals
+feature/ledger/      balances, transfers, UPI pay, close month
 feature/kitchen/     use-first list, dish suggestions
 server/app/          Ktor entry, routing, auth, DI
 server/parsing/      extraction, detection, template parsers, LLM fallback
@@ -172,14 +172,14 @@ docs/                design-plan.md, kickoff-prompt.md adr/
 | memberships | household\_id, user\_id, role | Role: OWNER, MEMBER, COOK; unique per pair |
 | invites | code, household\_id, role, expires\_at | Single use |
 | locations | id, household\_id, name, kind | Kind: FRIDGE, FREEZER, SHELF, OTHER |
-| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, created\_by, total\_paise, status, confidence, title, submitted\_at, version, period\_id | Unique (household\_id, platform, invoice\_no); period\_id arrives in M5 (ADR 0018) |
+| bills | id, household\_id, platform, invoice\_no, order\_id, invoice\_date, payer\_id, created\_by, total\_paise, status, confidence, title, submitted\_at, version, period\_id | Unique (household\_id, platform, invoice\_no); every bill belongs to a period (ADR 0022) |
 | bill\_documents | bill\_id, household\_id, platform, invoice\_no, storage\_key, sha256 | Several PDFs per bill; unique per household by sha256 and by platform + invoice\_no |
 | bill\_lines | id, bill\_id, position, raw\_name, display\_name, units, measure\_amount, measure\_unit, amount\_paise, mrp\_paise, hsn, upc, category, is\_food | amount\_paise = what was paid for the line; units drive QUANTITY splits (ADR 0018) |
 | bill\_charges | id, bill\_id, kind, amount\_paise, distribution | Kind: HANDLING, DELIVERY, DISCOUNT, ROUND\_OFF, OTHER; signed amount |
 | allocations | line\_id, user\_id, mode, units, amount\_paise | Amounts stored after computation; a line's rows sum to its amount; charge shares are derived, not stored (ADR 0021) |
 | approvals | bill\_id, user\_id, state, comment, decided\_at, automatic | State: PENDING, APPROVED, CHANGES\_REQUESTED; `automatic` marks the 48 h approval |
-| periods | id, household\_id, month, status | OPEN or LOCKED |
-| settlements | id, period\_id, from\_user, to\_user, amount\_paise, status | PENDING or PAID |
+| periods | id, household\_id, month, status, created\_at, closed\_at | Month is `YYYY-MM`; at most one OPEN period per household (ADR 0022) |
+| settlements | id, period\_id, from\_user, to\_user, amount\_paise, status, paid\_at | PENDING or PAID; written when a period closes |
 | pantry\_items | id, household\_id, name, category, quantity, unit, location\_id, expires\_on, status, added\_on, price\_paise, payer\_id, source\_line\_id | Status: IN\_STOCK, FINISHED, DISCARDED; one item per source line (ADR 0020) |
 | device\_tokens | user\_id, token, platform | For FCM |
 | sessions | token\_hash, user\_id, expires\_at | Opaque bearer sessions; only the hash is stored (ADR 0015) |
@@ -243,12 +243,13 @@ interface InvoiceParser {
 | PATCH | /households/{id}/pantry/{itemId} | Move, edit, finish or discard an item (ADR 0020) |
 | POST | /households/{id}/invoices | Upload one or more PDFs (JSON, Base64); returns a parsed draft bill (ADR 0018) |
 | GET | /bills/{id} | One bill with its review warnings (ADR 0018) |
-| GET, POST | /households/{id}/bills | List (other members' drafts are hidden; filtering by period arrives in M5); create a manual bill (ADR 0021) |
+| GET, POST | /households/{id}/bills | List (other members' drafts are hidden); create a manual bill (ADR 0021) |
 | PATCH | /bills/{id} | Edit lines, payer, allocations, charges |
 | POST | /bills/{id}/submit | Send for approval |
 | POST | /bills/{id}/approvals | Approve or request changes |
-| GET | /households/{id}/ledger?period= | Balances and suggested transfers |
-| POST | /households/{id}/periods/{month}/close | Close a month early (owner only) |
+| GET | /households/{id}/ledger?period=YYYY-MM | Balances and transfers of a period; open periods show suggestions, closed ones stored settlements (ADR 0022) |
+| POST | /households/{id}/periods/{month}/close | Close the open period early (owner only) |
+| PATCH | /me | Set or clear the caller's UPI address (ADR 0022) |
 | POST | /settlements/{id}/paid | Mark a transfer as paid |
 | GET | /households/{id}/kitchen/use-first | Use-first list |
 | POST | /households/{id}/kitchen/suggestions | Dish ideas from current stock |

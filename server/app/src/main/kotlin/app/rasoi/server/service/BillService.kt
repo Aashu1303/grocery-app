@@ -39,6 +39,7 @@ class BillService(
     private val bills: BillStore,
     private val pantry: PantryStore,
     private val planner: PantryPlanner,
+    private val periods: PeriodService,
     private val clock: Clock,
 ) {
     private class Loaded(val bill: Bill, val role: Role)
@@ -66,6 +67,7 @@ class BillService(
                     newChargeId = { Uuid.random().toChargeId() },
                 )
             }
+            .map { it.copy(periodId = periods.current(householdId).id) }
             .flatMap { bills.create(it, emptyList(), planner.itemsFor(it), clock.now()) }
 
     suspend fun update(userId: UserId, billId: BillId, edit: BillEdit): AppResult<Bill> =

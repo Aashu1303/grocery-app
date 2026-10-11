@@ -16,6 +16,7 @@ import app.rasoi.server.persistence.IdempotencyStore
 import app.rasoi.server.persistence.InviteStore
 import app.rasoi.server.persistence.LocationStore
 import app.rasoi.server.persistence.PantryStore
+import app.rasoi.server.persistence.PeriodStore
 import app.rasoi.server.persistence.RasoiDatabase
 import app.rasoi.server.persistence.SessionStore
 import app.rasoi.server.persistence.UserStore
@@ -25,6 +26,8 @@ import app.rasoi.server.service.HouseholdService
 import app.rasoi.server.service.InvoiceImportService
 import app.rasoi.server.service.PantryPlanner
 import app.rasoi.server.service.PantryService
+import app.rasoi.server.service.PeriodService
+import app.rasoi.server.service.ProfileService
 import app.rasoi.server.storage.DocumentStorage
 import app.rasoi.server.storage.FileDocumentStorage
 import com.auth0.jwk.JwkProviderBuilder
@@ -70,10 +73,14 @@ class AppGraph(
 
     private val planner = PantryPlanner(locationStore)
 
-    val imports =
-        InvoiceImportService(households, billStore, storage, InvoicePipeline.default(fallback), planner, clock)
+    val periods = PeriodService(households, PeriodStore(db), billStore, users, clock)
 
-    val bills = BillService(households, billStore, pantryStore, planner, clock)
+    val profile = ProfileService(users)
+
+    val imports =
+        InvoiceImportService(households, billStore, storage, InvoicePipeline.default(fallback), planner, periods, clock)
+
+    val bills = BillService(households, billStore, pantryStore, planner, periods, clock)
 
     val pantry = PantryService(households, householdStore, pantryStore, locationStore, clock)
 

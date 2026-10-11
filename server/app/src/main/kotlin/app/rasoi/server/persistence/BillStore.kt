@@ -7,6 +7,7 @@ import app.rasoi.core.model.BillId
 import app.rasoi.core.model.BillStatus
 import app.rasoi.core.model.HouseholdId
 import app.rasoi.core.model.PantryItem
+import app.rasoi.core.model.PeriodId
 import app.rasoi.core.model.Platform
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -61,6 +62,7 @@ class BillStore(private val db: RasoiDatabase) {
                 it[orderId] = bill.orderId
                 it[title] = bill.title
                 it[version] = 0
+                it[periodId] = bill.periodId?.uuid()
                 it[invoiceDate] = bill.invoiceDate
                 it[payerId] = bill.payerId.uuid()
                 it[createdBy] = bill.createdBy.uuid()
@@ -99,11 +101,14 @@ class BillStore(private val db: RasoiDatabase) {
         loadBills(BillsTable.selectAll().where { BillsTable.id eq id.uuid() }.toList()).singleOrNull()
     }
 
-    /** A household's bills, newest invoice first. */
-    suspend fun list(householdId: HouseholdId): List<Bill> = db.query {
+    /** A household's bills, newest invoice first; with [periodId] only that period's. */
+    suspend fun list(householdId: HouseholdId, periodId: PeriodId? = null): List<Bill> = db.query {
         loadBills(
             BillsTable.selectAll()
-                .where { BillsTable.householdId eq householdId.uuid() }
+                .where {
+                    val household = BillsTable.householdId eq householdId.uuid()
+                    if (periodId == null) household else household and (BillsTable.periodId eq periodId.uuid())
+                }
                 .orderBy(BillsTable.invoiceDate to SortOrder.DESC, BillsTable.createdAt to SortOrder.DESC)
                 .toList(),
         )

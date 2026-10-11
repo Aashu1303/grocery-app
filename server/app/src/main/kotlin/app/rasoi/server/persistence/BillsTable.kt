@@ -19,6 +19,7 @@ internal object BillsTable : Table("bills") {
     val submittedAt = timestamp("submitted_at").nullable()
     val title = text("title").nullable()
     val version = integer("version")
+    val periodId = uuid("period_id").references(PeriodsTable.id).nullable()
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
     override val primaryKey = PrimaryKey(id)

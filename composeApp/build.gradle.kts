@@ -12,6 +12,7 @@ kotlin {
             implementation(project(":feature:bills"))
             implementation(project(":feature:household"))
             implementation(project(":feature:invoiceimport"))
+            implementation(project(":feature:ledger"))
             implementation(project(":feature:pantry"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

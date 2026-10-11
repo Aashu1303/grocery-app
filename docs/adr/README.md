@@ -26,3 +26,4 @@ Copy `0000-template.md`. A superseded ADR stays in place with its status changed
 | [0019](0019-import-review-flow.md) | Invoice import and review flow on the client | Accepted |
 | [0020](0020-pantry-from-bills.md) | Pantry from bill lines, categories and expiry estimates | Accepted |
 | [0021](0021-splits-approvals-and-scheduled-work.md) | Splits, approvals and scheduled work | Accepted |
+| [0022](0022-ledger-and-settlement.md) | Ledger, month close and settlement | Accepted |

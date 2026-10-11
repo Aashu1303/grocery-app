@@ -37,6 +37,7 @@ class InvoiceImportService(
     private val storage: DocumentStorage,
     private val pipeline: InvoicePipeline,
     private val planner: PantryPlanner,
+    private val periods: PeriodService,
     private val clock: Clock,
     private val extractor: PdfTextExtractor = PdfTextExtractor(),
 ) {
@@ -109,6 +110,7 @@ class InvoiceImportService(
             lines = invoice.lines.map { line -> line.toBillLine(invoice.platform) },
             charges = invoice.charges.map { BillCharge(Uuid.random().toChargeId(), it.kind, it.label, it.amount) },
             total = invoice.total,
+            periodId = periods.current(householdId).id,
         )
         return bills.create(bill, stored, planner.itemsFor(bill), clock.now()).also { result ->
             if (result is AppResult.Failure) stored.forEach { storage.delete(it.storageKey) }

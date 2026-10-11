@@ -26,4 +26,5 @@ data class Bill(
     val submittedAt: Instant? = null,
     val title: String? = null,
     val version: Int = 0,
+    val periodId: PeriodId? = null,
 )

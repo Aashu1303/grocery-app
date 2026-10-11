@@ -128,6 +128,7 @@ private fun ResultRow.toBill(
     submittedAt = this[BillsTable.submittedAt],
     title = this[BillsTable.title],
     version = this[BillsTable.version],
+    periodId = this[BillsTable.periodId]?.toPeriodId(),
 )
 
 private fun ResultRow.toLine() = BillLine(

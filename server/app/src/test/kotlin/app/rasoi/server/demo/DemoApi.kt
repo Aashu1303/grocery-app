@@ -5,6 +5,7 @@ import app.rasoi.core.contract.HealthDto
 import app.rasoi.core.contract.auth.CreateSessionRequestDto
 import app.rasoi.core.contract.auth.MeDto
 import app.rasoi.core.contract.auth.SessionDto
+import app.rasoi.core.contract.auth.UpdateProfileRequestDto
 import app.rasoi.core.contract.bills.BillDto
 import app.rasoi.core.contract.bills.BillSummaryDto
 import app.rasoi.core.contract.bills.CreateBillRequestDto
@@ -19,6 +20,7 @@ import app.rasoi.core.contract.household.InviteDto
 import app.rasoi.core.contract.household.LocationDto
 import app.rasoi.core.contract.household.LocationKindDto
 import app.rasoi.core.contract.household.RoleDto
+import app.rasoi.core.contract.ledger.LedgerDto
 import app.rasoi.core.contract.pantry.CreatePantryItemRequestDto
 import app.rasoi.core.contract.pantry.PantryItemDto
 import app.rasoi.core.contract.pantry.UpdatePantryItemRequestDto
@@ -180,6 +182,39 @@ class DemoApi(private val client: HttpClient, private val baseUrl: String = "") 
 
     suspend fun pantryItems(session: SessionDto, householdId: String, status: String? = null): List<PantryItemDto> =
         pantry(session, householdId, status).expect(HttpStatusCode.OK).body()
+
+    suspend fun setUpi(session: SessionDto, vpa: String?): HttpResponse = call("PATCH /me") {
+        client.patch("$baseUrl/me") {
+            write(session)
+            setBody(UpdateProfileRequestDto(vpa))
+        }
+    }
+
+    suspend fun ledgerResponse(session: SessionDto, householdId: String, month: String? = null): HttpResponse =
+        call("GET /households/{id}/ledger") {
+            client.get("$baseUrl/households/$householdId/ledger${month?.let { "?period=$it" }.orEmpty()}") {
+                authed(session)
+            }
+        }
+
+    suspend fun ledger(session: SessionDto, householdId: String, month: String? = null): LedgerDto =
+        ledgerResponse(session, householdId, month).expect(HttpStatusCode.OK).body()
+
+    suspend fun closeMonth(session: SessionDto, householdId: String, month: String): HttpResponse =
+        call("POST /households/{id}/periods/{month}/close") {
+            client.post("$baseUrl/households/$householdId/periods/$month/close") {
+                write(session)
+                setBody("{}")
+            }
+        }
+
+    suspend fun markPaid(session: SessionDto, settlementId: String): HttpResponse =
+        call("POST /settlements/{id}/paid") {
+            client.post("$baseUrl/settlements/$settlementId/paid") {
+                write(session)
+                setBody("{}")
+            }
+        }
 
     suspend fun createdInvite(owner: SessionDto, householdId: String, role: RoleDto): InviteDto =
         invite(owner, householdId, role).expect(HttpStatusCode.Created).body()

@@ -7,6 +7,7 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -25,6 +26,10 @@ class UserStore(private val db: RasoiDatabase) {
             it[createdAt] = now
         }
         User(id.toUserId(), phone, displayName)
+    }
+
+    suspend fun setUpiVpa(id: UserId, vpa: String?) {
+        db.query { UsersTable.update({ UsersTable.id eq id.uuid() }) { it[upiVpa] = vpa } }
     }
 
     suspend fun find(id: UserId): User? = db.query {
