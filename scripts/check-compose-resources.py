@@ -14,6 +14,9 @@ for resources in [p for p in ROOT.glob("**/src/commonMain/composeResources") if 
     source_root = resources.parent.parent
     strings_files = list(resources.glob("values*/strings.xml"))
     declared = {m for f in strings_files for m in re.findall(r'<string name="([^"]+)"', f.read_text())}
+    for strings in strings_files:
+        if "\\'" in strings.read_text():
+            problems.append(f"{strings.relative_to(ROOT)}: Compose resources show \\' literally; use ’ instead")
     for source in source_root.glob("**/*.kt"):
         text = source.read_text()
         used = set(re.findall(r"\bRes\.string\.([A-Za-z0-9_]+)", text))

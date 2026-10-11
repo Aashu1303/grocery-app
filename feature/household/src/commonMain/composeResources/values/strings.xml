@@ -27,7 +27,7 @@
     <string name="household_add_location">Add storage place</string>
     <string name="household_location_name">Name</string>
     <string name="household_save_location">Save place</string>
-    <string name="household_load_error">Couldn\'t load your household. %1$s</string>
+    <string name="household_load_error">Couldn’t load your household. %1$s</string>
     <string name="role_owner">Owner</string>
     <string name="role_member">Member</string>
     <string name="role_cook">Cook</string>
@@ -37,15 +37,15 @@
     <string name="kind_other">Other</string>
     <string name="error_phone_invalid">Enter a 10-digit mobile number.</string>
     <string name="error_code_invalid">Enter the 6-digit code.</string>
-    <string name="error_code_incorrect">That code didn\'t work. Check it and try again.</string>
-    <string name="error_required">This can\'t be empty.</string>
+    <string name="error_code_incorrect">That code didn’t work. Check it and try again.</string>
+    <string name="error_required">This can’t be empty.</string>
     <string name="error_too_long">This is too long.</string>
     <string name="error_invite_used">This invite was already used. Ask for a new one.</string>
     <string name="error_invite_expired">This invite has expired. Ask for a new one.</string>
     <string name="error_invite_not_found">No invite matches this code.</string>
-    <string name="error_already_member">You\'re already in this household.</string>
+    <string name="error_already_member">You’re already in this household.</string>
     <string name="error_location_exists">A place with this name already exists.</string>
-    <string name="error_forbidden">Your role can\'t do this.</string>
-    <string name="error_offline">You\'re offline. Check your connection and try again.</string>
+    <string name="error_forbidden">Your role can’t do this.</string>
+    <string name="error_offline">You’re offline. Check your connection and try again.</string>
     <string name="error_generic">Something went wrong. Try again.</string>
 </resources>
