@@ -52,6 +52,17 @@ jobs:
       - uses: android-actions/setup-android@v3
         with:
           packages: ''
+      # Firebase settings for the Android app, kept out of git (ADR 0024). Forks and Dependabot get no secrets, so
+      # without it the app still builds and sign-in reports that Firebase is not configured.
+      - name: Restore google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > androidApp/google-services.json
+          else
+            echo "::notice::GOOGLE_SERVICES_JSON is not set; building without Firebase settings."
+          fi
       - name: Lint
         run: |
           set -o pipefail

@@ -14,6 +14,12 @@ skipped instead (`Lint` needs only `RASOI_RUNNER`). Delete the variables to retu
 CI runs on `push` (and manually). It does not also listen to `pull_request`: the open pull request shows the same checks
 for its head commit, and a second trigger would run every job twice.
 
+## Secrets
+
+| Secret | Used by | Content |
+| --- | --- | --- |
+| `GOOGLE_SERVICES_JSON` | CI Android builds, Lint | The Firebase Console's `google-services.json` for `app.rasoi`, written to `androidApp/` before Gradle runs. Optional: without it the app builds with Firebase unconfigured. Set it with `gh secret set GOOGLE_SERVICES_JSON < androidApp/google-services.json`. |
+
 ## Screenshots
 
 Goldens are Linux renderings. The recorder workflow always runs on `ubuntu-latest`, and the self-hosted fallback skips

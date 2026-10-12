@@ -77,11 +77,22 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew check --continue -Prasoi.android=false -Prasoi.ios=false ${{ runner.environment == 'self-hosted' && '-x verifyRoborazziJvm' || '' }} 2>&1 | tee build-check.log
+      # Firebase settings for the Android app, kept out of git (ADR 0024). Forks and Dependabot get no secrets, so
+      # without it the app still builds and sign-in reports that Firebase is not configured.
+      - name: Restore google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > androidApp/google-services.json
+          else
+            echo "::notice::GOOGLE_SERVICES_JSON is not set; building without Firebase settings."
+          fi
       - name: Assemble Android
         run: |
           set -o pipefail
           ./gradlew :androidApp:assembleDebug -Prasoi.ios=false 2>&1 | tee build-android.log
-      - name: Assemble Android release (compiles the Firebase sign-in; unsigned, no Firebase settings)
+      - name: Assemble Android release (compiles the Firebase sign-in; unsigned)
         run: |
           set -o pipefail
           ./gradlew :androidApp:assembleRelease -Prasoi.ios=false -Prasoi.apiBaseUrl=https://api.example.invalid 2>&1 | tee build-android-release.log
