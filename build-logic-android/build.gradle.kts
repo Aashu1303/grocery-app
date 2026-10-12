@@ -25,6 +25,8 @@ dependencies {
     implementation(libs.plugin.kotlin)
     implementation(libs.plugin.agp)
     implementation(libs.plugin.compose.compiler)
+    // On the root buildscript classpath with the other Android plugins, so it resolves only when Google Maven is in use.
+    implementation(libs.plugin.google.services)
 }
 
 gradlePlugin {
