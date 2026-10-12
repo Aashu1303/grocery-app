@@ -15,6 +15,7 @@ class FeaturePlugin : Plugin<Project> {
         with(target) {
             pluginManager.apply(ComposeLibraryPlugin::class.java)
             pluginManager.apply("io.github.takahirom.roborazzi")
+            applyKoinCompiler()
             val compose = extensions.getByType(ComposeExtension::class.java)
             val desktopRuntime = compose.dependencies.desktop.currentOs
             configureExtension<KotlinMultiplatformExtension> {
@@ -24,6 +25,7 @@ class FeaturePlugin : Plugin<Project> {
                     implementation(project(":core:designsystem"))
                     implementation(lib("kotlinx-coroutines-core"))
                     implementation(lib("koin-core"))
+                    implementation(lib("koin-annotations"))
                     implementation(lib("koin-compose-viewmodel"))
                     implementation(lib("lifecycle-viewmodel"))
                     implementation(lib("lifecycle-viewmodel-compose"))

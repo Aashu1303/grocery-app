@@ -25,6 +25,7 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+            implementation(libs.koin.annotations)
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

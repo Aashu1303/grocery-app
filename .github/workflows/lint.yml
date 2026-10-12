@@ -1,0 +1,73 @@
+name: Lint
+
+# Fast lint feedback on pull requests. The full CI workflow runs on push and also includes ktlint and detekt through
+# `check`, but it takes much longer and skips Android lint (it builds with rasoi.android=false).
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: lint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+# Same runner choice as CI (ADR 0025): GitHub-hosted first, the self-hosted Mac when hosted jobs cannot start. The
+# repository variable RASOI_RUNNER (a JSON label list) forces a choice; then choose-runner is skipped instead of failing.
+jobs:
+  choose-runner:
+    name: Choose runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # When hosted minutes run out this job dies at once and lint falls back to the self-hosted runner. Its failure is
+    # the expected signal, so it must not turn the whole run red.
+    continue-on-error: true
+    if: ${{ !vars.RASOI_RUNNER }}
+    outputs:
+      linux: ${{ steps.pick.outputs.linux }}
+    steps:
+      - id: pick
+        run: echo 'linux=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
+
+  lint:
+    name: ktlint, detekt, Android lint and source rules
+    needs: choose-runner
+    if: ${{ !cancelled() }}
+    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || needs.choose-runner.outputs.linux || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          # detekt 1.23 does not accept JVM targets above 22.
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      # Installs the SDK command-line tools and accepts the licences; the default package list asks for the obsolete
+      # 'tools' package and fails.
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+      - name: Lint
+        run: |
+          set -o pipefail
+          ./gradlew ktlintCheck detekt verifyFeatureSources verifyModuleGraph :androidApp:lintDebug \
+            -Prasoi.ios=false --continue 2>&1 | tee build-lint.log
+      - name: Resource and privacy guards
+        run: |
+          python3 scripts/check-compose-resources.py
+          ./scripts/check-no-real-invoices.sh
+      - name: Summarize failures
+        if: failure()
+        run: grep -hE '\.kts?:[0-9]+|Error:|FAILED|What went wrong' build-lint.log | head -80 || true
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: lint-reports
+          path: '**/build/reports/'
+          retention-days: 7

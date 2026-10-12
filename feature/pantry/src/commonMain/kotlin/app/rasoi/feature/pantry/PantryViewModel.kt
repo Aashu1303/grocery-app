@@ -26,15 +26,18 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Clock
 
 /**
  * What is in the flat's kitchen: add things by hand, move them between storage places, adjust the expiry estimate,
  * and mark them finished or discarded. Every change is saved to the server straight away.
  */
+@KoinViewModel
 class PantryViewModel(
-    private val householdId: HouseholdId,
-    private val myRole: Role,
+    @InjectedParam private val householdId: HouseholdId,
+    @InjectedParam private val myRole: Role,
     private val households: HouseholdRepository,
     private val listPantry: ListPantryUseCase,
     private val addItem: AddPantryItemUseCase,

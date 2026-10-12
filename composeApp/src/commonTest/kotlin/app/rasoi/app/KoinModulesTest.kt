@@ -9,8 +9,12 @@ import app.rasoi.core.domain.bills.GetBillUseCase
 import app.rasoi.core.domain.household.HouseholdRepository
 import app.rasoi.core.domain.pantry.ListPantryUseCase
 import app.rasoi.core.domain.pantry.PantryRepository
-import org.koin.core.context.startKoin
+import app.rasoi.core.model.HouseholdId
+import app.rasoi.core.model.Role
+import app.rasoi.feature.bills.list.BillsViewModel
 import org.koin.core.context.stopKoin
+import org.koin.core.parameter.parametersOf
+import org.koin.mp.KoinPlatform
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -28,7 +32,8 @@ class KoinModulesTest {
             InMemorySessionStorage(),
             DevPhoneAuthProvider(),
         )
-        val koin = startKoin { modules(listOf(appModule, dataModule(platform)) + featureModules) }.koin
+        initKoin(platform)
+        val koin = KoinPlatform.getKoin()
         assertSame(Clock.System, koin.get<Clock>())
         assertNotNull(koin.get<AuthRepository>())
         assertNotNull(koin.get<HouseholdRepository>())
@@ -36,5 +41,6 @@ class KoinModulesTest {
         assertNotNull(koin.get<PantryRepository>())
         assertNotNull(koin.get<ListPantryUseCase>())
         assertNotNull(koin.get<GetBillUseCase>())
+        assertNotNull(koin.get<BillsViewModel> { parametersOf(HouseholdId("h1"), Role.MEMBER) })
     }
 }

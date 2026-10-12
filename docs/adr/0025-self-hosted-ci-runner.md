@@ -13,7 +13,8 @@ GitHub-hosted runners are not available.
   `needs` it, runs even if it failed (`if: !cancelled()`) and takes its runner from its outputs. If the hosted runner
   could not start, the outputs are empty and the jobs use the self-hosted labels. No manual switch is needed.
 - The repository variables `RASOI_RUNNER` and `RASOI_IOS_RUNNER` (JSON label lists) force a choice, for the case where
-  hosted jobs queue forever instead of failing.
+  hosted jobs queue forever instead of failing. Jobs read the variables directly, and `choose-runner` is skipped when
+  they are set, so a known hosted-runner outage does not leave a red check on every commit.
 - Screenshot goldens are Linux renderings. Roborazzi compares pixels and macOS renders text differently, so the
   self-hosted fallback skips `verifyRoborazziJvm` (with a notice), and the recorder workflow always runs on
   `ubuntu-latest`. Goldens for new screens therefore wait for hosted runners; until then they are missing, not wrong.

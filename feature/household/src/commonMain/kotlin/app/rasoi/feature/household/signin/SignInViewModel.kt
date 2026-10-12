@@ -1,5 +1,6 @@
 package app.rasoi.feature.household.signin
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.rasoi.core.domain.auth.CompleteProfileUseCase
@@ -15,17 +16,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 
 /**
  * Phone, then code, then (first time only) a display name. Signing in updates the auth state, which the app
  * observes to leave this screen, so there is no navigation effect.
  */
+@KoinViewModel
 class SignInViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val requestOtp: RequestOtpUseCase,
     private val verifyOtp: VerifyOtpUseCase,
     private val completeProfile: CompleteProfileUseCase,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(SignInUiState())
+    private val mutableState = MutableStateFlow(
+        SignInUiState(
+            phone = savedStateHandle[KEY_PHONE] ?: "",
+            name = savedStateHandle[KEY_NAME] ?: "",
+        ),
+    )
     val state: StateFlow<SignInUiState> = mutableState.asStateFlow()
 
     private var verificationId: String? = null
@@ -33,14 +42,16 @@ class SignInViewModel(
 
     fun onEvent(event: SignInUiEvent) {
         when (event) {
-            is SignInUiEvent.PhoneChanged -> mutableState.update {
-                it.copy(phone = event.value, phoneError = null, error = null)
+            is SignInUiEvent.PhoneChanged -> {
+                savedStateHandle[KEY_PHONE] = event.value
+                mutableState.update { it.copy(phone = event.value, phoneError = null, error = null) }
             }
             is SignInUiEvent.CodeChanged -> mutableState.update {
                 it.copy(code = event.value, codeError = null, error = null)
             }
-            is SignInUiEvent.NameChanged -> mutableState.update {
-                it.copy(name = event.value, nameError = null, error = null)
+            is SignInUiEvent.NameChanged -> {
+                savedStateHandle[KEY_NAME] = event.value
+                mutableState.update { it.copy(name = event.value, nameError = null, error = null) }
             }
             SignInUiEvent.SubmitPhone -> submitPhone()
             SignInUiEvent.SubmitCode -> submitCode()
@@ -111,5 +122,10 @@ class SignInViewModel(
         mutableState.update {
             it.copy(phoneError = phoneError, codeError = codeError, nameError = nameError, error = screenError)
         }
+    }
+
+    private companion object {
+        const val KEY_PHONE = "phone"
+        const val KEY_NAME = "name"
     }
 }

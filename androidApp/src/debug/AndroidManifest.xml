@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Debug builds talk to a local dev server over plain HTTP; release builds never allow cleartext. -->
+<!--
+    Debug builds talk to a local dev server over plain HTTP; release builds never allow cleartext. The emulator reaches
+    the host at 10.0.2.2, a private address, which Android 17 (SDK 37) blocks for apps without the local network
+    permission.
+-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
     <application android:usesCleartextTraffic="true" />
 </manifest>

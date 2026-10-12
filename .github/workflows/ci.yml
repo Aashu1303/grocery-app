@@ -19,7 +19,7 @@ env:
 
 # Jobs run on GitHub-hosted runners. If the first job cannot start there (for example the account's minutes are used
 # up), the others fall back to the self-hosted Mac runner (ADR 0025). The repository variables RASOI_RUNNER and
-# RASOI_IOS_RUNNER (JSON label lists) force a choice.
+# RASOI_IOS_RUNNER (JSON label lists) force a choice; with both set, choose-runner is skipped instead of failing red.
 
 jobs:
   choose-runner:
@@ -29,23 +29,22 @@ jobs:
     # When hosted minutes run out this job dies at once and the others fall back to the self-hosted runner. Its
     # failure is the expected signal, so it must not turn the whole run red.
     continue-on-error: true
+    # Nothing to probe when both runners are forced.
+    if: ${{ !(vars.RASOI_RUNNER && vars.RASOI_IOS_RUNNER) }}
     outputs:
       linux: ${{ steps.pick.outputs.linux }}
       ios: ${{ steps.pick.outputs.ios }}
     steps:
       - id: pick
-        env:
-          FORCED_LINUX: ${{ vars.RASOI_RUNNER }}
-          FORCED_IOS: ${{ vars.RASOI_IOS_RUNNER }}
         run: |
-          echo "linux=${FORCED_LINUX:-[\"ubuntu-latest\"]}" >> "$GITHUB_OUTPUT"
-          echo "ios=${FORCED_IOS:-[\"macos-latest\"]}" >> "$GITHUB_OUTPUT"
+          echo 'linux=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
+          echo 'ios=["macos-latest"]' >> "$GITHUB_OUTPUT"
 
   guard:
     name: Privacy and resource guards
     needs: choose-runner
     if: ${{ !cancelled() }}
-    runs-on: ${{ fromJSON(needs.choose-runner.outputs.linux || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || needs.choose-runner.outputs.linux || '["self-hosted","macOS","ARM64"]') }}
     steps:
       - uses: actions/checkout@v5
       - run: ./scripts/check-no-real-invoices.sh
@@ -55,7 +54,7 @@ jobs:
     name: Build, lint and test (JVM, Compose, Android)
     needs: choose-runner
     if: ${{ !cancelled() }}
-    runs-on: ${{ fromJSON(needs.choose-runner.outputs.linux || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RASOI_RUNNER || needs.choose-runner.outputs.linux || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
@@ -104,7 +103,7 @@ jobs:
     name: Build and test (iOS)
     needs: choose-runner
     if: ${{ !cancelled() }}
-    runs-on: ${{ fromJSON(needs.choose-runner.outputs.ios || '["self-hosted","macOS","ARM64"]') }}
+    runs-on: ${{ fromJSON(vars.RASOI_IOS_RUNNER || needs.choose-runner.outputs.ios || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5

@@ -20,7 +20,10 @@ kotlin {
         }
         // Platform source sets exist only when their targets are enabled (ADR 0007), so configure them lazily.
         matching { it.name == "androidMain" }.configureEach {
-            dependencies { implementation(libs.ktor.client.okhttp) }
+            dependencies {
+                implementation(libs.ktor.client.okhttp)
+                implementation(libs.datastore.preferences)
+            }
         }
         matching { it.name == "iosMain" }.configureEach {
             dependencies {

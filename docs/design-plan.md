@@ -104,7 +104,7 @@ The whole system is Kotlin, so the app and server share models and domain logic.
 | --- | --- | --- |
 | Shared UI | Compose Multiplatform (Android, iOS) | One UI codebase; desktop and web possible later |
 | Navigation | Navigation Compose for Compose Multiplatform | Official, type-safe routes |
-| DI | Koin | KMP-native, simple, no code generation |
+| DI | Koin + compiler plugin (ADR 0026) | KMP-native; graph checked at build time without KSP |
 | Networking | Ktor client + kotlinx.serialization | Multiplatform, same serialization as the server |
 | Local storage | SQLDelight | Typed SQL on Android and iOS; offline reads of pantry and ledger |
 | Backend | Ktor server (JVM) | Kotlin end to end; shares `contract` and `domain` modules |
@@ -281,7 +281,7 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 | --- | --- |
 | AppButton (primary, secondary, text, destructive) | All actions |
 | AppCard | Grouped content |
-| AppTopBar, AppBottomBar | Screen chrome |
+| AppTopBar, AppBottomBar, AppScaffold | Screen chrome; AppScaffold fades the bars without resizing the content |
 | AmountText | Rupee amounts in Indian grouping (₹1,23,456.00), sign + colour + label for owed or owing |
 | ExpiryChip | Fresh / use soon / expired, always with text, never colour alone |
 | PantryItemRow | Name, quantity, location, expiry chip |

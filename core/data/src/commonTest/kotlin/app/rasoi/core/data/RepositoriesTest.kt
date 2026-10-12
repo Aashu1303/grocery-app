@@ -15,6 +15,8 @@ import app.rasoi.core.model.Role
 import app.rasoi.core.model.UserId
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,6 +46,18 @@ class RepositoriesTest {
             assertEquals(AuthState.SignedOut, awaitItem())
         }
         assertEquals(null, storage.read())
+    }
+
+    @Test
+    fun restoredSessionIsVisibleAsSignedInStraightAway() = runTest {
+        val stored = StoredSession("t", Instant.parse("2026-12-01T00:00:00Z"), "u1", "Meera")
+        val holder = SessionHolder(InMemorySessionStorage(stored), clock)
+        val lagging = CoroutineScope(StandardTestDispatcher(testScheduler))
+        val auth = DefaultAuthRepository(MockServer { json("{}") }.api, holder, lagging)
+
+        holder.restore()
+
+        assertEquals(AuthState.SignedIn(Account(UserId("u1"), "Meera")), auth.state.value)
     }
 
     @Test

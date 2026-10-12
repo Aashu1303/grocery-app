@@ -6,6 +6,6 @@ import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.Platform
 
 /** iOS entry point; the PascalCase name is what Swift calls. */
-@Suppress("FunctionNaming")
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @OptIn(ExperimentalNativeApi::class)
 fun MainViewController(): UIViewController = ComposeUIViewController { RasoiApp(showCatalog = Platform.isDebugBinary) }

@@ -48,6 +48,11 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+/** The screen's ViewModel, keyed per [key]; the app creates all tab ViewModels up front so tabs open already loaded. */
+@Composable
+fun billsViewModel(householdId: HouseholdId, myRole: Role, key: String = householdId.value): BillsViewModel =
+    koinViewModel(key = key) { parametersOf(householdId, myRole) }
+
 @Composable
 fun BillsRoute(
     householdId: HouseholdId,
@@ -55,7 +60,7 @@ fun BillsRoute(
     onOpenBill: (BillId) -> Unit,
     onImport: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: BillsViewModel = koinViewModel(key = householdId.value) { parametersOf(householdId, myRole) },
+    viewModel: BillsViewModel = billsViewModel(householdId, myRole),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {

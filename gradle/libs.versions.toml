@@ -6,13 +6,17 @@ composeMaterial3 = "1.9.0"
 lifecycle = "2.11.0"
 navigation = "2.9.2"
 activityCompose = "1.10.1"
-agp = "9.1.0"
+agp = "9.4.1"
+datastorePreferences = "1.2.1"
 firebaseAuth = "23.2.0"
+firebaseFirestore = "27.0.0"
+googleServices = "4.5.0"
 coroutines = "1.11.0"
 serialization = "1.11.0"
 datetime = "0.8.0"
 ktor = "3.6.0"
 koin = "4.2.2"
+koinCompiler = "1.2.1"
 sqldelight = "2.4.1"
 exposed = "1.5.1"
 flyway = "13.10.0"
@@ -38,6 +42,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" } # DI without code generation
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" } # Koin integration for Compose
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" } # ViewModel injection in Compose
+koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin" } # @KoinViewModel and @InjectedParam, checked at compile time
 koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" } # module verification in tests
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" } # multiplatform HTTP client
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" } # JSON bodies on the client
@@ -82,7 +87,9 @@ lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifec
 lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" } # collectAsStateWithLifecycle
 lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" } # ViewModel base class in common code
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" } # type-safe navigation
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" } # coroutine-native session storage on Android
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" } # production phone OTP sign-in in Android release builds (ADR 0024)
+firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestore" } # Firestore database in release builds
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" } # Android entry point for Compose
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" } # Main dispatcher for desktop tests
 junit4 = { module = "junit:junit", version = "4.13.2" } # runner required by the Compose desktop test rule
@@ -92,10 +99,12 @@ plugin-kotlin-serialization = { module = "org.jetbrains.kotlin:kotlin-serializat
 plugin-compose-compiler = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 plugin-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose" }
 plugin-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+plugin-google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" } # reads google-services.json into the Android app's Firebase settings
 plugin-kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
 plugin-detekt = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 plugin-ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
 plugin-roborazzi = { module = "io.github.takahirom.roborazzi:io.github.takahirom.roborazzi.gradle.plugin", version.ref = "roborazzi" }
+plugin-koin-compiler = { module = "io.insert-koin:koin-compiler-gradle-plugin", version.ref = "koinCompiler" }
 plugin-sqldelight = { module = "app.cash.sqldelight:gradle-plugin", version.ref = "sqldelight" }
 roborazzi-compose-desktop = { module = "io.github.takahirom.roborazzi:roborazzi-compose-desktop", version.ref = "roborazzi" } # screenshot tests on Compose Desktop
 

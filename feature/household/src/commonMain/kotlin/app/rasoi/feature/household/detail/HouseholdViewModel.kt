@@ -17,11 +17,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /** Members and storage places of one household; owners invite people, owners and members add places. */
+@KoinViewModel
 class HouseholdViewModel(
-    private val householdId: HouseholdId,
-    private val myRole: Role,
+    @InjectedParam private val householdId: HouseholdId,
+    @InjectedParam private val myRole: Role,
     private val repository: HouseholdRepository,
     private val createInvite: CreateInviteUseCase,
     private val addLocation: AddLocationUseCase,

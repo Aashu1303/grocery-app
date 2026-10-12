@@ -2,9 +2,10 @@ package app.rasoi.feature.kitchen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -47,12 +48,17 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+/** The screen's ViewModel, keyed per [key]; the app creates all tab ViewModels up front so tabs open already loaded. */
+@Composable
+fun kitchenViewModel(householdId: HouseholdId, myRole: Role, key: String = householdId.value): KitchenViewModel =
+    koinViewModel(key = key) { parametersOf(householdId, myRole) }
+
 @Composable
 fun KitchenRoute(
     householdId: HouseholdId,
     myRole: Role,
     modifier: Modifier = Modifier,
-    viewModel: KitchenViewModel = koinViewModel(key = householdId.value) { parametersOf(householdId, myRole) },
+    viewModel: KitchenViewModel = kitchenViewModel(householdId, myRole),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.onEvent(KitchenUiEvent.Refresh) }
@@ -86,7 +92,6 @@ fun KitchenScreen(state: KitchenUiState, onEvent: (KitchenUiEvent) -> Unit, modi
 private fun KitchenContent(state: KitchenUiState.Content, onEvent: (KitchenUiEvent) -> Unit, modifier: Modifier) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = AppTheme.spacing.sm),
         verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.xxs),
     ) {
         item {
@@ -102,6 +107,7 @@ private fun KitchenContent(state: KitchenUiState.Content, onEvent: (KitchenUiEve
         }
         items(state.entries, key = { it.item.id.value }) { entry -> EntryRow(entry) }
         item { Ideas(state, onEvent) }
+        item { Spacer(modifier = Modifier.height(AppTheme.spacing.sm)) }
     }
 }
 

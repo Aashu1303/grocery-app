@@ -72,13 +72,22 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+/** The screen's ViewModel, keyed per [key]; the app creates all tab ViewModels up front so tabs open already loaded. */
+@Composable
+fun ledgerViewModel(
+    householdId: HouseholdId,
+    myUserId: UserId,
+    myRole: Role,
+    key: String = householdId.value,
+): LedgerViewModel = koinViewModel(key = key) { parametersOf(householdId, myUserId, myRole) }
+
 @Composable
 fun LedgerRoute(
     householdId: HouseholdId,
     myUserId: UserId,
     myRole: Role,
     modifier: Modifier = Modifier,
-    viewModel: LedgerViewModel = koinViewModel(key = householdId.value) { parametersOf(householdId, myUserId, myRole) },
+    viewModel: LedgerViewModel = ledgerViewModel(householdId, myUserId, myRole),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val launcher = rememberUpiLauncher()
