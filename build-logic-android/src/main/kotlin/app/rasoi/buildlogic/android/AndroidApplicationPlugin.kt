@@ -50,12 +50,14 @@ class AndroidApplicationPlugin : Plugin<Project> {
     private fun Project.configureRelease(android: ApplicationExtension) {
         val release = android.buildTypes.getByName("release")
         release.isMinifyEnabled = false
-        val keystore = signingSetting("storeFile", "RASOI_KEYSTORE_FILE") ?: return
+        val keystore = signingSetting("storeFile", "RASOI_KEYSTORE_FILE")?.trim() ?: return
+        val storePassword = signingSetting("storePassword", "RASOI_KEYSTORE_PASSWORD")
         val signing = android.signingConfigs.create("release")
         signing.storeFile = file(keystore)
-        signing.storePassword = signingSetting("storePassword", "RASOI_KEYSTORE_PASSWORD")
-        signing.keyAlias = signingSetting("keyAlias", "RASOI_KEY_ALIAS")
-        signing.keyPassword = signingSetting("keyPassword", "RASOI_KEY_PASSWORD")
+        signing.storePassword = storePassword
+        signing.keyAlias = signingSetting("keyAlias", "RASOI_KEY_ALIAS")?.trim()
+        // A PKCS12 keystore (keytool's default) protects its key with the store password.
+        signing.keyPassword = signingSetting("keyPassword", "RASOI_KEY_PASSWORD") ?: storePassword
         release.signingConfig = signing
     }
 
