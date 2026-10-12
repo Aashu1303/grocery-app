@@ -12,12 +12,6 @@ class AndroidApplicationPlugin : Plugin<Project> {
         /** The host machine as seen from the Android emulator. */
         const val DEFAULT_API_BASE_URL = "http://10.0.2.2:8080"
         const val HTTPS = "https://"
-
-        val FIREBASE_PROPERTIES = mapOf(
-            "FIREBASE_APP_ID" to "rasoi.firebase.appId",
-            "FIREBASE_API_KEY" to "rasoi.firebase.apiKey",
-            "FIREBASE_PROJECT_ID" to "rasoi.firebase.projectId",
-        )
     }
 
     override fun apply(target: Project) {
@@ -47,27 +41,28 @@ class AndroidApplicationPlugin : Plugin<Project> {
     }
 
     /**
-     * Release builds sign with a key supplied through the environment, and carry the Firebase project's identifiers
-     * from Gradle properties (ADR 0024); nothing secret is committed. Shrinking stays off until a device-tested set of
-     * keep rules exists.
+     * Release builds sign with the upload key named by `rasoi.signing.*` Gradle properties (local builds, kept in
+     * `~/.gradle/gradle.properties`) or `RASOI_KEYSTORE_*` environment variables (CI); nothing secret is committed.
+     * Without them the release is unsigned (ADR 0024). Shrinking stays off until a device-tested set of keep rules
+     * exists.
      */
     private fun Project.configureRelease(android: ApplicationExtension) {
-        val keystore = providers.environmentVariable("RASOI_KEYSTORE_FILE").orNull
-        if (keystore != null) {
-            val signing = android.signingConfigs.create("release")
-            signing.storeFile = file(keystore)
-            signing.storePassword = providers.environmentVariable("RASOI_KEYSTORE_PASSWORD").orNull
-            signing.keyAlias = providers.environmentVariable("RASOI_KEY_ALIAS").orNull
-            signing.keyPassword = providers.environmentVariable("RASOI_KEY_PASSWORD").orNull
-            android.buildTypes.getByName("release").signingConfig = signing
-        }
         val release = android.buildTypes.getByName("release")
         release.isMinifyEnabled = false
-        FIREBASE_PROPERTIES.forEach { (field, property) ->
-            val value = providers.gradleProperty(property).orNull.orEmpty()
-            release.buildConfigField("String", field, "\"$value\"")
-        }
+        val keystore = signingSetting("storeFile", "RASOI_KEYSTORE_FILE") ?: return
+        val signing = android.signingConfigs.create("release")
+        signing.storeFile = file(keystore)
+        signing.storePassword = signingSetting("storePassword", "RASOI_KEYSTORE_PASSWORD")
+        signing.keyAlias = signingSetting("keyAlias", "RASOI_KEY_ALIAS")
+        signing.keyPassword = signingSetting("keyPassword", "RASOI_KEY_PASSWORD")
+        release.signingConfig = signing
     }
+
+    private fun Project.signingSetting(property: String, environment: String): String? =
+        providers.gradleProperty("rasoi.signing.$property")
+            .orElse(providers.environmentVariable(environment))
+            .orNull
+            ?.takeIf { it.isNotBlank() }
 
     /** Plain HTTP is a development convenience; a release must point at an HTTPS server. */
     private fun Project.requireHttpsForRelease() {

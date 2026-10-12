@@ -92,10 +92,33 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew :androidApp:assembleDebug -Prasoi.ios=false 2>&1 | tee build-android.log
-      - name: Assemble Android release (compiles the Firebase sign-in; unsigned)
+      # Signs with the upload key when the RASOI_KEYSTORE_* secrets exist (ADR 0024); forks and Dependabot get none and
+      # build unsigned. The keystore lives in the runner's temp folder only for this step.
+      - name: Assemble Android release
+        env:
+          RASOI_KEYSTORE_BASE64: ${{ secrets.RASOI_KEYSTORE_BASE64 }}
+          RASOI_KEYSTORE_PASSWORD: ${{ secrets.RASOI_KEYSTORE_PASSWORD }}
+          RASOI_KEY_ALIAS: ${{ secrets.RASOI_KEY_ALIAS }}
+          RASOI_KEY_PASSWORD: ${{ secrets.RASOI_KEY_PASSWORD }}
+          API_BASE_URL: ${{ vars.RASOI_API_BASE_URL || 'https://api.example.invalid' }}
         run: |
           set -o pipefail
-          ./gradlew :androidApp:assembleRelease -Prasoi.ios=false -Prasoi.apiBaseUrl=https://api.example.invalid 2>&1 | tee build-android-release.log
+          if [ -n "$RASOI_KEYSTORE_BASE64" ]; then
+            export RASOI_KEYSTORE_FILE="$RUNNER_TEMP/rasoi-upload.jks"
+            trap 'rm -f "$RASOI_KEYSTORE_FILE"' EXIT
+            printf '%s' "$RASOI_KEYSTORE_BASE64" | base64 --decode > "$RASOI_KEYSTORE_FILE"
+          else
+            echo "::notice::RASOI_KEYSTORE_BASE64 is not set; the release build is unsigned."
+          fi
+          ./gradlew :androidApp:assembleRelease -Prasoi.ios=false -Prasoi.apiBaseUrl="$API_BASE_URL" 2>&1 | tee build-android-release.log
+      # Only a build pointed at a real server is worth installing.
+      - name: Upload release APK
+        if: ${{ vars.RASOI_API_BASE_URL != '' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: rasoi-release-apk
+          path: androidApp/build/outputs/apk/release/*.apk
+          retention-days: 14
       - name: Summarize failures
         if: failure()
         run: |

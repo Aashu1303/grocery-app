@@ -72,15 +72,21 @@ non-root user and keeps invoice PDFs in the `/data` volume.
 - **API address:** Android `-Prasoi.apiBaseUrl=https://api.example.com` at build time; iOS `RASOI_API_BASE_URL`. A
   release build refuses any address that is not `https://` (ADR 0024).
 - **Android release.** Create a Firebase project, enable **Phone** sign-in, add the Android app (`app.rasoi`) with your
-  release key's SHA-1 and SHA-256, and note the app id, API key and project id from the project settings. Then:
-  ```sh
-  export RASOI_KEYSTORE_FILE=/secure/rasoi.jks RASOI_KEYSTORE_PASSWORD=... RASOI_KEY_ALIAS=... RASOI_KEY_PASSWORD=...
-  ./gradlew :androidApp:bundleRelease \
-    -Prasoi.apiBaseUrl=https://api.example.com \
-    -Prasoi.firebase.appId=1:123:android:abc -Prasoi.firebase.apiKey=AIza... -Prasoi.firebase.projectId=my-project
+  upload key's SHA-1 and SHA-256 (`keytool -list -v -keystore ~/rasoi-upload.jks`), and download its
+  `google-services.json` into `androidApp/` (it is git-ignored; the google-services plugin reads it). Create the upload
+  key once with `keytool -genkeypair -keystore ~/rasoi-upload.jks -alias rasoi-upload -keyalg RSA -keysize 4096
+  -validity 10000`, keep it outside the repo and back it up with its password. Then put this in
+  `~/.gradle/gradle.properties` (never in the repo):
+  ```properties
+  rasoi.signing.storeFile=/Users/you/rasoi-upload.jks
+  rasoi.signing.storePassword=...
+  rasoi.signing.keyAlias=rasoi-upload
+  rasoi.signing.keyPassword=...
   ```
-  Keep the properties in `~/.gradle/gradle.properties` rather than on a shared command line. Without the Firebase
-  properties the build works but sign-in reports an error. The release build has no development sign-in.
+  and build with `./gradlew :androidApp:bundleRelease -Prasoi.apiBaseUrl=https://api.example.com`. The
+  `RASOI_KEYSTORE_FILE`, `RASOI_KEYSTORE_PASSWORD`, `RASOI_KEY_ALIAS` and `RASOI_KEY_PASSWORD` environment variables
+  work too (CI uses them). Without a key the release is unsigned; without `google-services.json` sign-in reports an
+  error. The release build has no development sign-in.
 - **iOS release.** In the same Firebase project add the iOS app (`app.rasoi`), upload an APNs key (Project settings,
   Cloud Messaging) and download `GoogleService-Info.plist` into `iosApp/iosApp/` (it is git-ignored). Put its
   `REVERSED_CLIENT_ID` in the `RASOI_FIREBASE_REVERSED_CLIENT_ID` build setting. Then build the Release configuration
