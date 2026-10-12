@@ -129,5 +129,5 @@ A change is done when:
 
 ## Skills
 
-`.claude/skills/` holds step-by-step guides: `new-feature-module`, `add-invoice-parser`, `add-design-component`,
-`write-adr`, `pre-commit-review`.
+`.claude/skills/` holds step-by-step guides: `kmp-project-structure`, `new-feature-module`, `add-invoice-parser`,
+`add-design-component`, `write-adr`, `pre-commit-review`.
