@@ -29,7 +29,8 @@ unconfigured paths fail visibly.
   `RASOI_KEY_ALIAS` and `RASOI_KEY_PASSWORD` environment variables for Android, and from Xcode/`xcodebuild` settings for
   iOS. Without them an unsigned release still builds. *Amended:* CI signs with the upload key from the
   `RASOI_KEYSTORE_BASE64` and password secrets, decoded to the runner's temp folder for that step only; release builds
-  are never signed with the debug key.
+  are never signed with the debug key. The environment variables win over the properties, because the self-hosted
+  runner shares the owner's `~/.gradle`.
 - **Shrinking stays off.** R8 on a Compose, Ktor, Koin and Firebase app needs keep rules that can only be checked on
   a device; shipping untested rules is worse than a larger APK.
 - **Server image.** A multi-stage `Dockerfile` builds `:server:app:installDist` with every client module switched off

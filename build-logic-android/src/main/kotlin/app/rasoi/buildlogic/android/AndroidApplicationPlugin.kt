@@ -41,8 +41,9 @@ class AndroidApplicationPlugin : Plugin<Project> {
     }
 
     /**
-     * Release builds sign with the upload key named by `rasoi.signing.*` Gradle properties (local builds, kept in
-     * `~/.gradle/gradle.properties`) or `RASOI_KEYSTORE_*` environment variables (CI); nothing secret is committed.
+     * Release builds sign with the upload key named by `RASOI_KEYSTORE_*` environment variables (CI) or
+     * `rasoi.signing.*` Gradle properties (local builds, kept in `~/.gradle/gradle.properties`); nothing secret is
+     * committed.
      * Without them the release is unsigned (ADR 0024). Shrinking stays off until a device-tested set of keep rules
      * exists.
      */
@@ -58,9 +59,11 @@ class AndroidApplicationPlugin : Plugin<Project> {
         release.signingConfig = signing
     }
 
+    // The environment wins: the self-hosted CI runner shares the owner's ~/.gradle, whose properties must not
+    // replace the key CI was given.
     private fun Project.signingSetting(property: String, environment: String): String? =
-        providers.gradleProperty("rasoi.signing.$property")
-            .orElse(providers.environmentVariable(environment))
+        providers.environmentVariable(environment)
+            .orElse(providers.gradleProperty("rasoi.signing.$property"))
             .orNull
             ?.takeIf { it.isNotBlank() }
 
