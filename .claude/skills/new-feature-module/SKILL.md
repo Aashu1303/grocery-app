@@ -6,7 +6,8 @@ description: Create or extend a Rasoi feature module (feature/*) with an MVI scr
 # New feature module
 
 Features live in `feature/<name>/` and depend only on `core:model`, `core:domain` and `core:designsystem`
-(enforced by `verifyModuleGraph`). Package: `app.rasoi.feature.<name>`.
+(enforced by `verifyModuleGraph`). Package: `app.rasoi.feature.<name>`. Unsure whether code belongs in a feature, in
+`core` or in an entry module? See the `kmp-project-structure` skill.
 
 ## 1. Register the module (new feature only)
 
