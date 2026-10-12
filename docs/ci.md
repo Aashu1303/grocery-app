@@ -7,7 +7,9 @@ the self-hosted labels automatically.
 
 To force a choice, set the repository variables `RASOI_RUNNER` and `RASOI_IOS_RUNNER` to JSON label lists, for example
 `["self-hosted","macOS","ARM64"]` for both (Settings, Secrets and variables, Actions, Variables). Do this if hosted jobs
-queue forever instead of failing. Delete the variables to return to the default.
+queue forever instead of failing, or while hosted runners are unavailable for a while: a `choose-runner` job that cannot
+start shows as a red failed check on every commit, even though the run as a whole passes. With the variables set it is
+skipped instead (`Lint` needs only `RASOI_RUNNER`). Delete the variables to return to the default.
 
 CI runs on `push` (and manually). It does not also listen to `pull_request`: the open pull request shows the same checks
 for its head commit, and a second trigger would run every job twice.
