@@ -38,7 +38,10 @@ and a JSON parse at cold start, and draws the same vector paths a Compose `Canva
   colour. `RasoiApp` draws the intro over the app (loading continues underneath) and fades it out. It plays once per
   launch (`rememberSaveable`, so not again on rotation). On Android 12+ `MainActivity` removes the system splash
   without its fade, which would otherwise cover the zoom. iOS always cross-fades the launch screen into the app, so
-  `MainViewController` holds frame 0 for 400 ms (`introStartDelayMillis`) before the zoom starts.
+  `MainViewController` holds frame 0 for 200 ms (`introStartDelayMillis`) before the zoom starts. Measured on the
+  simulator: with no hold the fading launch mark ghosts over the zoom; at 200 ms it does not. Most of the wait before
+  the zoom is pre-main process start (about 1.4 s on the simulator, the same in Debug and Release); our code reaches
+  its first frame about 150 ms after `main`.
 - **Android** (`androidApp/src/main/res`): adaptive icon (`mipmap-anydpi-v26/ic_launcher`) with a green background,
   vector foreground inside the 66 dp safe zone and a monochrome layer for themed icons; `Theme.Rasoi` with
   `windowSplashScreen*` attributes on API 31+ and a `launch_screen` layer-list window background before that. No

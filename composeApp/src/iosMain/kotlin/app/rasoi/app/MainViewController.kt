@@ -13,4 +13,4 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
 }
 
 /** iOS cross-fades the launch screen into the first app frame; the intro waits it out on its matching frame 0. */
-private const val LAUNCH_SCREEN_FADE_MILLIS = 400L
+private const val LAUNCH_SCREEN_FADE_MILLIS = 200L
