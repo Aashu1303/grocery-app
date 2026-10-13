@@ -44,7 +44,9 @@ and a JSON parse at cold start, and draws the same vector paths a Compose `Canva
   `windowSplashScreen*` attributes on API 31+ and a `launch_screen` layer-list window background before that. No
   `core-splashscreen` dependency is needed. Colours are copied from the tokens with a comment pointing here.
 - **iOS** (`iosApp/iosApp/Assets.xcassets`): a single 1024 px `AppIcon` without alpha, a `LaunchBackground` colour
-  and a `LaunchMark` vector image (light and dark) used by `UILaunchScreen`.
+  and a `LaunchMark` vector image (light and dark) used by `UILaunchScreen`. iOS reads SVG fills as Display P3, so the
+  SVGs hold the P3 equivalents of `primary` (`#3E6A43` light, `#A1D2A6` dark); they render as the sRGB token, and the
+  mark does not change colour when the intro takes over.
 - **Copy.** The tagline is Hinglish by choice; it lives in `strings.xml` (`ds_brand_tagline`) like any other string.
   Design-plan 7.3 rule 8 (plain English) applies to UI copy, not the brand line.
 
