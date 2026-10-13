@@ -19,6 +19,11 @@ for its head commit, and a second trigger would run every job twice.
 | Secret | Used by | Content |
 | --- | --- | --- |
 | `GOOGLE_SERVICES_JSON` | CI Android builds, Lint | The Firebase Console's `google-services.json` for `app.rasoi`, written to `androidApp/` before Gradle runs. Optional: without it the app builds with Firebase unconfigured. Set it with `gh secret set GOOGLE_SERVICES_JSON < androidApp/google-services.json`. |
+| `RASOI_KEYSTORE_BASE64` | CI Android release | The Android upload keystore, base64: `base64 -i ~/rasoi-upload.jks \| gh secret set RASOI_KEYSTORE_BASE64`. Optional: without it the release is unsigned. |
+| `RASOI_KEYSTORE_PASSWORD`, `RASOI_KEY_ALIAS`, `RASOI_KEY_PASSWORD` | CI Android release | The keystore password, key alias (`rasoi-upload`) and key password (the same as the keystore's for a PKCS12 keystore). |
+
+Repository variable `RASOI_API_BASE_URL` (an `https://` address): the CI release build points at it and is kept as the
+`rasoi-release-apk` artifact for 14 days. Without it the release points at a placeholder and is not kept.
 
 ## Screenshots
 

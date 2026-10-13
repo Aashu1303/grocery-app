@@ -17,10 +17,3 @@ dependencies {
     implementation(libs.firebase.firestore)
     releaseImplementation(libs.kotlinx.coroutines.core)
 }
-android {
-    buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
-        }
-    }
-}

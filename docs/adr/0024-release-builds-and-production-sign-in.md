@@ -12,10 +12,11 @@ unconfigured paths fail visibly.
 ## Decision
 - **Android.** The sign-in provider is chosen by source set: `src/debug` binds `DevPhoneAuthProvider`, `src/release`
   binds `FirebasePhoneAuthProvider`, so the development provider is not in the release code at all. The Firebase Auth
-  SDK is a `releaseImplementation` dependency. `FirebaseApp` is initialised in code from three Gradle properties
-  (`rasoi.firebase.appId`, `.apiKey`, `.projectId`) instead of the `google-services` plugin and JSON file, so the build
-  needs no secret file; without them a release answers sign-in with an `Unavailable` error. The reCAPTCHA fallback
-  needs a foreground activity, tracked by `CurrentActivity`.
+  SDK is a `releaseImplementation` dependency. *Amended:* Firebase is configured by the `google-services` plugin from
+  a git-ignored `androidApp/google-services.json` (CI writes it from the `GOOGLE_SERVICES_JSON` secret); the plugin is
+  applied only when the file exists, and without it a release answers sign-in with an `Unavailable` error. This
+  replaced the earlier `rasoi.firebase.*` Gradle properties once Firestore needed the full Firebase configuration.
+  The reCAPTCHA fallback needs a foreground activity, tracked by `CurrentActivity`.
 - **iOS.** Swift implements `NativePhoneAuth` (exported from the Kotlin framework) with the Firebase iOS SDK, added as
   a Swift package in `project.yml`. Kotlin adapts its callbacks with `CallbackPhoneAuthProvider` (`core:data`, unit
   tested). `#if DEBUG` passes no provider and Kotlin falls back to the development one; release always passes Firebase,
@@ -23,8 +24,13 @@ unconfigured paths fail visibly.
   `RASOI_FIREBASE_REVERSED_CLIENT_ID` build setting.
 - **HTTPS only.** `preReleaseBuild` (Android) and a pre-build script (iOS) refuse a release whose API address is not
   `https://`. Cleartext stays in the Android debug manifest.
-- **Signing** comes from `RASOI_KEYSTORE_FILE`, `RASOI_KEYSTORE_PASSWORD`, `RASOI_KEY_ALIAS` and `RASOI_KEY_PASSWORD`
-  for Android and from Xcode/`xcodebuild` settings for iOS; an unsigned release still builds, which is what CI does.
+- **Signing** comes from the `rasoi.signing.storeFile`, `.storePassword`, `.keyAlias` and `.keyPassword` Gradle
+  properties (local, in `~/.gradle/gradle.properties`) or the `RASOI_KEYSTORE_FILE`, `RASOI_KEYSTORE_PASSWORD`,
+  `RASOI_KEY_ALIAS` and `RASOI_KEY_PASSWORD` environment variables for Android, and from Xcode/`xcodebuild` settings for
+  iOS. Without them an unsigned release still builds. *Amended:* CI signs with the upload key from the
+  `RASOI_KEYSTORE_BASE64` and password secrets, decoded to the runner's temp folder for that step only; release builds
+  are never signed with the debug key. The environment variables win over the properties, because the self-hosted
+  runner shares the owner's `~/.gradle`.
 - **Shrinking stays off.** R8 on a Compose, Ktor, Koin and Firebase app needs keep rules that can only be checked on
   a device; shipping untested rules is worse than a larger APK.
 - **Server image.** A multi-stage `Dockerfile` builds `:server:app:installDist` with every client module switched off
