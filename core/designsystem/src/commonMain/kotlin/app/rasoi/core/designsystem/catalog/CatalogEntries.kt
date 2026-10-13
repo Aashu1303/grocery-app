@@ -2,11 +2,13 @@ package app.rasoi.core.designsystem.catalog
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import app.rasoi.core.designsystem.brand.BrandIntroTimeline
 import app.rasoi.core.designsystem.component.AmountText
 import app.rasoi.core.designsystem.component.AmountTone
 import app.rasoi.core.designsystem.component.AppBottomBar
@@ -23,6 +25,7 @@ import app.rasoi.core.designsystem.component.ApprovalBanner
 import app.rasoi.core.designsystem.component.AvatarSize
 import app.rasoi.core.designsystem.component.BillLineRow
 import app.rasoi.core.designsystem.component.BottomSheetSurface
+import app.rasoi.core.designsystem.component.BrandIntro
 import app.rasoi.core.designsystem.component.ChoiceChips
 import app.rasoi.core.designsystem.component.ChoiceOption
 import app.rasoi.core.designsystem.component.ConfirmDialogContent
@@ -160,7 +163,23 @@ val catalogEntries: List<CatalogEntry> = buildList {
             ConfirmDialogContent(S.APPROVE, S.MESSAGE, S.APPROVE, noop, noop, destructive = false)
         },
     )
+
+    // Key frames of the launch intro (ADR 0027): the launch-screen match, the zoom peak, the leaf landing, the end.
+    listOf(
+        "launch" to 0,
+        "zoom" to BrandIntroTimeline.ZOOM_END,
+        "tadka" to BrandIntroTimeline.LAND_END,
+        "lockup" to BrandIntroTimeline.DURATION_MILLIS,
+    ).forEach { (state, millis) ->
+        add(
+            CatalogEntry("BrandIntro", state) {
+                BrandIntro(millis, Modifier.fillMaxWidth().height(AppTheme.spacing.xxl * BRAND_INTRO_HEIGHT_UNITS))
+            },
+        )
+    }
 }
+
+private const val BRAND_INTRO_HEIGHT_UNITS = 8
 
 @Composable
 private fun ScaffoldSample(barsVisible: Boolean) {

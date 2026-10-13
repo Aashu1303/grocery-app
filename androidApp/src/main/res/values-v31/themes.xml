@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system splash. An icon background the same colour as the window gives the 240 dp icon size,
+         which the Compose intro continues from without a jump (ADR 0027). -->
+    <style name="Theme.Rasoi" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
+        <item name="android:windowSplashScreenBackground">@color/launch_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/launch_mark</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/launch_background</item>
+    </style>
+</resources>

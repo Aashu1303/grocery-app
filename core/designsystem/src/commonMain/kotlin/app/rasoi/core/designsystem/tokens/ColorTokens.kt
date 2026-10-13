@@ -25,6 +25,8 @@ internal val LightColors = AppColors(
     onDangerContainer = Color(0xFF5C0E09),
     owedToYou = Color(0xFF2E6B32),
     youOwe = Color(0xFFA43A1F),
+    brandAccent = Color(0xFFFFBA5C),
+    onBrandAccent = Color(0xFF2E6B3F),
     isDark = false,
 )
 
@@ -50,5 +52,7 @@ internal val DarkColors = AppColors(
     onDangerContainer = Color(0xFFFFDAD5),
     owedToYou = Color(0xFF8FD58F),
     youOwe = Color(0xFFFFB49F),
+    brandAccent = Color(0xFFFFBA5C),
+    onBrandAccent = Color(0xFF1D5230),
     isDark = true,
 )

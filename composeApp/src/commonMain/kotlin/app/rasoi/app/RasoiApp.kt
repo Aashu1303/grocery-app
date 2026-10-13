@@ -1,6 +1,11 @@
 package app.rasoi.app
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +34,7 @@ import app.rasoi.app.resources.app_load_error
 import app.rasoi.app.resources.app_name
 import app.rasoi.app.resources.open_catalog
 import app.rasoi.core.designsystem.catalog.CatalogScreen
+import app.rasoi.core.designsystem.component.AnimatedBrandIntro
 import app.rasoi.core.designsystem.component.AppBottomBar
 import app.rasoi.core.designsystem.component.AppBottomBarItem
 import app.rasoi.core.designsystem.component.AppButton
@@ -61,23 +68,46 @@ import app.rasoi.feature.pantry.pantryViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-/** Root composable: routes between sign-in, household setup and the main tabs. */
+/**
+ * Root composable: routes between sign-in, household setup and the main tabs. [introStartDelayMillis] holds the
+ * intro's first frame while the platform launch screen fades out (iOS cross-fades it; Android 12+ removes it at once).
+ */
 @Composable
-fun RasoiApp(showCatalog: Boolean, viewModel: AppViewModel = koinViewModel()) {
+fun RasoiApp(showCatalog: Boolean, introStartDelayMillis: Long = 0, viewModel: AppViewModel = koinViewModel()) {
     AppTheme {
         val state by viewModel.state.collectAsStateWithLifecycle()
         val modifier = Modifier
             .fillMaxSize()
             .background(AppTheme.colors.surface)
             .windowInsetsPadding(WindowInsets.safeDrawing)
-        when (val current = state) {
-            AppState.Starting -> LoadingView(modifier)
-            AppState.SignedOut -> SignInRoute(modifier)
-            is AppState.NeedsHousehold -> HouseholdSetupRoute(onHouseholdReady = {
-                viewModel.refresh()
-            }, modifier = modifier)
-            AppState.LoadFailed -> ErrorView(stringResource(Res.string.app_load_error), viewModel::refresh, modifier)
-            is AppState.Ready -> MainScreen(current, showCatalog, modifier)
+        // Saveable so a rotation does not replay it: the intro plays once per launch (ADR 0027).
+        var introPlaying by rememberSaveable { mutableStateOf(true) }
+        Box(Modifier.fillMaxSize()) {
+            when (val current = state) {
+                AppState.Starting -> LoadingView(modifier)
+                AppState.SignedOut -> SignInRoute(modifier)
+                is AppState.NeedsHousehold -> HouseholdSetupRoute(onHouseholdReady = {
+                    viewModel.refresh()
+                }, modifier = modifier)
+                AppState.LoadFailed -> ErrorView(
+                    stringResource(Res.string.app_load_error),
+                    viewModel::refresh,
+                    modifier,
+                )
+                is AppState.Ready -> MainScreen(current, showCatalog, modifier)
+            }
+            // Drawn over the app, not before it, so loading carries on while the intro plays.
+            AnimatedVisibility(
+                visible = introPlaying,
+                enter = EnterTransition.None,
+                exit = fadeOut(tween(AppTheme.motion.mediumMillis, easing = AppTheme.motion.easing)),
+            ) {
+                AnimatedBrandIntro(
+                    onFinished = { introPlaying = false },
+                    modifier = Modifier.fillMaxSize(),
+                    startDelayMillis = introStartDelayMillis,
+                )
+            }
         }
     }
 }

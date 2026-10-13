@@ -21,4 +21,6 @@
     <string name="ds_catalog_title">Design system</string>
     <string name="ds_catalog_dark_theme">Dark theme</string>
     <string name="ds_catalog_light_theme">Light theme</string>
+    <string name="ds_brand_name">Rasoi</string>
+    <string name="ds_brand_tagline">Aapke ghar ki rasoi</string>
 </resources>

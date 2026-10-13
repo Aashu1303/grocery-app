@@ -23,7 +23,11 @@ targets:
       path: iosApp/Info.plist
       properties:
         CFBundleDisplayName: Rasoi
-        UILaunchScreen: {}
+        # The र centred on the surface colour at 240 pt: the first frame of the Compose intro (ADR 0027).
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchMark
+          UIImageRespectsSafeAreaInsets: false
         CADisableMinimumFrameDurationOnPhone: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         RasoiApiBaseUrl: "$(RASOI_API_BASE_URL)"
@@ -38,6 +42,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.rasoi
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "ComposeApp"]
         ENABLE_USER_SCRIPT_SANDBOXING: NO
