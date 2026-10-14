@@ -129,7 +129,7 @@ The app talks only to the Ktor server; the server alone reads and writes Postgre
 
 &#91;embedded content: system architecture · app, server, stores\]
 
-**Invoice import, end to end:** the app uploads PDFs, the server extracts, parses and reconciles them, stores the PDFs, and returns a draft bill. The user reviews and allocates in the app, the server records approvals, and jobs handle auto-approval, expiry alerts and month close.
+**Invoice import, end to end:** PDFs come from the in-app picker or, on Android, from "Share" or "Open with" in any app, which opens the import screen with them added (after sign-in if needed). The app uploads PDFs, the server extracts, parses and reconciles them, stores the PDFs, and returns a draft bill. The user reviews and allocates in the app, the server records approvals, and jobs handle auto-approval, expiry alerts and month close.
 
 ## 6. Low-level design (LLD)
 
