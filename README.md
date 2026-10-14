@@ -1,18 +1,70 @@
 <div align="center">
 
+<img src="iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png" alt="Rasoi — cream र with saffron leaf on a green tile" width="96" height="96" />
+
 # Rasoi
 
 **One household. A shared pantry. Fair grocery bills.**
 
-Android + iOS · Kotlin Multiplatform · Kotlin server
+*Aapke ghar ki rasoi*
 
-[Contribute](#start-contributing) · [Run locally](#run-locally) · [Architecture](#how-the-code-fits-together) · [Project guide](docs/project-guide.md)
+Android + iOS · Shared Kotlin · Fair to the last paise
+
+**[Start contributing](#start-contributing)** &nbsp; / &nbsp; **[Run locally](#run-locally)** &nbsp; / &nbsp; **[Architecture](#how-the-code-fits-together)** &nbsp; / &nbsp; **[Tech stack](#the-stack)**
 
 </div>
 
 Rasoi helps flatmates import grocery invoices, track food, split bills and settle monthly balances.
 
-> **Status:** Phase 1 workflows are implemented on `main`. The [milestone record](docs/milestones.md) documents M0–M7 and verification limits. Build/test coverage is not proof of production readiness; see [remaining integration work](#what-still-needs-validation).
+> [!NOTE]
+> **Project status:** Phase 1 workflows are implemented on `main`. The [milestone record](docs/milestones.md) documents M0–M7 and verification limits. Build/test coverage is not proof of production readiness; see [remaining integration work](#what-still-needs-validation).
+
+## The stack
+
+<table>
+<tr>
+<th align="center">📱 App & shared UI</th>
+<th align="center">⚙️ Backend & data</th>
+<th align="center">☁️ Build & delivery</th>
+</tr>
+<tr>
+<td align="center">
+<img src="docs/assets/stack/kotlin.svg" alt="Kotlin" width="48" height="48" />
+<img src="docs/assets/stack/jetpackcompose.svg" alt="Compose" width="48" height="48" />
+<br /><strong>Kotlin · Compose Multiplatform</strong><br />
+One shared UI and domain layer
+<br /><br />
+<img src="docs/assets/stack/android.svg" alt="Android" width="40" height="40" />
+<img src="docs/assets/stack/apple.svg" alt="Apple iOS" width="40" height="40" />
+<br />Android · iOS
+</td>
+<td align="center">
+<img src="docs/assets/stack/ktor.svg" alt="Ktor" width="48" height="48" />
+<img src="docs/assets/stack/postgresql.svg" alt="PostgreSQL" width="48" height="48" />
+<br /><strong>Ktor · PostgreSQL</strong><br />
+Server-owned financial state
+<br /><br />
+<img src="docs/assets/stack/firebase.svg" alt="Firebase" width="40" height="40" />
+<br />Firebase auth · server push
+</td>
+<td align="center">
+<img src="docs/assets/stack/gradle.svg" alt="Gradle" width="48" height="48" />
+<img src="docs/assets/stack/docker.svg" alt="Docker" width="48" height="48" />
+<br /><strong>Gradle · Docker</strong><br />
+Reproducible builds and services
+<br /><br />
+<img src="docs/assets/stack/githubactions.svg" alt="GitHub Actions" width="40" height="40" />
+<img src="docs/assets/stack/googlecloud.svg" alt="Google Cloud" width="40" height="40" />
+<br />GitHub Actions · Cloud Run
+</td>
+</tr>
+</table>
+
+**Also in the stack:** Koin for dependency injection · SQLDelight for cached reads · PDFBox for invoice extraction · Flyway for database migrations.
+
+[Version catalog](gradle/libs.versions.toml) · [Stack details](docs/project-guide.md#build-and-runtime-reference) · [Icon credits](docs/assets/stack/README.md)
+
+---
 
 ## The product at a glance
 
@@ -38,7 +90,7 @@ Read the complete [design plan](docs/design-plan.md) and [AGENTS.md](AGENTS.md),
 ```mermaid
 flowchart TD
     A["1 · Understand the scope<br/>Read the design plan + AGENTS.md"] --> B["2 · Choose a focused change<br/>Find its owner below"]
-    B --> C["3 · Run the relevant foundation<br/>Android, iOS or server"]
+    B --> C["3 · Run the app or server<br/>Android, iOS or server"]
     C --> D["4 · Implement + test<br/>Domain and parsers: test-first"]
     D --> E{"Architecture changes?"}
     E -->|Yes| F["Update the plan<br/>Write an ADR"]
@@ -102,7 +154,7 @@ flowchart TD
         Contract["core:contract<br/>Serialized DTOs"]
         Model["core:model<br/>Entities + value types"]
         Domain --> Model
-        end
+    end
     subgraph Backend["SERVER · authoritative business operations"]
         API["server:app<br/>Routes + composition"]
         Workers["server:parsing · jobs · notifications"]
