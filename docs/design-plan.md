@@ -268,7 +268,7 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 | Colour (semantic) | primary, onPrimary, surface, surfaceVariant, onSurface, outline, success, warning, danger, owedToYou, youOwe, brandAccent, onBrandAccent | Light and dark sets; named by meaning, not hue; brand colours are decorative only (ADR 0027) |
 | Freshness | fresh, useSoon, expired | Mapped to success, warning, danger |
 | Typography | display, title, body, label, numeric | `numeric` uses tabular figures for amounts |
-| Spacing | 4, 8, 12, 16, 24, 32, 48 dp | 4 dp grid; screen padding 16 |
+| Spacing | 4, 8, 12, 16, 24, 32, 48 dp | 4 dp grid; screen padding 16 dp horizontal and vertical (ADR 0029) |
 | Radius | 8, 12, 16 dp | Cards 12, sheets 16 |
 | Elevation | 0, 1, 3 | Mostly flat; elevation only for sheets and FABs |
 | Motion | 150 ms and 250 ms, standard easing | No decorative animation, except the one launch intro (ADR 0027) |
@@ -282,6 +282,7 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 | AppButton (primary, secondary, text, destructive) | All actions |
 | AppCard | Grouped content |
 | AppTopBar, AppBottomBar, AppScaffold | Screen chrome; AppScaffold fades the bars without resizing the content |
+| AppPullToRefresh | Pull down to reload a screen's data; the content stays visible while it reloads |
 | AmountText | Rupee amounts in Indian grouping (₹1,23,456.00), sign + colour + label for owed or owing |
 | ExpiryChip | Fresh / use soon / expired, always with text, never colour alone |
 | PantryItemRow | Name, quantity, location, expiry chip |
@@ -310,6 +311,9 @@ Every component appears in a **catalog screen** (debug builds) in all states, li
 8. **Copy** is short, plain English; buttons are verbs ("Approve split", not "OK").
 9. **Forms** validate inline and keep the user's input after an error.
 10. **Dynamic type** up to 200% without clipping; layouts scroll instead of truncating amounts.
+11. **Screen padding** is `spacing.screenPadding` (16 dp) horizontally and vertically on every screen, measured from the
+    status bar, the top bar or the bottom bar. `AppTopBar` keeps 16 dp above, below and before its title, and grows
+    for a two-line title; its icons sit on the same 16 dp edge (ADR 0029).
 
 ### 7.4 Brand, app icon and launch
 

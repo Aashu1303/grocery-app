@@ -53,6 +53,7 @@ class LedgerViewModel(
     fun onEvent(event: LedgerUiEvent) {
         when (event) {
             LedgerUiEvent.Retry -> load(shown(), showLoading = true)
+            LedgerUiEvent.PullToRefresh -> pullToRefresh()
             LedgerUiEvent.Refresh -> if (mutableState.value != LedgerUiState.Loading) load(shown(), false)
             is LedgerUiEvent.SelectMonth -> load(event.month, showLoading = false)
             is LedgerUiEvent.PayWithUpi -> payWithUpi(event.settlementId)
@@ -90,6 +91,8 @@ class LedgerViewModel(
             } else if (showLoading) {
                 val error = (result as? AppResult.Failure)?.error ?: (details as AppResult.Failure).error
                 mutableState.value = LedgerUiState.Error(error.ledgerError())
+            } else {
+                updateContent { it.copy(isRefreshing = false) }
             }
         }
     }
@@ -167,6 +170,12 @@ class LedgerViewModel(
         (getLedger(householdId, myRole, month) as? AppResult.Success)?.let { fresh ->
             updateContent { it.copy(ledger = fresh.value) }
         }
+    }
+
+    private fun pullToRefresh() {
+        val content = mutableState.value as? LedgerUiState.Content ?: return
+        mutableState.value = content.copy(isRefreshing = true)
+        load(shown(), showLoading = false)
     }
 
     private fun updateContent(transform: (LedgerUiState.Content) -> LedgerUiState.Content) {

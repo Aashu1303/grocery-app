@@ -34,6 +34,7 @@ class KitchenViewModel(
     fun onEvent(event: KitchenUiEvent) {
         when (event) {
             KitchenUiEvent.Retry -> load(showLoading = true)
+            KitchenUiEvent.PullToRefresh -> pullToRefresh()
             KitchenUiEvent.Refresh -> if (mutableState.value != KitchenUiState.Loading) load(showLoading = false)
             KitchenUiEvent.AskIdeas -> askIdeas()
             KitchenUiEvent.HideIdeas -> updateContent { it.copy(ideas = DishIdeas.Hidden) }
@@ -53,6 +54,8 @@ class KitchenViewModel(
                 is AppResult.Failure -> if (showLoading) {
                     mutableState.value =
                         KitchenUiState.Error(result.error.kitchenError())
+                } else {
+                    updateContent { it.copy(isRefreshing = false) }
                 }
             }
         }
@@ -77,6 +80,12 @@ class KitchenViewModel(
         DishIdeas.Unavailable
     } else {
         DishIdeas.Failed(kitchenError())
+    }
+
+    private fun pullToRefresh() {
+        val content = mutableState.value as? KitchenUiState.Content ?: return
+        mutableState.value = content.copy(isRefreshing = true)
+        load(showLoading = false)
     }
 
     private fun updateContent(transform: (KitchenUiState.Content) -> KitchenUiState.Content) {

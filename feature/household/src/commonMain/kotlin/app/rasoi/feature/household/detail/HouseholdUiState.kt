@@ -18,6 +18,8 @@ sealed interface HouseholdUiState {
         val canAddLocation: Boolean,
         val invite: InviteSheetState? = null,
         val addLocation: AddLocationState? = null,
+        /** The user pulled to refresh; the content stays while it reloads. */
+        val isRefreshing: Boolean = false,
     ) : HouseholdUiState
 }
 

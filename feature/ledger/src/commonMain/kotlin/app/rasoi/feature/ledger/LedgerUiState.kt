@@ -24,6 +24,8 @@ sealed interface LedgerUiState {
         val sheet: LedgerSheet? = null,
         val isBusy: Boolean = false,
         val error: LedgerError? = null,
+        /** The user pulled to refresh; the content stays while it reloads. */
+        val isRefreshing: Boolean = false,
     ) : LedgerUiState {
         val canClose: Boolean
             get() = ledger.status == PeriodStatus.OPEN && RolePolicy.allows(myRole, Permission.CLOSE_PERIOD)

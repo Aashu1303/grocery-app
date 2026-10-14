@@ -18,6 +18,7 @@ import app.rasoi.core.designsystem.component.AmountText
 import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppCard
+import app.rasoi.core.designsystem.component.AppPullToRefresh
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.AppTopBar
 import app.rasoi.core.designsystem.component.ApprovalBanner
@@ -102,7 +103,11 @@ fun BillDetailScreen(
                 modifier = Modifier.weight(1f),
             )
             is BillDetailUiState.Content -> {
-                DetailContent(state, onEvent, Modifier.weight(1f))
+                AppPullToRefresh(
+                    refreshing = state.isRefreshing,
+                    onRefresh = { onEvent(BillDetailUiEvent.PullToRefresh) },
+                    modifier = Modifier.weight(1f),
+                ) { DetailContent(state, onEvent, Modifier.fillMaxSize()) }
                 BillSheets(state, onEvent)
             }
         }

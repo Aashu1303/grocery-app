@@ -50,6 +50,7 @@ class BillsViewModel(
     fun onEvent(event: BillsUiEvent) {
         when (event) {
             BillsUiEvent.Retry -> load(showLoading = true)
+            BillsUiEvent.PullToRefresh -> pullToRefresh()
             BillsUiEvent.Refresh -> if (mutableState.value != BillsUiState.Loading) load(showLoading = false)
             is BillsUiEvent.OpenBill -> send(BillsEffect.OpenBill(event.billId))
             BillsUiEvent.ImportInvoice -> send(BillsEffect.OpenImport)
@@ -77,7 +78,11 @@ class BillsViewModel(
                 }
             } else {
                 val error = (bills as? AppResult.Failure)?.error ?: (details as AppResult.Failure).error
-                if (showLoading) mutableState.value = BillsUiState.Error(error.billsError())
+                if (showLoading) {
+                    mutableState.value = BillsUiState.Error(error.billsError())
+                } else {
+                    updateContent { it.copy(isRefreshing = false) }
+                }
             }
         }
     }
@@ -121,6 +126,12 @@ class BillsViewModel(
 
     private fun send(effect: BillsEffect) {
         viewModelScope.launch { effectChannel.send(effect) }
+    }
+
+    private fun pullToRefresh() {
+        val content = mutableState.value as? BillsUiState.Content ?: return
+        mutableState.value = content.copy(isRefreshing = true)
+        load(showLoading = false)
     }
 
     private fun updateContent(transform: (BillsUiState.Content) -> BillsUiState.Content) {

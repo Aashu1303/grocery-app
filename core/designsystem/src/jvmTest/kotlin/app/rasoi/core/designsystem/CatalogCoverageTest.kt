@@ -10,7 +10,7 @@ class CatalogCoverageTest {
         "AppButton", "AppCard", "AppTopBar", "AppBottomBar", "AmountText", "ExpiryChip", "PantryItemRow",
         "BillLineRow", "SplitSelector", "QuantityStepper", "MemberAvatar", "MemberPicker", "ApprovalBanner",
         "StateViews", "AppBottomSheet", "ConfirmDialog", "AppText", "AppTextField", "ChoiceChips", "NoticeBanner",
-        "FileRow", "AppScaffold", "BrandIntro",
+        "FileRow", "AppScaffold", "BrandIntro", "AppPullToRefresh",
     )
 
     @Test

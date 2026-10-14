@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppCard
 import app.rasoi.core.designsystem.component.AppKeyboard
+import app.rasoi.core.designsystem.component.AppPullToRefresh
 import app.rasoi.core.designsystem.component.AppScaffold
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.AppTextField
@@ -64,6 +66,15 @@ val catalogEntries: List<CatalogEntry> = buildList {
 
     add(CatalogEntry("AppTopBar", "title") { AppTopBar(title = S.TITLE) })
     add(CatalogEntry("AppTopBar", "back") { AppTopBar(title = S.TITLE, onBack = noop) })
+    listOf(false, true).forEach { refreshing ->
+        add(
+            CatalogEntry("AppPullToRefresh", if (refreshing) "refreshing" else "idle") {
+                AppPullToRefresh(refreshing = refreshing, onRefresh = {}) {
+                    LazyColumn { items(3) { Text(S.ITEM, style = AppTheme.type.body) } }
+                }
+            },
+        )
+    }
     add(
         CatalogEntry("AppBottomBar", "selected") {
             AppBottomBar(bottomBarItems, selectedKey = "pantry", onSelect = {})

@@ -24,6 +24,7 @@ import app.rasoi.core.testing.FakeLedgerRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -158,5 +159,17 @@ class LedgerViewModelTest : ViewModelTest() {
         viewModel.onEvent(LedgerUiEvent.Upi.Save)
         assertEquals("meera@okbank", viewModel.content().myUpi)
         assertNull(viewModel.content().sheet)
+    }
+
+    @Test
+    fun pullingToRefreshReloadsAndAFailedPullKeepsWhatIsShown() {
+        val viewModel = viewModel()
+        val before = viewModel.content()
+        viewModel.onEvent(LedgerUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        repository.failure = AppError.Offline
+        viewModel.onEvent(LedgerUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        assertFalse(viewModel.content().isRefreshing)
     }
 }

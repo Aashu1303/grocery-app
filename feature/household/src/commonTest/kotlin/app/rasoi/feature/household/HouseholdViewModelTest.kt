@@ -13,6 +13,7 @@ import app.rasoi.feature.household.detail.HouseholdUiState
 import app.rasoi.feature.household.detail.HouseholdViewModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 
@@ -90,5 +91,17 @@ class HouseholdViewModelTest : ViewModelTest() {
         val form = requireNotNull(viewModel.content().addLocation)
         assertEquals(ScreenError.DUPLICATE, form.error)
         assertEquals("Fridge", form.name)
+    }
+
+    @Test
+    fun pullingToRefreshReloadsAndAFailedPullKeepsWhatIsShown() {
+        val viewModel = viewModel()
+        val before = viewModel.content()
+        viewModel.onEvent(HouseholdUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        repository.failure = AppError.Offline
+        viewModel.onEvent(HouseholdUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        assertFalse(viewModel.content().isRefreshing)
     }
 }

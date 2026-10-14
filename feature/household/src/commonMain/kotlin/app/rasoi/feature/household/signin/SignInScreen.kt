@@ -51,7 +51,7 @@ fun SignInScreen(state: SignInUiState, onEvent: (SignInUiEvent) -> Unit, modifie
             .fillMaxSize()
             .background(AppTheme.colors.surface)
             .verticalScroll(rememberScrollState())
-            .padding(AppTheme.spacing.lg),
+            .padding(AppTheme.spacing.screenPadding),
         verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.md),
     ) {
         when (state.step) {
