@@ -32,7 +32,12 @@ and its three 15-minute sweeps (ADR 0021).
   calls it every 15 minutes. Without the setting nothing changes: the endpoint does not exist and the timer runs.
   Sweeps only do what is due, so a late, missed or retried call is safe; a failing sweep answers 500 so the scheduler
   shows and retries it.
-- **Secrets** (database password, sweep token) live in Secret Manager and reach the service as environment variables.
+- **AI fallback** (added 2026-10-15): Groq's OpenAI-compatible API (`llama-3.3-70b-versatile`) reads invoice
+  formats no template knows and suggests dishes. Its free tier covers the expected load and does not train on or
+  keep request data; only line-item text is sent (design-plan rule 9). It is on when the secret `rasoi-llm-api-key`
+  exists; the deploy script then sets `RASOI_LLM_*`. Firebase AI Logic was not used: it calls Gemini from the app,
+  while the server is the one place that talks to an LLM, and the Gemini free tier may use request data.
+- **Secrets** (database password, sweep token, optional AI key) live in Secret Manager and reach the service as environment variables.
   `scripts/deploy-cloud-run.sh` creates everything idempotently and deploys the current commit.
 
 ## Consequences

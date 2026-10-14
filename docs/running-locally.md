@@ -72,7 +72,8 @@ Then every deploy is:
 RASOI_DATABASE_URL='jdbc:postgresql://<neon host>/rasoi?sslmode=require' RASOI_DATABASE_USER=neondb_owner \
   ./scripts/deploy-cloud-run.sh
 ```
-It builds the image with Cloud Build, deploys the current commit, schedules the sweeps and checks `/health`.
+It builds the image with Cloud Build, deploys the current commit, schedules the sweeps and checks `/health`. To turn on the AI fallback, create a Groq key at console.groq.com and store it once with
+`gcloud secrets create rasoi-llm-api-key --data-file=<file with only the key>`; the next deploy picks it up.
 
 ### Server image
 `docker build -t rasoi-server .` builds the server only. Run it with the variables above, for example
