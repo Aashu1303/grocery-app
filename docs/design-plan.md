@@ -41,13 +41,14 @@ All four samples have a text layer, so text extraction works without OCR, but ea
 | Zepto | Geddit Convenience Pvt Ltd | Item, MRP, HSN, Qty, Rate, Disc %, Taxable, GST, Total | Count; pack size in the name ("Lemon 200 g") | Percentage | None on this invoice | 866.99 + 0.01 round-off = 867.00 |
 | Blinkit | Blink Commerce Pvt Ltd | UPC, Description, MRP, Discount, Qty, Taxable, GST, Total | Count | Absolute vs MRP | None on this invoice | 129.00 |
 | Handpickd | Handpickd (not a GST invoice) | Item, rate per kg, weight, amount, promo discount | Measured weight (470 g at 43/kg) | Per-line promo, plus delivery discount | Delivery 19, delivery discount 10, pesticide-free 15 | 114 - 8 + 15 + 19 - 10 = 130 |
+| Firstclub | Trolleypop Retail Pvt Ltd | Particulars, HSN, Gross value, Disc %, Taxable, CGST, SGST, Cess, Total | Count, printed at the end of the name ("… x 2") | Percentage vs gross value | Handling fee 12; delivery and coupons printed as rows (zero here) | 1735 + 12 = 1747 |
 
 **Parser requirements these samples force**
 
-- **Platform detection** by seller and footer signatures ("Swinsta", "Blink Commerce", "ZEPTO MARKETPLACE"), not by file name. Handpickd prints its name only in the logo image, so it is detected by its bill structure (ADR 0017).
+- **Platform detection** by seller and footer signatures ("Swinsta", "Blink Commerce", "ZEPTO MARKETPLACE", "TROLLEYPOP RETAIL" for Firstclub), not by file name. Handpickd prints its name only in the logo image, so it is detected by its bill structure (ADR 0017).
 - **Wrapped descriptions:** item names span several lines (Instamart, Zepto), so rows are rebuilt from text positions, not split by newline.
 - **Multi-page tables** with repeated headers (Zepto).
-- **Zero-value promo lines** must be dropped (Instamart "Flyer - Nat Habit Shampoo", total 0).
+- **Zero-value promo lines** must be dropped (Instamart "Flyer - Nat Habit Shampoo", total 0; Firstclub "Surprise Goodie Bag" at 100% discount).
 - **Non-food items** appear (Blinkit hot/cold pack). They are splittable but never enter the pantry.
 - **Split basis** = the amount actually paid per line: tax-inclusive Total for GST invoices; amount minus line promo for Handpickd (20 - 1 = 19). The exact columns per platform are in ADR 0017.
 - **Bill-level charges and discounts** (handling, delivery, extras, delivery discount) are separate charge lines, distributed by the split rules.

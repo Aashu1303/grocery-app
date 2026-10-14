@@ -30,8 +30,11 @@ class GoldenInvoiceTest {
         root.walkTopDown().filter { it.name.endsWith(".redacted.txt") }.sorted().toList()
 
     @Test
-    fun allFourPlatformsHaveFixtures() {
-        assertEquals(setOf("blinkit", "handpickd", "instamart", "zepto"), fixtures().map { it.parentFile.name }.toSet())
+    fun everyPlatformHasFixtures() {
+        assertEquals(
+            setOf("blinkit", "firstclub", "handpickd", "instamart", "zepto"),
+            fixtures().map { it.parentFile.name }.toSet(),
+        )
     }
 
     @Test

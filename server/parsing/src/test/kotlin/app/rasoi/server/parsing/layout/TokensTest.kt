@@ -36,6 +36,8 @@ class TokensTest {
         assertEquals(LocalDate(2026, 10, 2), parseDate("2026-10-02"))
         assertEquals(LocalDate(2026, 10, 4), parseDate("4/10/2026"))
         assertEquals(LocalDate(2026, 10, 4), parseDate("04.10.2026"))
+        assertEquals(LocalDate(2026, 10, 14), parseDate("14-Oct-2026"))
+        assertEquals(LocalDate(2026, 9, 4), parseDate("4-sep-2026"))
     }
 
     @Test
@@ -44,5 +46,7 @@ class TokensTest {
         assertNull(parseDate("2026-13-01"))
         assertNull(parseDate("04-10-26"))
         assertNull(parseDate("Oct 4, 2026"))
+        assertNull(parseDate("14-Okt-2026"))
+        assertNull(parseDate("31-Feb-2026"))
     }
 }

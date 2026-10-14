@@ -24,6 +24,7 @@ import app.rasoi.feature.invoiceimport.resources.error_too_large
 import app.rasoi.feature.invoiceimport.resources.error_too_many
 import app.rasoi.feature.invoiceimport.resources.error_unsupported
 import app.rasoi.feature.invoiceimport.resources.platform_blinkit
+import app.rasoi.feature.invoiceimport.resources.platform_firstclub
 import app.rasoi.feature.invoiceimport.resources.platform_handpickd
 import app.rasoi.feature.invoiceimport.resources.platform_instamart
 import app.rasoi.feature.invoiceimport.resources.platform_manual
@@ -59,6 +60,7 @@ internal fun Platform.label(): String = stringResource(
         Platform.BLINKIT -> Res.string.platform_blinkit
         Platform.INSTAMART -> Res.string.platform_instamart
         Platform.HANDPICKD -> Res.string.platform_handpickd
+        Platform.FIRSTCLUB -> Res.string.platform_firstclub
         Platform.MANUAL -> Res.string.platform_manual
         Platform.OTHER -> Res.string.platform_other
     },
