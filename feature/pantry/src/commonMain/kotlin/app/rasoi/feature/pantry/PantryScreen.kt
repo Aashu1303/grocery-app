@@ -99,7 +99,7 @@ private fun PantryContent(state: PantryUiState.Content, onEvent: (PantryUiEvent)
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = AppTheme.spacing.sm),
+                contentPadding = PaddingValues(vertical = AppTheme.spacing.screenPadding),
                 verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.xxs),
             ) {
                 items(items, key = { it.id.value }) { item ->
