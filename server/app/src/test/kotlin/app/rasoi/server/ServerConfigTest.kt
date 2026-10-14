@@ -51,4 +51,17 @@ class ServerConfigTest {
         assertFalse(configured.toString().contains("llm-secret"))
         assertFailsWith<IllegalArgumentException> { ServerConfig.fromEnvironment(dev + llm.minus("RASOI_LLM_MODEL")) }
     }
+
+    @Test
+    fun aSweepTokenHandsTheSweepsToAnExternalSchedulerAndIsNeverPrinted() {
+        val dev = database + ("RASOI_AUTH_MODE" to "dev")
+        assertEquals(null, ServerConfig.fromEnvironment(dev).sweepToken)
+        val token = "k".repeat(40)
+        val config = ServerConfig.fromEnvironment(dev + ("RASOI_SWEEP_TOKEN" to token))
+        assertEquals(token, config.sweepToken?.value)
+        assertFalse(config.toString().contains(token))
+        assertFailsWith<IllegalArgumentException> {
+            ServerConfig.fromEnvironment(dev + ("RASOI_SWEEP_TOKEN" to "short"))
+        }
+    }
 }

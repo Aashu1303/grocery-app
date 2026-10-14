@@ -7,6 +7,7 @@ import app.rasoi.core.contract.auth.SessionDto
 import app.rasoi.server.AppGraph
 import app.rasoi.server.AuthMode
 import app.rasoi.server.ServerConfig
+import app.rasoi.server.SweepToken
 import app.rasoi.server.auth.DevIdTokenVerifier
 import app.rasoi.server.parsing.InvoiceFallback
 import app.rasoi.server.parsing.fallback.ChatCompletionClient
@@ -35,6 +36,7 @@ fun rasoiTest(
     fallback: InvoiceFallback? = null,
     chat: ChatCompletionClient? = null,
     notifier: RecordingNotifier = RecordingNotifier(),
+    sweepToken: SweepToken? = null,
     block: suspend TestScope.() -> Unit,
 ) = testApplication {
     TestPostgres.reset()
@@ -44,6 +46,7 @@ fun rasoiTest(
         database = DatabaseConfig("unused", "unused", "unused"),
         authMode = AuthMode.DEV,
         firebaseProjectId = null,
+        sweepToken = sweepToken,
     )
     val graph = AppGraph(
         config,

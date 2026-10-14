@@ -9,3 +9,6 @@ androidApp
 *.keystore
 *.jks
 .env*
+# Local tool folders (agent clones and worktrees, assistant settings) are never part of the build.
+.delta
+.claude
