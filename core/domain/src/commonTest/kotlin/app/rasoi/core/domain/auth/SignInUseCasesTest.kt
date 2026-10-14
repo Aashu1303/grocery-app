@@ -4,11 +4,13 @@ import app.rasoi.core.model.AppError
 import app.rasoi.core.model.AppResult
 import app.rasoi.core.testing.FakeAuthRepository
 import app.rasoi.core.testing.FakePhoneAuthProvider
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class SignInUseCasesTest {
     private val provider = FakePhoneAuthProvider()
@@ -68,6 +70,17 @@ class SignInUseCasesTest {
     fun serverFailuresOtherThanMissingNameAreReturned() = runTest {
         auth.failure = AppError.Offline
         assertEquals(AppResult.Failure(AppError.Offline), verifyOtp("verification-+919812345678", "123456"))
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun aProviderThatNeverAnswersTimesOutAfterThirtySeconds() = runTest {
+        provider.silent = true
+        val start = testScheduler.currentTime
+        assertEquals(AppResult.Failure(AppError.Timeout), requestOtp("9812345678"))
+        assertEquals(30.seconds.inWholeMilliseconds, testScheduler.currentTime - start)
+        assertEquals(AppResult.Failure(AppError.Timeout), verifyOtp("verification-+919812345678", "123456"))
+        assertTrue(auth.signInCalls.isEmpty())
     }
 
     @Test

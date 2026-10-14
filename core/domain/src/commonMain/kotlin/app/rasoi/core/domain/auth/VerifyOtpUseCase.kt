@@ -11,7 +11,7 @@ class VerifyOtpUseCase(private val provider: PhoneAuthProvider, private val auth
         if (digits.length != CODE_LENGTH || !digits.all { it.isDigit() }) {
             return AppResult.Failure(AppError.Validation(listOf(AppError.FieldViolation("code", "invalid"))))
         }
-        return provider.confirm(verificationId, digits).flatMap { idToken ->
+        return withProviderTimeout { provider.confirm(verificationId, digits) }.flatMap { idToken ->
             when (val result = auth.signIn(idToken, displayName = null)) {
                 is AppResult.Success -> AppResult.Success(SignInOutcome.SignedIn(result.value))
                 is AppResult.Failure -> if (result.error.needsDisplayName()) {

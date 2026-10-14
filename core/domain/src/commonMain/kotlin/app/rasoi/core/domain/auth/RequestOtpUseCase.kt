@@ -9,6 +9,6 @@ class RequestOtpUseCase(private val provider: PhoneAuthProvider) {
     suspend operator fun invoke(rawPhone: String): AppResult<OtpRequest> {
         val phone = PhoneNumber.parse(rawPhone)
             ?: return AppResult.Failure(AppError.Validation(listOf(AppError.FieldViolation("phone", "invalid"))))
-        return provider.requestCode(phone).map { OtpRequest(phone, it) }
+        return withProviderTimeout { provider.requestCode(phone) }.map { OtpRequest(phone, it) }
     }
 }
