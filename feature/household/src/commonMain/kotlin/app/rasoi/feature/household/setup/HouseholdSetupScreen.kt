@@ -62,6 +62,8 @@ fun HouseholdSetupScreen(
             .fillMaxSize()
             .background(AppTheme.colors.surface)
             .verticalScroll(rememberScrollState())
+            // No top bar here, so the title gets extra room below the status bar.
+            .padding(top = AppTheme.spacing.md)
             .padding(AppTheme.spacing.screenPadding),
         verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.lg),
     ) {
