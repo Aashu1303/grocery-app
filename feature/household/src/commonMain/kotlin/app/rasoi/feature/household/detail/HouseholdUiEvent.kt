@@ -6,6 +6,9 @@ import app.rasoi.core.model.Role
 sealed interface HouseholdUiEvent {
     data object Retry : HouseholdUiEvent
 
+    /** The user pulled the screen down: reload, showing the refresh indicator until it is done. */
+    data object PullToRefresh : HouseholdUiEvent
+
     data object OpenInvite : HouseholdUiEvent
 
     data class InviteRoleSelected(val role: Role) : HouseholdUiEvent

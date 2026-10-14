@@ -298,4 +298,17 @@ class BillDetailViewModelTest : ViewModelTest() {
             assertEquals(BillDetailEffect.OpenItems(BillId("b1")), awaitItem())
         }
     }
+
+    @Test
+    fun pullingToRefreshReloadsAndAFailedPullKeepsWhatIsShown() {
+        bill()
+        val viewModel = viewModel()
+        val before = viewModel.content()
+        viewModel.onEvent(BillDetailUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        repository.failure = AppError.Offline
+        viewModel.onEvent(BillDetailUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        assertFalse(viewModel.content().isRefreshing)
+    }
 }

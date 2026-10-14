@@ -39,6 +39,7 @@ class HouseholdViewModel(
     fun onEvent(event: HouseholdUiEvent) {
         when (event) {
             HouseholdUiEvent.Retry -> load()
+            HouseholdUiEvent.PullToRefresh -> pullToRefresh()
             HouseholdUiEvent.OpenInvite -> updateContent { it.copy(invite = InviteSheetState()) }
             is HouseholdUiEvent.InviteRoleSelected -> updateInvite {
                 it.copy(role = event.role, code = null, error = null)
@@ -55,17 +56,27 @@ class HouseholdViewModel(
         }
     }
 
-    private fun load() {
-        mutableState.value = HouseholdUiState.Loading
+    /** A quiet reload ([showLoading] false) keeps what is on screen and any open sheet. */
+    private fun load(showLoading: Boolean = true) {
+        if (showLoading) mutableState.value = HouseholdUiState.Loading
         viewModelScope.launch {
-            mutableState.value = when (val result = repository.details(householdId)) {
-                is AppResult.Success -> HouseholdUiState.Content(
-                    details = result.value,
-                    myRole = myRole,
-                    canInvite = RolePolicy.allows(myRole, Permission.INVITE_MEMBERS),
-                    canAddLocation = RolePolicy.allows(myRole, Permission.MANAGE_LOCATIONS),
-                )
-                is AppResult.Failure -> HouseholdUiState.Error(result.error.screenError())
+            when (val result = repository.details(householdId)) {
+                is AppResult.Success -> mutableState.update { previous ->
+                    val kept = previous as? HouseholdUiState.Content
+                    HouseholdUiState.Content(
+                        details = result.value,
+                        myRole = myRole,
+                        canInvite = RolePolicy.allows(myRole, Permission.INVITE_MEMBERS),
+                        canAddLocation = RolePolicy.allows(myRole, Permission.MANAGE_LOCATIONS),
+                        invite = kept?.invite,
+                        addLocation = kept?.addLocation,
+                    )
+                }
+                is AppResult.Failure -> if (showLoading) {
+                    mutableState.value = HouseholdUiState.Error(result.error.screenError())
+                } else {
+                    updateContent { it.copy(isRefreshing = false) }
+                }
             }
         }
     }
@@ -105,6 +116,12 @@ class HouseholdViewModel(
                 }
             }
         }
+    }
+
+    private fun pullToRefresh() {
+        val content = mutableState.value as? HouseholdUiState.Content ?: return
+        mutableState.value = content.copy(isRefreshing = true)
+        load(showLoading = false)
     }
 
     private fun updateContent(transform: (HouseholdUiState.Content) -> HouseholdUiState.Content) {

@@ -8,7 +8,11 @@ sealed interface KitchenUiState {
 
     data class Error(val error: KitchenError) : KitchenUiState
 
-    data class Content(val entries: List<UseFirstEntry>, val ideas: DishIdeas = DishIdeas.Hidden) : KitchenUiState
+    data class Content(
+        val entries: List<UseFirstEntry>,
+        val ideas: DishIdeas = DishIdeas.Hidden,
+        val isRefreshing: Boolean = false,
+    ) : KitchenUiState
 }
 
 /** The "what can I cook?" section under the use-first list. */

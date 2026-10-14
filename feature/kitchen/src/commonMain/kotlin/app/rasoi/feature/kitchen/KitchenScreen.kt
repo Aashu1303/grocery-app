@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppCard
+import app.rasoi.core.designsystem.component.AppPullToRefresh
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.EmptyView
 import app.rasoi.core.designsystem.component.ErrorView
@@ -75,16 +76,26 @@ fun KitchenScreen(state: KitchenUiState, onEvent: (KitchenUiEvent) -> Unit, modi
             onRetry = { onEvent(KitchenUiEvent.Retry) },
             modifier = modifier,
         )
-        is KitchenUiState.Content ->
+        is KitchenUiState.Content -> AppPullToRefresh(
+            refreshing = state.isRefreshing,
+            onRefresh = { onEvent(KitchenUiEvent.PullToRefresh) },
+            modifier = modifier,
+        ) {
             if (state.entries.isEmpty()) {
-                EmptyView(
-                    title = stringResource(Res.string.kitchen_empty_title),
-                    message = stringResource(Res.string.kitchen_empty_message),
-                    modifier = modifier.padding(AppTheme.spacing.screenPadding),
-                )
+                // In a list so the empty screen can be pulled too.
+                LazyColumn(Modifier.fillMaxSize()) {
+                    item {
+                        EmptyView(
+                            title = stringResource(Res.string.kitchen_empty_title),
+                            message = stringResource(Res.string.kitchen_empty_message),
+                            modifier = Modifier.fillParentMaxSize().padding(AppTheme.spacing.screenPadding),
+                        )
+                    }
+                }
             } else {
-                KitchenContent(state, onEvent, modifier)
+                KitchenContent(state, onEvent, Modifier)
             }
+        }
     }
 }
 

@@ -54,6 +54,7 @@ class PantryViewModel(
     fun onEvent(event: PantryUiEvent) {
         when (event) {
             PantryUiEvent.Retry -> load()
+            PantryUiEvent.PullToRefresh -> pullToRefresh()
             is PantryUiEvent.FilterSelected -> updateContent { it.copy(filter = event.locationId) }
             PantryUiEvent.OpenAdd -> updateContent { if (it.canEdit) it.copy(sheet = PantrySheet.Add()) else it }
             PantryUiEvent.SaveNew -> saveNew()
@@ -80,21 +81,29 @@ class PantryViewModel(
         PantryUiEvent.Change.ConfirmDiscard -> discard()
     }
 
-    private fun load() {
-        mutableState.value = PantryUiState.Loading
+    /** A quiet reload ([showLoading] false) keeps what is on screen, the filter and any open sheet. */
+    private fun load(showLoading: Boolean = true) {
+        if (showLoading) mutableState.value = PantryUiState.Loading
         viewModelScope.launch {
             val details = households.details(householdId)
             val items = listPantry(householdId)
-            mutableState.value = when {
-                details is AppResult.Failure -> PantryUiState.Error(details.error.pantryError())
-                items is AppResult.Failure -> PantryUiState.Error(items.error.pantryError())
-                details is AppResult.Success && items is AppResult.Success -> PantryUiState.Content(
-                    items = items.value.byExpiry(),
-                    locations = details.value.locations,
-                    today = clock.now().toLocalDateTime(details.value.household.timeZone).date,
-                    canEdit = RolePolicy.allows(myRole, Permission.EDIT_PANTRY),
-                )
-                else -> PantryUiState.Error(PantryError.GENERIC)
+            if (details is AppResult.Success && items is AppResult.Success) {
+                mutableState.update { previous ->
+                    val kept = previous as? PantryUiState.Content
+                    PantryUiState.Content(
+                        items = items.value.byExpiry(),
+                        locations = details.value.locations,
+                        today = clock.now().toLocalDateTime(details.value.household.timeZone).date,
+                        canEdit = RolePolicy.allows(myRole, Permission.EDIT_PANTRY),
+                        filter = kept?.filter,
+                        sheet = kept?.sheet,
+                    )
+                }
+            } else if (showLoading) {
+                val error = (details as? AppResult.Failure)?.error ?: (items as? AppResult.Failure)?.error
+                mutableState.value = PantryUiState.Error(error?.pantryError() ?: PantryError.GENERIC)
+            } else {
+                updateContent { it.copy(isRefreshing = false) }
             }
         }
     }
@@ -178,6 +187,12 @@ class PantryViewModel(
             it.expiresOn == null
         }.thenBy { it.expiresOn }.thenBy { it.name.lowercase() },
     )
+
+    private fun pullToRefresh() {
+        val content = mutableState.value as? PantryUiState.Content ?: return
+        mutableState.value = content.copy(isRefreshing = true)
+        load(showLoading = false)
+    }
 
     private fun updateContent(transform: (PantryUiState.Content) -> PantryUiState.Content) {
         mutableState.update { state -> if (state is PantryUiState.Content) transform(state) else state }

@@ -19,6 +19,7 @@ import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
 import app.rasoi.core.designsystem.component.AppCard
 import app.rasoi.core.designsystem.component.AppKeyboard
+import app.rasoi.core.designsystem.component.AppPullToRefresh
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.AppTextField
 import app.rasoi.core.designsystem.component.EmptyView
@@ -100,20 +101,31 @@ fun BillsScreen(state: BillsUiState, onEvent: (BillsUiEvent) -> Unit, modifier: 
 @Composable
 private fun BillsContent(state: BillsUiState.Content, onEvent: (BillsUiEvent) -> Unit, modifier: Modifier) {
     Column(modifier.fillMaxSize()) {
-        if (state.bills.isEmpty()) {
-            EmptyView(
-                title = stringResource(Res.string.bills_empty_title),
-                message = stringResource(Res.string.bills_empty_message),
-                modifier = Modifier.weight(1f).padding(AppTheme.spacing.screenPadding),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(AppTheme.spacing.screenPadding),
-                verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sm),
-            ) {
-                items(state.bills, key = { it.id.value }) { bill ->
-                    BillCard(bill, state.names[bill.payerId].orEmpty()) { onEvent(BillsUiEvent.OpenBill(bill.id)) }
+        AppPullToRefresh(
+            refreshing = state.isRefreshing,
+            onRefresh = { onEvent(BillsUiEvent.PullToRefresh) },
+            modifier = Modifier.weight(1f),
+        ) {
+            if (state.bills.isEmpty()) {
+                // In a list so the empty screen can be pulled too.
+                LazyColumn(Modifier.fillMaxSize()) {
+                    item {
+                        EmptyView(
+                            title = stringResource(Res.string.bills_empty_title),
+                            message = stringResource(Res.string.bills_empty_message),
+                            modifier = Modifier.fillParentMaxSize().padding(AppTheme.spacing.screenPadding),
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(AppTheme.spacing.screenPadding),
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sm),
+                ) {
+                    items(state.bills, key = { it.id.value }) { bill ->
+                        BillCard(bill, state.names[bill.payerId].orEmpty()) { onEvent(BillsUiEvent.OpenBill(bill.id)) }
+                    }
                 }
             }
         }

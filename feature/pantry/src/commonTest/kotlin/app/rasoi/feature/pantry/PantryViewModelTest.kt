@@ -18,6 +18,7 @@ import app.rasoi.core.testing.FakePantryRepository
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -214,5 +215,18 @@ class PantryViewModelTest : ViewModelTest() {
     @Test
     fun everyErrorHasAMessage() {
         assertEquals(PantryError.entries.toSet(), pantryErrorMessages.keys)
+    }
+
+    @Test
+    fun pullingToRefreshReloadsAndAFailedPullKeepsWhatIsShown() {
+        val viewModel = viewModel()
+        viewModel.onEvent(PantryUiEvent.FilterSelected(viewModel.content().locations.first().id))
+        val before = viewModel.content()
+        viewModel.onEvent(PantryUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        pantry.failure = AppError.Offline
+        viewModel.onEvent(PantryUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        assertFalse(viewModel.content().isRefreshing)
     }
 }

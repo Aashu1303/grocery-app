@@ -19,6 +19,7 @@ import app.rasoi.core.designsystem.component.AmountTone
 import app.rasoi.core.designsystem.component.AppBottomSheet
 import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
+import app.rasoi.core.designsystem.component.AppPullToRefresh
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.AppTextField
 import app.rasoi.core.designsystem.component.AvatarSize
@@ -118,7 +119,11 @@ fun LedgerScreen(state: LedgerUiState, onEvent: (LedgerUiEvent) -> Unit, modifie
             modifier = modifier,
         )
         is LedgerUiState.Content -> {
-            LedgerContent(state, onEvent, modifier)
+            AppPullToRefresh(
+                refreshing = state.isRefreshing,
+                onRefresh = { onEvent(LedgerUiEvent.PullToRefresh) },
+                modifier = modifier,
+            ) { LedgerContent(state, onEvent, Modifier) }
             LedgerSheets(state, onEvent)
         }
     }

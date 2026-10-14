@@ -20,6 +20,8 @@ sealed interface PantryUiState {
         val canEdit: Boolean,
         val filter: LocationId? = null,
         val sheet: PantrySheet? = null,
+        /** The user pulled to refresh; the content stays while it reloads. */
+        val isRefreshing: Boolean = false,
     ) : PantryUiState {
         val visibleItems: List<PantryItem> get() = items.filter { filter == null || it.locationId == filter }
     }

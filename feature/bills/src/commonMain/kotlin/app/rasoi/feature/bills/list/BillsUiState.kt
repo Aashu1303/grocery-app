@@ -16,6 +16,8 @@ sealed interface BillsUiState {
         val names: Map<UserId, String>,
         val canEdit: Boolean,
         val form: NewBillForm? = null,
+        /** The user pulled to refresh; the content stays while it reloads. */
+        val isRefreshing: Boolean = false,
     ) : BillsUiState
 }
 

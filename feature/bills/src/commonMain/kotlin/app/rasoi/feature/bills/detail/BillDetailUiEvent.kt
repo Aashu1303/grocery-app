@@ -9,6 +9,9 @@ import app.rasoi.core.model.UserId
 sealed interface BillDetailUiEvent {
     data object Retry : BillDetailUiEvent
 
+    /** The user pulled the screen down: reload, showing the refresh indicator until it is done. */
+    data object PullToRefresh : BillDetailUiEvent
+
     /** Reloads quietly when the screen comes back, for example from the item editor. */
     data object Refresh : BillDetailUiEvent
 

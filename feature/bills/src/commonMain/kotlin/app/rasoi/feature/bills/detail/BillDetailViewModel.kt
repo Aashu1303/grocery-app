@@ -66,6 +66,10 @@ class BillDetailViewModel(
         when (event) {
             BillDetailUiEvent.Retry -> load()
             BillDetailUiEvent.Refresh -> refresh()
+            BillDetailUiEvent.PullToRefresh -> {
+                updateContent { it.copy(isRefreshing = true) }
+                refresh()
+            }
             BillDetailUiEvent.DismissSheet -> updateContent { it.copy(sheet = null, error = null) }
             is BillDetailUiEvent.OpenSplit -> openSplit(event.lineId)
             BillDetailUiEvent.OpenPayer -> openSheet(BillSheet.Payer)
@@ -103,8 +107,11 @@ class BillDetailViewModel(
     private fun refresh() {
         if (mutableState.value !is BillDetailUiState.Content) return
         viewModelScope.launch {
-            (getBill(billId) as? AppResult.Success)?.let { fresh ->
-                updateContent { if (it.sheet == null && !it.isBusy) it.copy(bill = fresh.value) else it }
+            val fresh = (getBill(billId) as? AppResult.Success)?.value
+            // A sheet or save in progress keeps its bill; the refresh indicator always ends.
+            updateContent {
+                val current = if (fresh != null && it.sheet == null && !it.isBusy) it.copy(bill = fresh) else it
+                current.copy(isRefreshing = false)
             }
         }
     }

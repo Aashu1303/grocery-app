@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.rasoi.core.designsystem.component.AppBottomSheet
 import app.rasoi.core.designsystem.component.AppButton
 import app.rasoi.core.designsystem.component.AppButtonVariant
+import app.rasoi.core.designsystem.component.AppPullToRefresh
 import app.rasoi.core.designsystem.component.AppText
 import app.rasoi.core.designsystem.component.AppTopBar
 import app.rasoi.core.designsystem.component.ErrorView
@@ -69,7 +70,10 @@ fun HouseholdScreen(
                 message = stringResource(Res.string.household_load_error, state.error.text()),
                 onRetry = { onEvent(HouseholdUiEvent.Retry) },
             )
-            is HouseholdUiState.Content -> HouseholdContent(state, onEvent)
+            is HouseholdUiState.Content -> AppPullToRefresh(
+                refreshing = state.isRefreshing,
+                onRefresh = { onEvent(HouseholdUiEvent.PullToRefresh) },
+            ) { HouseholdContent(state, onEvent) }
         }
     }
     val content = state as? HouseholdUiState.Content
@@ -91,6 +95,7 @@ fun HouseholdScreen(
 @Composable
 private fun HouseholdContent(state: HouseholdUiState.Content, onEvent: (HouseholdUiEvent) -> Unit) {
     LazyColumn(
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(AppTheme.spacing.screenPadding),
         verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sm),
     ) {

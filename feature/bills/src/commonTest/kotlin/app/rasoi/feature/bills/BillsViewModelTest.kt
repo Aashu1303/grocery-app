@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -143,5 +144,17 @@ class BillsViewModelTest : ViewModelTest() {
         val form = assertIs<BillsUiState.Content>(viewModel.state.value).form
         assertEquals(BillsError.OFFLINE, form?.error)
         assertEquals("Gas", form?.title)
+    }
+
+    @Test
+    fun pullingToRefreshReloadsAndAFailedPullKeepsWhatIsShown() {
+        val viewModel = viewModel()
+        val before = viewModel.content()
+        viewModel.onEvent(BillsUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        repository.failure = AppError.Offline
+        viewModel.onEvent(BillsUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        assertFalse(viewModel.content().isRefreshing)
     }
 }

@@ -138,7 +138,13 @@ private fun MainScreen(
                         variant = AppButtonVariant.TEXT,
                     )
                 }
-                MemberAvatar(name = state.account.displayName, onClick = { navController.navigate(Route.Household) })
+                // The bar insets actions by 4 dp for 48 dp icon buttons; the 40 dp avatar needs 8 dp more to sit on
+                // the same 16 dp edge as the title.
+                MemberAvatar(
+                    name = state.account.displayName,
+                    modifier = Modifier.padding(end = AppTheme.spacing.xs),
+                    onClick = { navController.navigate(Route.Household) },
+                )
             })
         },
         bottomBar = {

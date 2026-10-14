@@ -7,6 +7,9 @@ import app.rasoi.core.model.PantryItemId
 sealed interface PantryUiEvent {
     data object Retry : PantryUiEvent
 
+    /** The user pulled the screen down: reload, showing the refresh indicator until it is done. */
+    data object PullToRefresh : PantryUiEvent
+
     data class FilterSelected(val locationId: LocationId?) : PantryUiEvent
 
     data object OpenAdd : PantryUiEvent

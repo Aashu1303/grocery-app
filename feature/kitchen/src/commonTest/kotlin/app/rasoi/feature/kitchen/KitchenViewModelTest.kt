@@ -12,6 +12,7 @@ import app.rasoi.core.testing.FakeKitchenRepository
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 
 class KitchenViewModelTest : ViewModelTest() {
@@ -93,5 +94,17 @@ class KitchenViewModelTest : ViewModelTest() {
         assertEquals(KitchenError.OFFLINE, AppError.Timeout.kitchenError())
         assertEquals(KitchenError.FORBIDDEN, AppError.Forbidden.kitchenError())
         assertEquals(KitchenError.GENERIC, AppError.Server(500).kitchenError())
+    }
+
+    @Test
+    fun pullingToRefreshReloadsAndAFailedPullKeepsWhatIsShown() {
+        val viewModel = viewModel()
+        val before = viewModel.content()
+        viewModel.onEvent(KitchenUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        repository.failure = AppError.Offline
+        viewModel.onEvent(KitchenUiEvent.PullToRefresh)
+        assertEquals(before, viewModel.content())
+        assertFalse(viewModel.content().isRefreshing)
     }
 }

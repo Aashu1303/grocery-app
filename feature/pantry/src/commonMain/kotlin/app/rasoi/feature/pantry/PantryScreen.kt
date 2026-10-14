@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.rasoi.core.designsystem.component.AppBottomSheet
 import app.rasoi.core.designsystem.component.AppButton
+import app.rasoi.core.designsystem.component.AppPullToRefresh
 import app.rasoi.core.designsystem.component.ChoiceChips
 import app.rasoi.core.designsystem.component.ChoiceOption
 import app.rasoi.core.designsystem.component.ConfirmDialog
@@ -94,16 +95,25 @@ private fun PantryContent(state: PantryUiState.Content, onEvent: (PantryUiEvent)
             )
         }
         val items = state.visibleItems
-        if (items.isEmpty()) {
-            Empty(state, onEvent, Modifier.weight(1f))
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = AppTheme.spacing.screenPadding),
-                verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.xxs),
-            ) {
-                items(items, key = { it.id.value }) { item ->
-                    ItemRow(item, names[item.locationId] ?: noPlace, state) { onEvent(PantryUiEvent.OpenItem(item.id)) }
+        AppPullToRefresh(
+            refreshing = state.isRefreshing,
+            onRefresh = { onEvent(PantryUiEvent.PullToRefresh) },
+            modifier = Modifier.weight(1f),
+        ) {
+            if (items.isEmpty()) {
+                // In a list so the empty screen can be pulled too.
+                LazyColumn(Modifier.fillMaxSize()) { item { Empty(state, onEvent, Modifier.fillParentMaxSize()) } }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = AppTheme.spacing.screenPadding),
+                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.xxs),
+                ) {
+                    items(items, key = { it.id.value }) { item ->
+                        ItemRow(item, names[item.locationId] ?: noPlace, state) {
+                            onEvent(PantryUiEvent.OpenItem(item.id))
+                        }
+                    }
                 }
             }
         }

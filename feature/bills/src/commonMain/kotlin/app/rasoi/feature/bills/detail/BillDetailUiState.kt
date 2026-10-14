@@ -37,6 +37,8 @@ sealed interface BillDetailUiState {
         val sheet: BillSheet? = null,
         val isBusy: Boolean = false,
         val error: BillsError? = null,
+        /** The user pulled to refresh; the content stays while it reloads. */
+        val isRefreshing: Boolean = false,
     ) : BillDetailUiState {
         val names: Map<UserId, String> get() = members.associate { it.userId to it.displayName }
 
