@@ -58,10 +58,21 @@ On a machine without Google Maven or Kotlin/Native access, see "Platform switche
 | `SESSION_TTL_DAYS` | Session lifetime, default 30. |
 | `RASOI_VERSION` | Shown by `/health`; set it to your release. |
 | `RASOI_LLM_*` | Optional, as above. The same chat model also powers the Kitchen tab's dish ideas; without it that feature says it is off. |
+| `RASOI_SWEEP_TOKEN` | Optional, at least 32 characters. When set, an external scheduler runs the 15-minute sweeps through `POST /internal/sweeps` with this value in `X-Rasoi-Sweep-Token`, and the in-process timer is off. Needed on hosts that pause idle CPU (Cloud Run; ADR 0028). |
 | `FCM_SERVICE_ACCOUNT_FILE` | Optional path to a Firebase service-account JSON file (keep it outside the repo). With it the server sends approval and expiry push notifications; without it nothing is sent. |
 
 Run it behind a TLS-terminating proxy (HTTPS only), run one instance (the 15-minute sweeps that auto-approve bills and
 close months are safe to repeat, but only one process is tested), and back up the database and the storage folder.
+
+### Cloud Run (the hosted setup, ADR 0028)
+One-time: install the Google Cloud CLI, `gcloud auth login`, put the Firebase project on the Blaze plan, and store
+the Neon password with `gcloud secrets create rasoi-database-password --data-file=<file with only the password>`.
+Then every deploy is:
+```sh
+RASOI_DATABASE_URL='jdbc:postgresql://<neon host>/rasoi?sslmode=require' RASOI_DATABASE_USER=neondb_owner \
+  ./scripts/deploy-cloud-run.sh
+```
+It builds the image with Cloud Build, deploys the current commit, schedules the sweeps and checks `/health`.
 
 ### Server image
 `docker build -t rasoi-server .` builds the server only. Run it with the variables above, for example

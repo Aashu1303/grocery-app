@@ -17,11 +17,16 @@ fun main() {
         if (config.authMode == AuthMode.DEV) log.warn("RASOI_AUTH_MODE=dev: development sign-in is enabled")
         monitor.subscribe(ApplicationStopped) { database.close() }
         rasoiModule(graph)
-        scheduleJobs(
-            graph,
-            JobRunner(this) { name, error ->
-                log.error("Job {} failed: {}", name, error::class.simpleName)
-            },
-        )
+        // A host that pauses idle CPU (Cloud Run) cannot keep a timer; its scheduler calls the sweeps instead.
+        if (config.sweepToken == null) {
+            scheduleJobs(
+                graph,
+                JobRunner(this) { name, error ->
+                    log.error("Job {} failed: {}", name, error::class.simpleName)
+                },
+            )
+        } else {
+            log.info("Sweeps run from POST /internal/sweeps; the in-process timer is off")
+        }
     }.start(wait = true)
 }

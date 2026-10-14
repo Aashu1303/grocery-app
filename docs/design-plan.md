@@ -114,14 +114,14 @@ The whole system is Kotlin, so the app and server share models and domain logic.
 | Auth | Firebase Auth phone OTP; server verifies the ID token | Phone numbers fit Indian flatmates and cooks |
 | Push | Firebase Cloud Messaging (Android, and iOS via APNs) | One channel for approvals and expiry alerts |
 | File storage | S3-compatible object storage | Invoice PDFs for re-parsing and dispute evidence |
-| Scheduled jobs | In-server `JobRunner` (`server:jobs`) running sweeps that derive due work from stored state | Auto-approve, expiry alerts, month close; no extra infrastructure and no queue to lose (ADR 0021) |
+| Scheduled jobs | In-server `JobRunner` (`server:jobs`) running sweeps that derive due work from stored state | Auto-approve, expiry alerts, month close; no extra infrastructure and no queue to lose (ADR 0021). On Cloud Run an external scheduler calls the same sweeps (ADR 0028) |
 | Payments | UPI deep link (`upi://pay`) + manual "mark settled" | No payment processing or licensing needed |
 | Build | Gradle version catalog + convention plugins | Consistent module setup; every shared module also has a `jvm` target for fast local tests (ADR 0007) |
 | CI | GitHub Actions | Build, lint, test on every push |
 
 **Decisions to record as ADRs at M0:** server-side PDF parsing, money as paise, server-authoritative ledger, Firebase for auth and push, offline reads with online-only writes in Phase 1.
 
-**Open question:** where to host the server and database (for example Railway, Render, Fly.io or a small VPS). It does not block M0 to M2, since local development runs on Docker Compose.
+**Hosting** (ADR 0028): the server runs on Cloud Run in the Firebase project (`asia-southeast1`), the database on Neon Postgres in Singapore, invoice PDFs in a Cloud Storage bucket mounted as the storage folder, and Cloud Scheduler drives the sweeps through `POST /internal/sweeps`. Local development still runs on Docker.
 
 ## 5. High-level design (HLD)
 

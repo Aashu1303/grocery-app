@@ -54,6 +54,7 @@ fun Application.rasoiModule(graph: AppGraph) {
     routing {
         healthRoutes(graph.config)
         authRoutes(graph.auth)
+        graph.config.sweepToken?.let { sweepRoutes(it, graph) }
         authenticate(SESSION_AUTH) {
             householdRoutes(graph.households, graph.idempotency)
             billRoutes(graph.imports, graph.bills, graph.idempotency)
