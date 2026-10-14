@@ -265,13 +265,13 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 
 | Token group | Values | Rule |
 | --- | --- | --- |
-| Colour (semantic) | primary, onPrimary, surface, surfaceVariant, onSurface, outline, success, warning, danger, owedToYou, youOwe | Light and dark sets; named by meaning, not hue |
+| Colour (semantic) | primary, onPrimary, surface, surfaceVariant, onSurface, outline, success, warning, danger, owedToYou, youOwe, brandAccent, onBrandAccent | Light and dark sets; named by meaning, not hue; brand colours are decorative only (ADR 0027) |
 | Freshness | fresh, useSoon, expired | Mapped to success, warning, danger |
 | Typography | display, title, body, label, numeric | `numeric` uses tabular figures for amounts |
 | Spacing | 4, 8, 12, 16, 24, 32, 48 dp | 4 dp grid; screen padding 16 |
 | Radius | 8, 12, 16 dp | Cards 12, sheets 16 |
 | Elevation | 0, 1, 3 | Mostly flat; elevation only for sheets and FABs |
-| Motion | 150 ms and 250 ms, standard easing | No decorative animation |
+| Motion | 150 ms and 250 ms, standard easing | No decorative animation, except the one launch intro (ADR 0027) |
 
 `AppTheme` wraps Material 3 and exposes tokens through `AppTheme.colors`, `AppTheme.type` and `AppTheme.spacing`.
 
@@ -294,6 +294,7 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 | AppBottomSheet, ConfirmDialog | Pickers and destructive confirmation |
 | NoticeBanner | A warning or note above content, such as an import total mismatch (ADR 0019) |
 | FileRow | A picked file with its size and a remove button (ADR 0019) |
+| BrandIntro, AnimatedBrandIntro | The launch intro: र zooms in, the leaf lands, "रasoi" and the tagline appear (ADR 0027) |
 
 Every component appears in a **catalog screen** (debug builds) in all states, light and dark, and each has screenshot tests.
 
@@ -309,6 +310,13 @@ Every component appears in a **catalog screen** (debug builds) in all states, li
 8. **Copy** is short, plain English; buttons are verbs ("Approve split", not "OK").
 9. **Forms** validate inline and keep the user's input after an error.
 10. **Dynamic type** up to 200% without clipping; layouts scroll instead of truncating amounts.
+
+### 7.4 Brand, app icon and launch
+
+The mark is a Devanagari र with a saffron tadka leaf; the launcher icon puts it in cream on a green tile (Android
+adaptive icon with a themed layer, iOS 1024 px icon). Both platforms launch on the surface colour with the र centred at
+240 dp, and the app continues from that exact frame into a 1.2 s intro that ends on the "रasoi" lockup with the
+tagline "Aapke ghar ki rasoi". Source: Figma "Rasoi Design System" (App Icon, Splash Motion). See ADR 0027.
 
 ## 8. Testing strategy
 

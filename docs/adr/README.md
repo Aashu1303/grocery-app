@@ -31,4 +31,5 @@ Copy `0000-template.md`. A superseded ADR stays in place with its status changed
 | [0024](0024-release-builds-and-production-sign-in.md) | Release builds, production sign-in and the server image | Accepted |
 | [0025](0025-self-hosted-ci-runner.md) | Self-hosted runner as the CI fallback | Accepted |
 | [0026](0026-koin-compiler-plugin-and-annotations.md) | Koin compiler plugin and annotations for client DI | Accepted |
+| [0027](0027-brand-mark-app-icon-and-launch-intro.md) | Brand mark, app icon and the launch intro | Accepted |
 | [0028](0028-hosting-on-cloud-run-and-neon.md) | Hosting: Cloud Run, Neon Postgres and scheduler-driven sweeps | Accepted |

@@ -28,6 +28,10 @@ data class AppColors(
     val onDangerContainer: Color,
     val owedToYou: Color,
     val youOwe: Color,
+    /** The saffron tadka leaf in the brand mark. Decorative only; never carries meaning (ADR 0027). */
+    val brandAccent: Color,
+    /** The vein drawn on [brandAccent]. */
+    val onBrandAccent: Color,
     val isDark: Boolean,
 ) {
     fun freshness(freshness: Freshness): Color = when (freshness) {
