@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Before Android 12 the window background is the launch screen: the र centred at 240 dp, the size the
+         Compose intro starts from (ADR 0027). Compose draws over it once the first frame is ready. -->
+    <style name="Theme.Rasoi" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
+    </style>
+</resources>

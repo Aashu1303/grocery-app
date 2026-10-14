@@ -58,10 +58,21 @@ On a machine without Google Maven or Kotlin/Native access, see "Platform switche
 | `SESSION_TTL_DAYS` | Session lifetime, default 30. |
 | `RASOI_VERSION` | Shown by `/health`; set it to your release. |
 | `RASOI_LLM_*` | Optional, as above. The same chat model also powers the Kitchen tab's dish ideas; without it that feature says it is off. |
+| `RASOI_SWEEP_TOKEN` | Optional, at least 32 characters. When set, an external scheduler runs the 15-minute sweeps through `POST /internal/sweeps` with this value in `X-Rasoi-Sweep-Token`, and the in-process timer is off. Needed on hosts that pause idle CPU (Cloud Run; ADR 0028). |
 | `FCM_SERVICE_ACCOUNT_FILE` | Optional path to a Firebase service-account JSON file (keep it outside the repo). With it the server sends approval and expiry push notifications; without it nothing is sent. |
 
 Run it behind a TLS-terminating proxy (HTTPS only), run one instance (the 15-minute sweeps that auto-approve bills and
 close months are safe to repeat, but only one process is tested), and back up the database and the storage folder.
+
+### Cloud Run (the hosted setup, ADR 0028)
+One-time: install the Google Cloud CLI, `gcloud auth login`, put the Firebase project on the Blaze plan, and store
+the Neon password with `gcloud secrets create rasoi-database-password --data-file=<file with only the password>`.
+Then every deploy is:
+```sh
+RASOI_DATABASE_URL='jdbc:postgresql://<neon host>/rasoi?sslmode=require' RASOI_DATABASE_USER=neondb_owner \
+  ./scripts/deploy-cloud-run.sh
+```
+It builds the image with Cloud Build, deploys the current commit, schedules the sweeps and checks `/health`.
 
 ### Server image
 `docker build -t rasoi-server .` builds the server only. Run it with the variables above, for example
@@ -72,15 +83,21 @@ non-root user and keeps invoice PDFs in the `/data` volume.
 - **API address:** Android `-Prasoi.apiBaseUrl=https://api.example.com` at build time; iOS `RASOI_API_BASE_URL`. A
   release build refuses any address that is not `https://` (ADR 0024).
 - **Android release.** Create a Firebase project, enable **Phone** sign-in, add the Android app (`app.rasoi`) with your
-  release key's SHA-1 and SHA-256, and note the app id, API key and project id from the project settings. Then:
-  ```sh
-  export RASOI_KEYSTORE_FILE=/secure/rasoi.jks RASOI_KEYSTORE_PASSWORD=... RASOI_KEY_ALIAS=... RASOI_KEY_PASSWORD=...
-  ./gradlew :androidApp:bundleRelease \
-    -Prasoi.apiBaseUrl=https://api.example.com \
-    -Prasoi.firebase.appId=1:123:android:abc -Prasoi.firebase.apiKey=AIza... -Prasoi.firebase.projectId=my-project
+  upload key's SHA-1 and SHA-256 (`keytool -list -v -keystore ~/rasoi-upload.jks`), and download its
+  `google-services.json` into `androidApp/` (it is git-ignored; the google-services plugin reads it). Create the upload
+  key once with `keytool -genkeypair -keystore ~/rasoi-upload.jks -alias rasoi-upload -keyalg RSA -keysize 4096
+  -validity 10000`, keep it outside the repo and back it up with its password. Then put this in
+  `~/.gradle/gradle.properties` (never in the repo):
+  ```properties
+  rasoi.signing.storeFile=/Users/you/rasoi-upload.jks
+  rasoi.signing.storePassword=...
+  rasoi.signing.keyAlias=rasoi-upload
+  rasoi.signing.keyPassword=...
   ```
-  Keep the properties in `~/.gradle/gradle.properties` rather than on a shared command line. Without the Firebase
-  properties the build works but sign-in reports an error. The release build has no development sign-in.
+  and build with `./gradlew :androidApp:bundleRelease -Prasoi.apiBaseUrl=https://api.example.com`. The
+  `RASOI_KEYSTORE_FILE`, `RASOI_KEYSTORE_PASSWORD`, `RASOI_KEY_ALIAS` and `RASOI_KEY_PASSWORD` environment variables
+  work too (CI uses them). Without a key the release is unsigned; without `google-services.json` sign-in reports an
+  error. The release build has no development sign-in.
 - **iOS release.** In the same Firebase project add the iOS app (`app.rasoi`), upload an APNs key (Project settings,
   Cloud Messaging) and download `GoogleService-Info.plist` into `iosApp/iosApp/` (it is git-ignored). Put its
   `REVERSED_CLIENT_ID` in the `RASOI_FIREBASE_REVERSED_CLIENT_ID` build setting. Then build the Release configuration

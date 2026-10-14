@@ -33,6 +33,7 @@ import app.rasoi.server.support.authed
 import app.rasoi.server.support.rasoiTest
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -392,6 +393,18 @@ class SplitAndApprovalRoutesTest {
         assertEquals(true, asha.automatic)
         assertEquals(false, approved.approvals.first { it.userId == flat.dev.user.id }.automatic)
         assertEquals(0, graph.bills.autoApproveDue())
+    }
+
+    @Test
+    fun theSchedulerSweepApprovesASilentBill() = rasoiTest(sweepToken = SweepToken("s".repeat(32))) {
+        val flat = flat()
+        split(flat)
+        submit(flat.meera, flat.bill.id)
+        decide(flat.dev, flat.bill.id, ApprovalStateDto.APPROVED)
+        clock.advance(49.hours)
+        val sweep = client.post("/internal/sweeps") { header(SweepToken.HEADER, "s".repeat(32)) }
+        assertEquals(HttpStatusCode.NoContent, sweep.status)
+        assertEquals(BillStatusDto.APPROVED, fetch(flat.meera, flat.bill.id).status)
     }
 
     @Test

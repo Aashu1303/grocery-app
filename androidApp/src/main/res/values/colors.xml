@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brand colours for the launcher icon and launch screen, copied from the design-system tokens (ADR 0027):
+     surface and primary in light and dark; the icon tile is the light primary in both themes. -->
+<resources>
+    <color name="launch_background">#FFFBF6</color>
+    <color name="launch_mark">#2E6B3F</color>
+    <color name="ic_launcher_background">#2E6B3F</color>
+</resources>

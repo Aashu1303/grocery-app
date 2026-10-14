@@ -114,14 +114,14 @@ The whole system is Kotlin, so the app and server share models and domain logic.
 | Auth | Firebase Auth phone OTP; server verifies the ID token | Phone numbers fit Indian flatmates and cooks |
 | Push | Firebase Cloud Messaging (Android, and iOS via APNs) | One channel for approvals and expiry alerts |
 | File storage | S3-compatible object storage | Invoice PDFs for re-parsing and dispute evidence |
-| Scheduled jobs | In-server `JobRunner` (`server:jobs`) running sweeps that derive due work from stored state | Auto-approve, expiry alerts, month close; no extra infrastructure and no queue to lose (ADR 0021) |
+| Scheduled jobs | In-server `JobRunner` (`server:jobs`) running sweeps that derive due work from stored state | Auto-approve, expiry alerts, month close; no extra infrastructure and no queue to lose (ADR 0021). On Cloud Run an external scheduler calls the same sweeps (ADR 0028) |
 | Payments | UPI deep link (`upi://pay`) + manual "mark settled" | No payment processing or licensing needed |
 | Build | Gradle version catalog + convention plugins | Consistent module setup; every shared module also has a `jvm` target for fast local tests (ADR 0007) |
 | CI | GitHub Actions | Build, lint, test on every push |
 
 **Decisions to record as ADRs at M0:** server-side PDF parsing, money as paise, server-authoritative ledger, Firebase for auth and push, offline reads with online-only writes in Phase 1.
 
-**Open question:** where to host the server and database (for example Railway, Render, Fly.io or a small VPS). It does not block M0 to M2, since local development runs on Docker Compose.
+**Hosting** (ADR 0028): the server runs on Cloud Run in the Firebase project (`asia-southeast1`), the database on Neon Postgres in Singapore, invoice PDFs in a Cloud Storage bucket mounted as the storage folder, and Cloud Scheduler drives the sweeps through `POST /internal/sweeps`. Local development still runs on Docker.
 
 ## 5. High-level design (HLD)
 
@@ -265,13 +265,13 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 
 | Token group | Values | Rule |
 | --- | --- | --- |
-| Colour (semantic) | primary, onPrimary, surface, surfaceVariant, onSurface, outline, success, warning, danger, owedToYou, youOwe | Light and dark sets; named by meaning, not hue |
+| Colour (semantic) | primary, onPrimary, surface, surfaceVariant, onSurface, outline, success, warning, danger, owedToYou, youOwe, brandAccent, onBrandAccent | Light and dark sets; named by meaning, not hue; brand colours are decorative only (ADR 0027) |
 | Freshness | fresh, useSoon, expired | Mapped to success, warning, danger |
 | Typography | display, title, body, label, numeric | `numeric` uses tabular figures for amounts |
 | Spacing | 4, 8, 12, 16, 24, 32, 48 dp | 4 dp grid; screen padding 16 dp horizontal and vertical (ADR 0029) |
 | Radius | 8, 12, 16 dp | Cards 12, sheets 16 |
 | Elevation | 0, 1, 3 | Mostly flat; elevation only for sheets and FABs |
-| Motion | 150 ms and 250 ms, standard easing | No decorative animation |
+| Motion | 150 ms and 250 ms, standard easing | No decorative animation, except the one launch intro (ADR 0027) |
 
 `AppTheme` wraps Material 3 and exposes tokens through `AppTheme.colors`, `AppTheme.type` and `AppTheme.spacing`.
 
@@ -294,6 +294,7 @@ All UI is built from one `core/designsystem` module: features use its tokens and
 | AppBottomSheet, ConfirmDialog | Pickers and destructive confirmation |
 | NoticeBanner | A warning or note above content, such as an import total mismatch (ADR 0019) |
 | FileRow | A picked file with its size and a remove button (ADR 0019) |
+| BrandIntro, AnimatedBrandIntro | The launch intro: र zooms in, the leaf lands, "रasoi" and the tagline appear (ADR 0027) |
 
 Every component appears in a **catalog screen** (debug builds) in all states, light and dark, and each has screenshot tests.
 
@@ -312,6 +313,13 @@ Every component appears in a **catalog screen** (debug builds) in all states, li
 11. **Screen padding** is `spacing.screenPadding` (16 dp) horizontally and vertically on every screen, measured from the
     status bar, the top bar or the bottom bar. `AppTopBar` keeps 16 dp above, below and before its title, and grows
     for a two-line title; its icons sit on the same 16 dp edge (ADR 0029).
+
+### 7.4 Brand, app icon and launch
+
+The mark is a Devanagari र with a saffron tadka leaf; the launcher icon puts it in cream on a green tile (Android
+adaptive icon with a themed layer, iOS 1024 px icon). Both platforms launch on the surface colour with the र centred at
+240 dp, and the app continues from that exact frame into a 1.2 s intro that ends on the "रasoi" lockup with the
+tagline "Aapke ghar ki rasoi". Source: Figma "Rasoi Design System" (App Icon, Splash Motion). See ADR 0027.
 
 ## 8. Testing strategy
 

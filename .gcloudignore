@@ -1,0 +1,3 @@
+# What `gcloud builds submit` uploads: the same as the Docker build context, minus git-ignored files and secrets.
+#!include:.dockerignore
+#!include:.gitignore
