@@ -50,6 +50,7 @@ val platformModule: Module = module {
     single<PhoneAuthProvider> { get<PlatformDependencies>().phoneAuth }
     single<SessionStorage> { get<PlatformDependencies>().sessionStorage }
     single<ApiConfig> { get<PlatformDependencies>().apiConfig }
+    single<IncomingInvoices> { get<PlatformDependencies>().incomingInvoices }
 }
 
 /** Everything built on the platform pieces: HTTP client, API and repositories. */

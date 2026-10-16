@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,6 +67,7 @@ import app.rasoi.feature.pantry.PantryRoute
 import app.rasoi.feature.pantry.PantryViewModel
 import app.rasoi.feature.pantry.pantryViewModel
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -125,6 +127,14 @@ private fun MainScreen(
     // Remembered so the highlight stays on the last tab while the bar fades out over a detail screen.
     var selectedTab by remember { mutableStateOf(TopLevelDestination.KITCHEN) }
     TopLevelDestination.entries.firstOrNull { destination?.hasRoute(it.route::class) == true }?.let { selectedTab = it }
+    val incoming = koinInject<IncomingInvoices>()
+    val shared by incoming.files.collectAsStateWithLifecycle()
+    // A PDF shared from another app ("Share", "Open with") opens the import screen with it already added.
+    LaunchedEffect(shared.isNotEmpty()) {
+        if (shared.isNotEmpty() && destination?.hasRoute(Route.ImportInvoices::class) != true) {
+            navController.navigate(Route.ImportInvoices)
+        }
+    }
     AppScaffold(
         // The destination is null only on the first frame; counting it as a tab keeps the bars from fading in at
         // launch.
@@ -168,7 +178,7 @@ private fun MainScreen(
             popExitTransition = { FadeThrough.exit },
         ) {
             tabDestinations(state, tabs, Modifier.padding(barsPadding), navController)
-            detailDestinations(state, navController)
+            detailDestinations(state, navController, incoming)
         }
     }
 }
@@ -247,7 +257,11 @@ private fun NavGraphBuilder.tabDestinations(
 }
 
 /** Screens opened from a tab; the bars are hidden, so each fills the space with its own top bar. */
-private fun NavGraphBuilder.detailDestinations(state: AppState.Ready, navController: NavHostController) {
+private fun NavGraphBuilder.detailDestinations(
+    state: AppState.Ready,
+    navController: NavHostController,
+    incoming: IncomingInvoices,
+) {
     composable<Route.BillDetail> { entry ->
         BillDetailRoute(
             billId = BillId(entry.toRoute<Route.BillDetail>().billId),
@@ -258,6 +272,7 @@ private fun NavGraphBuilder.detailDestinations(state: AppState.Ready, navControl
         )
     }
     composable<Route.ImportInvoices> {
+        val shared by incoming.files.collectAsStateWithLifecycle()
         ImportRoute(
             householdId = state.household.household.id,
             myRole = state.household.role,
@@ -265,6 +280,8 @@ private fun NavGraphBuilder.detailDestinations(state: AppState.Ready, navControl
             onBillImported = { billId ->
                 navController.navigate(Route.BillReview(billId.value)) { popUpTo<Route.Bills>() }
             },
+            sharedFiles = shared,
+            onSharedFilesTaken = { incoming.take() },
         )
     }
     composable<Route.BillReview> { entry ->

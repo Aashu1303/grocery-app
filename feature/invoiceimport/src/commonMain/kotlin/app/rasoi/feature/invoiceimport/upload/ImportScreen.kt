@@ -20,6 +20,7 @@ import app.rasoi.core.designsystem.component.AppTopBar
 import app.rasoi.core.designsystem.component.EmptyView
 import app.rasoi.core.designsystem.component.FileRow
 import app.rasoi.core.designsystem.theme.AppTheme
+import app.rasoi.core.domain.bills.InvoiceFile
 import app.rasoi.core.model.BillId
 import app.rasoi.core.model.HouseholdId
 import app.rasoi.core.model.Role
@@ -47,10 +48,19 @@ fun ImportRoute(
     onBack: () -> Unit,
     onBillImported: (BillId) -> Unit,
     modifier: Modifier = Modifier,
+    sharedFiles: List<InvoiceFile> = emptyList(),
+    onSharedFilesTaken: () -> Unit = {},
     viewModel: ImportViewModel = koinViewModel(key = householdId.value) { parametersOf(householdId, myRole) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val picker = rememberPdfPicker { viewModel.onEvent(ImportUiEvent.FilesPicked(it)) }
+    // PDFs shared from another app arrive already picked.
+    LaunchedEffect(sharedFiles) {
+        if (sharedFiles.isNotEmpty()) {
+            viewModel.onEvent(ImportUiEvent.FilesPicked(sharedFiles))
+            onSharedFilesTaken()
+        }
+    }
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
