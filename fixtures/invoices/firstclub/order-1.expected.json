@@ -1,0 +1,32 @@
+{
+  "platform": "FIRSTCLUB",
+  "invoiceNumber": "FC00000000000001",
+  "orderId": "FC00000000000001",
+  "invoiceDate": "2026-10-14",
+  "lines": [
+    { "rawName": "Provilac High Protein Hazelnut Coffee 250 ml", "units": 1, "amount": "130.00", "hsn": "22029930" },
+    { "rawName": "Safal Frozen Sweet Corn", "units": 1, "amount": "45.00", "hsn": "071040" },
+    { "rawName": "Provilac High Protein Milk Kesar Elaichi", "units": 1, "amount": "120.00", "hsn": "22029930" },
+    { "rawName": "Provilac High Protein Milk", "units": 1, "amount": "90.00", "hsn": "04011000" },
+    { "rawName": "Provilac High Protein Milk Cacao", "units": 1, "amount": "140.00", "hsn": "22029930" },
+    { "rawName": "Desi Tomato", "units": 1, "amount": "19.00", "hsn": "07031010" },
+    { "rawName": "English Cucumber", "units": 1, "amount": "27.00", "hsn": "07031010" },
+    { "rawName": "The Drill Crunchy Roasted Edamame Sea Salt", "units": 1, "amount": "49.00", "hsn": "20081990" },
+    { "rawName": "Firstclub Cafe Pistachio Kunafa Cookie", "units": 1, "amount": "219.00", "hsn": "19059090" },
+    { "rawName": "Lady's Fingers", "units": 1, "amount": "15.00", "hsn": "07031010" },
+    { "rawName": "Orange Carrot", "units": 1, "amount": "30.00", "hsn": "07031010" },
+    { "rawName": "Pumpkin Cut", "units": 1, "amount": "39.00", "hsn": "07031010" },
+    { "rawName": "French Ring Beans", "units": 1, "amount": "44.00", "hsn": "07031010" },
+    { "rawName": "Natch Thai Mango slices Chilli", "units": 1, "amount": "144.00", "hsn": "20082000" },
+    { "rawName": "The Drill Crunchy Roasted Edamame Nimbu Pudina", "units": 2, "amount": "98.00", "hsn": "20081990" },
+    { "rawName": "Kulfiwallah Kesar Pista Matka Kulfi", "units": 1, "amount": "85.00", "hsn": "21050000" },
+    { "rawName": "Akshayakalpa Organic High Protein Vanilla Milk", "units": 1, "amount": "59.00", "hsn": "04029990" },
+    { "rawName": "Red Capsicum", "units": 1, "amount": "50.00", "hsn": "07031010" },
+    { "rawName": "Nutty Gritties Salted Mixed Nuts", "units": 1, "amount": "332.00", "hsn": "20081920" }
+  ],
+  "charges": [
+    { "kind": "HANDLING", "label": "Handling Fee", "amount": "12.00" }
+  ],
+  "total": "1747.00",
+  "warnings": []
+}

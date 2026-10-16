@@ -20,6 +20,7 @@ class TemplateDetectionTest {
         ZeptoInvoiceParser(),
         BlinkitInvoiceParser(),
         HandpickdInvoiceParser(),
+        FirstclubInvoiceParser(),
     )
 
     private fun fixtures(): Map<Platform, ExtractedDocument> = root.walkTopDown()

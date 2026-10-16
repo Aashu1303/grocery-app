@@ -23,6 +23,7 @@ import app.rasoi.feature.bills.resources.field_invalid_amount
 import app.rasoi.feature.bills.resources.field_required
 import app.rasoi.feature.bills.resources.field_too_long
 import app.rasoi.feature.bills.resources.platform_blinkit
+import app.rasoi.feature.bills.resources.platform_firstclub
 import app.rasoi.feature.bills.resources.platform_handpickd
 import app.rasoi.feature.bills.resources.platform_instamart
 import app.rasoi.feature.bills.resources.platform_manual
@@ -73,6 +74,7 @@ internal fun Platform.label(): String = stringResource(
         Platform.BLINKIT -> Res.string.platform_blinkit
         Platform.INSTAMART -> Res.string.platform_instamart
         Platform.HANDPICKD -> Res.string.platform_handpickd
+        Platform.FIRSTCLUB -> Res.string.platform_firstclub
         Platform.MANUAL -> Res.string.platform_manual
         Platform.OTHER -> Res.string.platform_other
     },

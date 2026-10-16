@@ -6,6 +6,7 @@ import app.rasoi.server.parsing.extract.ExtractedDocument
 import app.rasoi.server.parsing.model.ParseWarning
 import app.rasoi.server.parsing.model.ParsedInvoice
 import app.rasoi.server.parsing.template.BlinkitInvoiceParser
+import app.rasoi.server.parsing.template.FirstclubInvoiceParser
 import app.rasoi.server.parsing.template.HandpickdInvoiceParser
 import app.rasoi.server.parsing.template.InstamartInvoiceParser
 import app.rasoi.server.parsing.template.ZeptoInvoiceParser
@@ -38,7 +39,13 @@ class InvoicePipeline(private val parsers: List<InvoiceParser>, private val fall
 
     companion object {
         fun default(fallback: InvoiceFallback? = null) = InvoicePipeline(
-            listOf(InstamartInvoiceParser(), ZeptoInvoiceParser(), BlinkitInvoiceParser(), HandpickdInvoiceParser()),
+            listOf(
+                InstamartInvoiceParser(),
+                ZeptoInvoiceParser(),
+                BlinkitInvoiceParser(),
+                HandpickdInvoiceParser(),
+                FirstclubInvoiceParser(),
+            ),
             fallback,
         )
     }

@@ -11,6 +11,7 @@
     <string name="platform_zepto">Zepto</string>
     <string name="platform_blinkit">Blinkit</string>
     <string name="platform_instamart">Instamart</string>
+    <string name="platform_firstclub">Firstclub</string>
     <string name="platform_handpickd">Handpickd</string>
     <string name="platform_manual">Added by hand</string>
     <string name="platform_other">Other store</string>
