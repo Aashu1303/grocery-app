@@ -9,12 +9,21 @@
 #   RASOI_GCP_PROJECT [grocery-app-2c112]   RASOI_GCP_REGION [asia-southeast1]
 #   RASOI_DATABASE_URL (required)  e.g. jdbc:postgresql://ep-xxx.ap-southeast-1.aws.neon.tech/rasoi?sslmode=require
 #   RASOI_DATABASE_USER (required)
+#   RASOI_LLM_BASE_URL [https://api.groq.com/openai/v1]   RASOI_LLM_MODEL [openai/gpt-oss-120b]
+#   RASOI_LLM_SECRET [rasoi-llm-api-key]
+#
+# Optional AI fallback for unknown invoice formats and dish ideas: store the provider's API key once as a secret
+# (gcloud secrets create rasoi-llm-api-key --data-file=<file with only the key>) and name it in RASOI_LLM_SECRET
+# if it is called something else. Without the secret the server runs with the fallback off.
 set -euo pipefail
 
 PROJECT="${RASOI_GCP_PROJECT:-grocery-app-2c112}"
 REGION="${RASOI_GCP_REGION:-asia-southeast1}"
 DATABASE_URL="${RASOI_DATABASE_URL:?set RASOI_DATABASE_URL (jdbc:postgresql://…?sslmode=require)}"
 DATABASE_USER="${RASOI_DATABASE_USER:?set RASOI_DATABASE_USER}"
+LLM_BASE_URL="${RASOI_LLM_BASE_URL:-https://api.groq.com/openai/v1}"
+LLM_MODEL="${RASOI_LLM_MODEL:-openai/gpt-oss-120b}"
+LLM_SECRET="${RASOI_LLM_SECRET:-rasoi-llm-api-key}"
 SERVICE=rasoi-api
 REPO=rasoi
 BUCKET="${PROJECT}-rasoi-documents"
@@ -58,7 +67,18 @@ exists gcloud secrets describe rasoi-database-password || {
 }
 exists gcloud secrets describe rasoi-sweep-token ||
   openssl rand -hex 32 | tr -d '\n' | gcloud secrets create rasoi-sweep-token --data-file=-
-for secret in rasoi-database-password rasoi-sweep-token; do
+SECRETS=(rasoi-database-password rasoi-sweep-token)
+ENV_VARS="FIREBASE_PROJECT_ID=${PROJECT}|DATABASE_URL=${DATABASE_URL}|DATABASE_USER=${DATABASE_USER}|RASOI_VERSION=${VERSION}|RASOI_STORAGE_DIR=/data"
+SECRET_VARS="DATABASE_PASSWORD=rasoi-database-password:latest,RASOI_SWEEP_TOKEN=rasoi-sweep-token:latest"
+if exists gcloud secrets describe "$LLM_SECRET"; then
+  echo "    AI fallback on (${LLM_MODEL})"
+  SECRETS+=("$LLM_SECRET")
+  ENV_VARS="${ENV_VARS}|RASOI_LLM_BASE_URL=${LLM_BASE_URL}|RASOI_LLM_MODEL=${LLM_MODEL}"
+  SECRET_VARS="${SECRET_VARS},RASOI_LLM_API_KEY=${LLM_SECRET}:latest"
+else
+  echo "    AI fallback off (no ${LLM_SECRET} secret)"
+fi
+for secret in "${SECRETS[@]}"; do
   gcloud secrets add-iam-policy-binding "$secret" \
     --member "serviceAccount:${RUNTIME_SA}" --role roles/secretmanager.secretAccessor >/dev/null
 done
@@ -75,8 +95,8 @@ gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" \
   --min-instances 0 --max-instances 1 --concurrency 80 --timeout 300 \
   --add-volume "name=documents,type=cloud-storage,bucket=${BUCKET},mount-options=uid=10001;gid=10001" \
   --add-volume-mount "volume=documents,mount-path=/data" \
-  --set-env-vars "^|^FIREBASE_PROJECT_ID=${PROJECT}|DATABASE_URL=${DATABASE_URL}|DATABASE_USER=${DATABASE_USER}|RASOI_VERSION=${VERSION}|RASOI_STORAGE_DIR=/data" \
-  --set-secrets "DATABASE_PASSWORD=rasoi-database-password:latest,RASOI_SWEEP_TOKEN=rasoi-sweep-token:latest"
+  --set-env-vars "^|^${ENV_VARS}" \
+  --set-secrets "${SECRET_VARS}"
 URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')"
 
 echo "==> Sweep schedule (every 15 minutes)"
